@@ -1,6 +1,9 @@
-# Aaron (v2)
+# Aaron
 
 An opinionated, high-performance distributed systems runtime and actor-service framework in Rust, designed for resilient peer-to-peer (P2P) networking, embedded LSM-tree persistence, lockless event-driven architecture, and supervised service lifecycles.
+
+> **Origins & Vision**:
+> Aaron represents the culmination of **5 years of research, architectural experiments, and distributed systems engineering**. Bringing a runtime of this scope and precision to life is an immense challenge for a solo developer—accelerated and made tangible through pair-programming with **Gemini**. Every model, invariant, and subsystem in Aaron was designed by a mind deeply dedicated to **correctness, mechanical efficiency, and long-term architectural clarity**.
 
 ---
 
@@ -31,10 +34,60 @@ Aaron is built upon core architectural principles that dictate how distributed s
 
 ---
 
-## 2. Workspace Structure
+## 2. Cluster Architecture in Action
+
+<p align="center">
+  <img src="./assets/aaron_cluster_architecture.jpg" alt="Aaron 3-Node Cluster Architecture" width="100%" />
+</p>
+
+### Expressive Cluster Composition in Rust
+
+Spinning up a secure, supervised node with embedded storage, dynamic logging, and cluster gossip takes just a few lines of idiomatic Rust:
+
+```rust
+use node::{Node, Context, service_fn};
+use membership_service::{MembershipService, MembershipEvent};
+use tracing_service::TracingService;
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<(), node::Error> {
+    // 1. Initialize Membership with an admin handle for cluster operations
+    let (membership_svc, membership_handle) = MembershipService::new_with_handle();
+
+    // 2. Compose the Node runtime with supervised services and event observers
+    let node = Node::new()
+        .with(TracingService::new())
+        .with(membership_svc)
+        .with(service_fn("cluster-watcher", |ctx: Context| async move {
+            let mut sub = ctx.event_hub.subscribe::<MembershipEvent>().await;
+            while let Ok(event) = sub.recv().await {
+                println!("Cluster event observed: {event:?}");
+            }
+            Ok(())
+        }));
+
+    // 3. Connect to the cluster seed asynchronously
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        let seed_addr = "127.0.0.1:9001".parse().unwrap();
+        match membership_handle.join(seed_addr).await {
+            Ok(peers) => println!("Joined cluster! Discovered {} peer(s)", peers.len()),
+            Err(err) => eprintln!("Failed to join cluster: {err}"),
+        }
+    });
+
+    // 4. Run the supervised node runtime
+    node.run().await
+}
+```
+
+---
+
+## 3. Workspace Structure
 
 ```
-aaron-v2/
+aaron/
 ├── crates/
 │   ├── node/                   # Core runtime host, Context, Supervision, Network, Store, EventHub, Error
 │   ├── tracing-service/        # Structured JSON/Pretty logging with dynamic runtime level reload
@@ -52,7 +105,7 @@ aaron-v2/
 
 ---
 
-## 3. Quick Start
+## 4. Quick Start
 
 ### Running the Examples
 
@@ -84,7 +137,7 @@ cargo clippy --all-targets --release
 
 ---
 
-## 4. Documentation Index
+## 5. Documentation Index
 
 - [Node Architecture & Service Development Guide](./crates/node/README.md)
 - [SWIM Membership Service & Protocol Specification](./crates/membership-service/README.md)

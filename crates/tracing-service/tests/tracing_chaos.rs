@@ -220,6 +220,7 @@ async fn test_concurrent_log_level_changes_converge_to_a_requested_level() {
 /// must not permanently deafen the service).
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_event_flood_drops_events_but_never_deafens_the_service() {
+    let _guard = GLOBAL_LOCK.lock().await;
     let token = CancellationToken::new();
     let (ctx, _tmp) = test_context(token.clone());
 
@@ -278,6 +279,7 @@ async fn test_event_flood_drops_events_but_never_deafens_the_service() {
 /// and must not panic on the events it never got to process.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_shutdown_while_level_changes_are_in_flight_is_prompt() {
+    let _guard = GLOBAL_LOCK.lock().await;
     let token = CancellationToken::new();
     let (ctx, _tmp) = test_context(token.clone());
 

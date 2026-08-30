@@ -1,6 +1,6 @@
-# Aaron (v2) - Architectural Conventions, Directives & Project Memories
+# Aaron - Architectural Conventions, Directives & Project Memories
 
-This document records the foundational architectural principles, design decisions, codebase conventions, and historical insights established for the Aaron v2 project.
+This document records the foundational architectural principles, design decisions, codebase conventions, and historical insights established for the Aaron project.
 
 ---
 
