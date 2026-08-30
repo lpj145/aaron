@@ -1,0 +1,164 @@
+use node::{BoxError, EventHub, QuicManager, Uuid};
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::{RwLock, watch};
+
+use crate::event::MembershipEvent;
+use crate::member::Member;
+use crate::stage::egress::EgressTransport;
+use crate::table::{MembershipChange, MembershipTable};
+
+#[derive(Clone)]
+pub(crate) struct MembershipHandleInner {
+    pub table: MembershipTable,
+    pub quic: QuicManager,
+    pub event_hub: EventHub,
+}
+
+/// A cloneable, thread-safe handle for querying cluster topology and performing dynamic operations.
+#[derive(Clone)]
+pub struct MembershipHandle {
+    inner: Arc<RwLock<Option<MembershipHandleInner>>>,
+    ready_tx: Arc<watch::Sender<bool>>,
+    ready_rx: watch::Receiver<bool>,
+}
+
+impl Default for MembershipHandle {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl MembershipHandle {
+    /// Creates a new uninitialized `MembershipHandle`.
+    pub fn new() -> Self {
+        let (ready_tx, ready_rx) = watch::channel(false);
+        Self {
+            inner: Arc::new(RwLock::new(None)),
+            ready_tx: Arc::new(ready_tx),
+            ready_rx,
+        }
+    }
+
+    /// Internal method to initialize the handle when `MembershipService` starts running.
+    pub(crate) async fn initialize(
+        &self,
+        table: MembershipTable,
+        quic: QuicManager,
+        event_hub: EventHub,
+    ) {
+        let mut guard = self.inner.write().await;
+        *guard = Some(MembershipHandleInner {
+            table,
+            quic,
+            event_hub,
+        });
+        let _ = self.ready_tx.send(true);
+    }
+
+    /// Waits until the underlying `MembershipService` is running and initialized.
+    pub async fn wait_ready(&self) {
+        let mut rx = self.ready_rx.clone();
+        if *rx.borrow() {
+            return;
+        }
+        while rx.changed().await.is_ok() {
+            if *rx.borrow() {
+                return;
+            }
+        }
+    }
+
+    /// Returns a list of all active (non-Dead and non-Left) cluster members.
+    pub async fn active_members(&self) -> Vec<Member> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            inner.table.all_active_members().await
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Returns the local node's member representation if initialized.
+    pub async fn local_member(&self) -> Option<Member> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            Some(inner.table.local_member().await)
+        } else {
+            None
+        }
+    }
+
+    /// Returns the cluster ID if initialized and established.
+    pub async fn cluster_id(&self) -> Option<Uuid> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            inner.table.cluster_id().await
+        } else {
+            None
+        }
+    }
+
+    /// Looks up a specific member by its node UUID.
+    pub async fn get(&self, id: &Uuid) -> Option<Member> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            inner.table.get(id).await
+        } else {
+            None
+        }
+    }
+
+    /// Checks if a specific node is currently known and in the `Alive` state.
+    pub async fn is_alive(&self, id: &Uuid) -> bool {
+        self.get(id).await.is_some_and(|m| m.is_alive())
+    }
+
+    /// Triggers an on-demand cluster join to a seed node over QUIC.
+    pub async fn join(&self, seed_addr: SocketAddr) -> Result<Vec<Member>, BoxError> {
+        let inner = {
+            let guard = self.inner.read().await;
+            guard.clone().ok_or_else(|| {
+                Box::new(std::io::Error::other(
+                    "MembershipService is not yet running",
+                )) as BoxError
+            })?
+        };
+
+        let local_member = inner.table.local_member().await;
+        let (seed_cluster_id, members) = EgressTransport::join(
+            &inner.quic,
+            seed_addr,
+            local_member,
+            Duration::from_millis(2000),
+        )
+        .await?;
+
+        if let Some(expected_cid) = inner.table.cluster_id().await {
+            if seed_cluster_id != expected_cid {
+                return Err(Box::new(std::io::Error::other(format!(
+                    "Cluster ID mismatch: expected {expected_cid}, seed returned {seed_cluster_id}"
+                ))) as BoxError);
+            }
+        } else {
+            inner.table.set_cluster_id(seed_cluster_id).await;
+        }
+
+        for m in &members {
+            if let Some(change) = inner.table.upsert(m.clone()).await {
+                let event = match change {
+                    MembershipChange::Joined(m) => MembershipEvent::Joined(m),
+                    MembershipChange::Alive(m) => MembershipEvent::Alive(m),
+                    MembershipChange::Suspect(m) => MembershipEvent::Suspect(m),
+                    MembershipChange::Dead(m) => MembershipEvent::Dead(m),
+                    MembershipChange::Left(m) => MembershipEvent::Left(m),
+                    MembershipChange::Refuted(m) => MembershipEvent::Refuted(m),
+                };
+                inner.event_hub.publish(event).await;
+            }
+        }
+
+        Ok(members)
+    }
+}

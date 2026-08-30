@@ -1,0 +1,44 @@
+[package]
+name = "node"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio-util.workspace = true
+snafu.workspace = true
+gethostname = "1.1.0"
+if-addrs = "0.15.0"
+dotenvy = "0.15.7"
+fjall = "3.1.9"
+planus = "1.3.0"
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls", "ring"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+rcgen = "0.13"
+crossfire = "3"
+
+[build-dependencies]
+planus-translation = "1.3.0"
+planus-codegen = "1.3.0"
+
+[dev-dependencies]
+tempfile = "3"
+criterion = { version = "0.8", features = ["async_tokio", "html_reports"] }
+tracing-service = { path = "../tracing-service" }
+membership-service = { path = "../membership-service" }
+# Self-dependency so integration tests in `tests/` can opt into the
+# `test-util` feature (same pattern tokio itself uses) and reach the
+# supervisor internals without making them part of the normal public API.
+node = { path = ".", features = ["test-util"] }
+
+[[bench]]
+name = "event_hub_bench"
+harness = false
+
+[features]
+# Exposes `supervise`, `SupervisedService`, and `TaskResult` — internal
+# plumbing not meant for regular consumers — so integration tests can
+# exercise them directly instead of only through `Node`.
+test-util = []

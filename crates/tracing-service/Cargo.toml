@@ -1,0 +1,15 @@
+[package]
+name = "tracing-service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+node = { path = "../node" }
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio-util.workspace = true
+snafu.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

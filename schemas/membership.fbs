@@ -1,0 +1,59 @@
+include "node.fbs";
+
+namespace Aaron.Membership;
+
+enum MemberStatus : uint8 {
+  Alive = 0,
+  Suspect = 1,
+  Dead = 2,
+  Left = 3
+}
+
+table MemberRecord {
+  node_id: Aaron.Node.NodeId;
+  addr: string;
+  status: MemberStatus;
+  incarnation: uint64;
+}
+
+table Ping {
+  seq: uint64;
+  sender: MemberRecord;
+  gossip: [MemberRecord];
+}
+
+table Ack {
+  seq: uint64;
+  sender: MemberRecord;
+  gossip: [MemberRecord];
+}
+
+table PingReq {
+  seq: uint64;
+  target: MemberRecord;
+  sender: MemberRecord;
+  gossip: [MemberRecord];
+}
+
+table JoinRequest {
+  sender: MemberRecord;
+}
+
+table JoinResponse {
+  cluster_id: Aaron.Node.Uuid;
+  members: [MemberRecord];
+}
+
+union MessagePayload {
+  Ping,
+  Ack,
+  PingReq,
+  JoinRequest,
+  JoinResponse
+}
+
+table MembershipMessage {
+  payload: MessagePayload;
+}
+
+root_type MembershipMessage;
