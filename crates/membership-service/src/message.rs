@@ -70,9 +70,27 @@ pub enum Message {
     /// Cluster bootstrap join request sent to seed nodes.
     JoinRequest { sender: Member },
     /// Cluster bootstrap join response returned by a seed node with current members and cluster_id.
+    /// Cluster bootstrap join response returned by a seed node with current members and cluster_id.
     JoinResponse {
         cluster_id: Uuid,
         members: Vec<Member>,
+    },
+    /// Dynamic configuration update broadcast over QUIC.
+    ConfigUpdate {
+        tracing_filter: String,
+        probe_interval_ms: u64,
+        probe_timeout_ms: u64,
+        suspect_timeout_ms: u64,
+        indirect_ping_targets: u32,
+        gossip_fanout: u32,
+        env_key: String,
+        env_val: String,
+        sender: Member,
+    },
+    /// Direct acknowledgement of configuration update.
+    ConfigAck {
+        success: bool,
+        sender: Member,
     },
 }
 
@@ -83,7 +101,9 @@ impl Message {
             Self::Ping { sender, .. }
             | Self::Ack { sender, .. }
             | Self::PingReq { sender, .. }
-            | Self::JoinRequest { sender } => Some(sender),
+            | Self::JoinRequest { sender }
+            | Self::ConfigUpdate { sender, .. }
+            | Self::ConfigAck { sender, .. } => Some(sender),
             Self::JoinResponse { .. } => None,
         }
     }
@@ -154,6 +174,37 @@ impl Message {
                 proto::MessagePayload::JoinResponse(Box::new(proto::JoinResponse {
                     cluster_id: Some(proto_cluster_id),
                     members: Some(member_recs),
+                }))
+            }
+            Self::ConfigUpdate {
+                tracing_filter,
+                probe_interval_ms,
+                probe_timeout_ms,
+                suspect_timeout_ms,
+                indirect_ping_targets,
+                gossip_fanout,
+                env_key,
+                env_val,
+                sender,
+            } => {
+                let sender_rec = member_to_record(sender);
+                proto::MessagePayload::ConfigUpdate(Box::new(proto::ConfigUpdate {
+                    tracing_filter: Some(tracing_filter.clone()),
+                    probe_interval_ms: *probe_interval_ms,
+                    probe_timeout_ms: *probe_timeout_ms,
+                    suspect_timeout_ms: *suspect_timeout_ms,
+                    indirect_ping_targets: *indirect_ping_targets,
+                    gossip_fanout: *gossip_fanout,
+                    env_key: Some(env_key.clone()),
+                    env_val: Some(env_val.clone()),
+                    sender: Some(Box::new(sender_rec)),
+                }))
+            }
+            Self::ConfigAck { success, sender } => {
+                let sender_rec = member_to_record(sender);
+                proto::MessagePayload::ConfigAck(Box::new(proto::ConfigAck {
+                    success: *success,
+                    sender: Some(Box::new(sender_rec)),
                 }))
             }
         };
@@ -257,6 +308,39 @@ impl Message {
                     cluster_id,
                     members,
                 })
+            }
+            proto::MessagePayloadRef::ConfigUpdate(update) => {
+                let tracing_filter = update.tracing_filter()?.unwrap_or_default().to_string();
+                let probe_interval_ms = update.probe_interval_ms()?;
+                let probe_timeout_ms = update.probe_timeout_ms()?;
+                let suspect_timeout_ms = update.suspect_timeout_ms()?;
+                let indirect_ping_targets = update.indirect_ping_targets()?;
+                let gossip_fanout = update.gossip_fanout()?;
+                let env_key = update.env_key()?.unwrap_or_default().to_string();
+                let env_val = update.env_val()?.unwrap_or_default().to_string();
+                let sender_ref = update
+                    .sender()?
+                    .ok_or(MessageError::MissingField("ConfigUpdate.sender"))?;
+                let sender = record_ref_to_member(sender_ref)?;
+                Ok(Self::ConfigUpdate {
+                    tracing_filter,
+                    probe_interval_ms,
+                    probe_timeout_ms,
+                    suspect_timeout_ms,
+                    indirect_ping_targets,
+                    gossip_fanout,
+                    env_key,
+                    env_val,
+                    sender,
+                })
+            }
+            proto::MessagePayloadRef::ConfigAck(ack) => {
+                let success = ack.success()?;
+                let sender_ref = ack
+                    .sender()?
+                    .ok_or(MessageError::MissingField("ConfigAck.sender"))?;
+                let sender = record_ref_to_member(sender_ref)?;
+                Ok(Self::ConfigAck { success, sender })
             }
         }
     }

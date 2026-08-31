@@ -6,7 +6,8 @@ import type {
   KeyspaceScanResult,
   TracingInfo,
   EnvVarInfo,
-  EventLogEntry,
+  SwimConfig,
+  ConfigUpdateResult,
 } from '../types';
 
 const API_BASE = '/api';
@@ -39,12 +40,12 @@ export const api = {
   getNodeInfo: () => request<NodeInfo>('/node'),
   getHealth: () => request<{ status: string; node_id: string; uptime_secs: number }>('/health'),
 
-  // Cluster
+  // Cluster & Membership
   getClusterInfo: () => request<ClusterInfo>('/cluster'),
-  joinCluster: (seed: string) =>
-    request<{ success: boolean; discovered_peers: number; message: string }>('/cluster/join', {
+  joinCluster: (target_addr: string) =>
+    request<{ success: boolean; message: string }>('/cluster/join', {
       method: 'POST',
-      body: JSON.stringify({ seed }),
+      body: JSON.stringify({ target_addr }),
     }),
   leaveCluster: () =>
     request<{ success: boolean; message: string }>('/cluster/leave', {
@@ -54,15 +55,25 @@ export const api = {
   // Services
   getServices: () => request<{ services: ServiceInfo[] }>('/services'),
 
-  // Store
+  // LSM Store Explorer
   getStoreInfo: () => request<StoreInfo>('/store'),
-  scanKeyspace: (keyspace: string, prefix = '', limit = 50) =>
+  scanKeyspace: (keyspace: string, prefix = '', limit = 100) =>
     request<KeyspaceScanResult>(
-      `/store/${encodeURIComponent(keyspace)}/scan?prefix=${encodeURIComponent(prefix)}&limit=${limit}`
+      `/store/${encodeURIComponent(keyspace)}/scan?limit=${limit}${
+        prefix ? `&prefix=${encodeURIComponent(prefix)}` : ''
+      }`
     ),
-  getKeyValue: (keyspace: string, key: string) =>
-    request<{ key: string; value: string | null; exists: boolean }>(
+  getKey: (keyspace: string, key: string) =>
+    request<{ key: string; value: string; exists: boolean }>(
       `/store/${encodeURIComponent(keyspace)}/get?key=${encodeURIComponent(key)}`
+    ),
+  setKey: (keyspace: string, key: string, value: string) =>
+    request<{ success: boolean; message: string }>(
+      `/store/${encodeURIComponent(keyspace)}/set`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ key, value }),
+      }
     ),
   setKeyValue: (keyspace: string, key: string, value: string) =>
     request<{ success: boolean; message: string }>(
@@ -106,21 +117,9 @@ export const api = {
 
   // Environment
   getEnvVars: () => request<{ envs: EnvVarInfo[] }>('/env'),
-
-  // SSE Events Stream
-  subscribeEvents: (onMessage: (event: EventLogEntry) => void, onError?: (err: any) => void) => {
-    const es = new EventSource(`${API_BASE}/events/stream`);
-    es.onmessage = (ev) => {
-      try {
-        const data: EventLogEntry = JSON.parse(ev.data);
-        onMessage(data);
-      } catch (err) {
-        console.error('Failed to parse SSE event:', err);
-      }
-    };
-    es.onerror = (err) => {
-      if (onError) onError(err);
-    };
-    return () => es.close();
-  },
+  setEnvVar: (key: string, value: string, propagate_cluster = false) =>
+    request<ConfigUpdateResult>('/env', {
+      method: 'POST',
+      body: JSON.stringify({ key, value, propagate_cluster }),
+    }),
 };

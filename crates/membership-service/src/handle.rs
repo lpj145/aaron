@@ -217,4 +217,88 @@ impl MembershipHandle {
 
         Ok(members)
     }
+
+    /// Broadcasts a runtime configuration update (tracing, SWIM parameters, or environment variables) to all active cluster peers over QUIC.
+    ///
+    /// Returns `(propagated_count, failed_count)`.
+    pub async fn broadcast_config_update(
+        &self,
+        tracing_filter: Option<String>,
+        swim_config: Option<UpdateSwimConfig>,
+        env_var: Option<(String, String)>,
+    ) -> (usize, usize) {
+        let inner = {
+            let guard = self.inner.read().await;
+            match &*guard {
+                Some(i) => i.clone(),
+                None => return (0, 0),
+            }
+        };
+
+        let local_member = inner.table.local_member().await;
+        let active_peers = inner.table.all_active_members().await;
+
+        let tracing_str = tracing_filter.unwrap_or_default();
+        let (pi_ms, pt_ms, st_ms, k, fanout) = match swim_config {
+            Some(cfg) => (
+                cfg.probe_interval.map(|d| d.as_millis() as u64).unwrap_or(0),
+                cfg.probe_timeout.map(|d| d.as_millis() as u64).unwrap_or(0),
+                cfg.suspect_timeout.map(|d| d.as_millis() as u64).unwrap_or(0),
+                cfg.indirect_ping_targets.unwrap_or(0) as u32,
+                cfg.gossip_fanout.unwrap_or(0) as u32,
+            ),
+            None => (0, 0, 0, 0, 0),
+        };
+
+        let (env_key, env_val) = match env_var {
+            Some((k, v)) => (k, v),
+            None => (String::new(), String::new()),
+        };
+
+        let msg = crate::message::Message::ConfigUpdate {
+            tracing_filter: tracing_str,
+            probe_interval_ms: pi_ms,
+            probe_timeout_ms: pt_ms,
+            suspect_timeout_ms: st_ms,
+            indirect_ping_targets: k,
+            gossip_fanout: fanout,
+            env_key,
+            env_val,
+            sender: local_member.clone(),
+        };
+
+        let mut tasks = Vec::new();
+        for peer in active_peers {
+            if peer.node_id.id() == local_member.node_id.id() {
+                continue;
+            }
+
+            let quic_clone = inner.quic.clone();
+            let peer_addr = peer.addr;
+            let msg_clone = msg.clone();
+
+            tasks.push(tokio::spawn(async move {
+                EgressTransport::send_config_update(
+                    &quic_clone,
+                    peer_addr,
+                    msg_clone,
+                    Duration::from_millis(1500),
+                )
+                .await
+            }));
+        }
+
+        let mut propagated = 0;
+        let mut failed = 0;
+
+        for task in tasks {
+            if let Ok(Ok(())) = task.await {
+                propagated += 1;
+            } else {
+                failed += 1;
+            }
+        }
+
+        (propagated, failed)
+    }
 }

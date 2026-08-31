@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 node = { path = "../node" }
+tracing-service = { path = "../tracing-service" }
 tokio.workspace = true
 tracing.workspace = true
 tokio-util.workspace = true

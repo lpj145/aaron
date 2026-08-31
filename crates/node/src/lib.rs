@@ -1,13 +1,14 @@
 pub use service::{
     AnonymousService, BackoffStrategy, BoxError, ConfigError, ConfigField, Context, RestartPolicy,
-    Service, ServiceConfig, ServiceHandler, ServiceOpts, service_fn,
+    Service, ServiceConfig, ServiceConfigFieldDescriptor, ServiceDescriptor, ServiceHandler,
+    ServiceOpts, service_fn,
 };
 use std::{path::Path, path::PathBuf, sync::Arc, time::Duration};
 use tokio::task::JoinSet;
 pub use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
-pub use crate::events::NodeEvents;
+pub use crate::events::{NodeEvents, SetEnvVar};
 // `supervise`/`SupervisedService`/`TaskResult` are internal plumbing, not part
 // of the normal public API — but exposed under `test-util` so integration
 // tests in `tests/` can exercise them directly instead of only through `Node`.
@@ -314,10 +315,31 @@ impl Node {
 
         // Subscriptions for Node core management
         let mut node_events = event_hub.subscribe::<NodeEvents>().await;
+        let mut env_events = event_hub.subscribe::<SetEnvVar>().await;
 
         // 7. Supervised execution
         let mut tasks: JoinSet<TaskResult> = JoinSet::new();
         let services = self.services;
+
+        let service_descriptors: Vec<ServiceDescriptor> = services
+            .iter()
+            .map(|s| ServiceDescriptor {
+                name: s.service.dyn_name().to_string(),
+                schema: s
+                    .service
+                    .dyn_schema()
+                    .into_iter()
+                    .map(|f| ServiceConfigFieldDescriptor {
+                        name: f.name.to_string(),
+                        type_name: f.type_name.to_string(),
+                        required: f.required,
+                        default: f.default.map(|d| d.to_string()),
+                        description: f.description.to_string(),
+                    })
+                    .collect(),
+            })
+            .collect();
+        ctx.set_services(service_descriptors).await;
 
         for registry in &services {
             tasks.spawn(supervise(registry.clone(), ctx.clone(), token.clone()));
@@ -334,6 +356,15 @@ impl Node {
                 _ = &mut shutdown => {
                     token.cancel();
                     break;
+                },
+                event = env_events.recv() => match event {
+                    Ok(e) => {
+                        let _ = env.set(&e.key, &e.value);
+                        info!(target: "node", key = %e.key, "Environment variable updated dynamically via EventHub");
+                    },
+                    Err(err) => {
+                        error!("Error receiving SetEnvVar event: {err}");
+                    }
                 },
                 event = node_events.recv() => match event {
                     Ok(NodeEvents::BindClusterId { cluster_id }) => {

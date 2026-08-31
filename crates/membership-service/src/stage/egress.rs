@@ -111,4 +111,19 @@ impl EgressTransport {
             other => Err(format!("expected JoinResponse, got {other:?}").into()),
         }
     }
+
+    /// Sends a ConfigUpdate message to a remote cluster peer over QUIC.
+    pub async fn send_config_update(
+        quic: &QuicManager,
+        peer_addr: SocketAddr,
+        update: Message,
+        timeout: Duration,
+    ) -> Result<(), BoxError> {
+        trace!(target: "membership::egress", peer = %peer_addr, "Sending ConfigUpdate over QUIC");
+        let response = Self::request_response(quic, peer_addr, update, timeout, "config_update").await?;
+        match response {
+            Message::ConfigAck { success, .. } if success => Ok(()),
+            other => Err(format!("unexpected response to config_update: {other:?}").into()),
+        }
+    }
 }

@@ -8,7 +8,7 @@ pub mod service_trait;
 
 pub use anon_service::{AnonymousService, ServiceHandler, service_fn};
 pub use config::{ConfigError, ConfigField, ServiceConfig};
-pub use context::Context;
+pub use context::{Context, ServiceConfigFieldDescriptor, ServiceDescriptor};
 pub use service_opts::{BackoffStrategy, RestartPolicy, ServiceOpts};
 pub use service_trait::Service;
 

@@ -3,9 +3,7 @@ import OverviewView from '../views/OverviewView.vue';
 import ClusterView from '../views/ClusterView.vue';
 import ServicesView from '../views/ServicesView.vue';
 import StoreView from '../views/StoreView.vue';
-import LogsView from '../views/LogsView.vue';
 import ConfigView from '../views/ConfigView.vue';
-import EventsView from '../views/EventsView.vue';
 import EnvView from '../views/EnvView.vue';
 
 const router = createRouter({
@@ -38,13 +36,11 @@ const router = createRouter({
     },
     {
       path: '/logs',
-      name: 'logs',
-      component: LogsView,
+      redirect: '/config',
     },
     {
       path: '/events',
-      name: 'events',
-      component: EventsView,
+      redirect: '/',
     },
     {
       path: '/env',

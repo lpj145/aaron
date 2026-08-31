@@ -44,12 +44,31 @@ table JoinResponse {
   members: [MemberRecord];
 }
 
+table ConfigUpdate {
+  tracing_filter: string;
+  probe_interval_ms: uint64;
+  probe_timeout_ms: uint64;
+  suspect_timeout_ms: uint64;
+  indirect_ping_targets: uint32;
+  gossip_fanout: uint32;
+  env_key: string;
+  env_val: string;
+  sender: MemberRecord;
+}
+
+table ConfigAck {
+  success: bool;
+  sender: MemberRecord;
+}
+
 union MessagePayload {
   Ping,
   Ack,
   PingReq,
   JoinRequest,
-  JoinResponse
+  JoinResponse,
+  ConfigUpdate,
+  ConfigAck
 }
 
 table MembershipMessage {

@@ -7,8 +7,6 @@ import {
   Sliders,
   Layers,
   Database,
-  Terminal,
-  Activity,
   SlidersHorizontal,
   Radio,
 } from 'lucide-vue-next';
@@ -24,10 +22,8 @@ const navItems = [
   { name: 'Overview', path: '/', icon: LayoutDashboard },
   { name: 'Cluster & SWIM', path: '/cluster', icon: Network },
   { name: 'Configuration', path: '/config', icon: Sliders },
-  { name: 'Supervised Services', path: '/services', icon: Layers },
+  { name: 'Services', path: '/services', icon: Layers },
   { name: 'LSM Store Explorer', path: '/store', icon: Database },
-  { name: 'Live Logs Console', path: '/logs', icon: Terminal },
-  { name: 'Live EventHub', path: '/events', icon: Activity },
   { name: 'Environment', path: '/env', icon: SlidersHorizontal },
 ];
 

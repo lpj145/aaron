@@ -2,6 +2,23 @@ use crate::{Env, EventHub, Network, NodeId, Store};
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 
+/// Describes a configuration field expected by a supervised service.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ServiceConfigFieldDescriptor {
+    pub name: String,
+    pub type_name: String,
+    pub required: bool,
+    pub default: Option<String>,
+    pub description: String,
+}
+
+/// Describes a service registered and managed by the node supervisor.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ServiceDescriptor {
+    pub name: String,
+    pub schema: Vec<ServiceConfigFieldDescriptor>,
+}
+
 /// Runtime context provided to services and background workers in the node.
 ///
 /// Contains shared handles to the node's event bus, network manager, persistent store,
@@ -20,6 +37,8 @@ pub struct Context {
     pub env: Arc<Env>,
     /// Cancellation token tied to this service's local lifecycle (isolated child token).
     pub token: CancellationToken,
+    /// Registry of currently registered and supervised services and schemas on this node.
+    pub services: Arc<tokio::sync::RwLock<Vec<ServiceDescriptor>>>,
     /// Root cancellation token used to initiate a node-wide graceful shutdown.
     shutdown_token: CancellationToken,
 }
@@ -42,7 +61,24 @@ impl Context {
             env,
             shutdown_token: token.clone(),
             token,
+            services: Arc::new(tokio::sync::RwLock::new(Vec::new())),
         }
+    }
+
+    /// Returns the list of registered services and their configuration schemas.
+    pub async fn services(&self) -> Vec<ServiceDescriptor> {
+        self.services.read().await.clone()
+    }
+
+    /// Returns a list of currently registered / supervised service names running on this node.
+    pub async fn running_services(&self) -> Vec<String> {
+        self.services.read().await.iter().map(|s| s.name.clone()).collect()
+    }
+
+    /// Updates the registered supervised services and their schemas on this node.
+    pub async fn set_services(&self, services: Vec<ServiceDescriptor>) {
+        let mut guard = self.services.write().await;
+        *guard = services;
     }
 
     /// Creates a child context sharing all subsystems and root shutdown token,

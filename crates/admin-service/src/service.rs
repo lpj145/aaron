@@ -1,16 +1,14 @@
 use axum::Router;
-use membership_service::{MembershipEvent, MembershipHandle};
-use node::{BoxError, Context, NodeEvents, Service, ServiceConfig};
+use membership_service::MembershipHandle;
+use node::{BoxError, Context, Service, ServiceConfig};
 use std::sync::Arc;
 use std::time::Instant;
-use tokio::sync::broadcast;
 use tracing::info;
-use tracing_service::ChangeLogLevel;
 
 use crate::api::create_api_router;
 use crate::config::AdminConfig;
 use crate::error::AdminError;
-use crate::state::{AppState, ConfigFieldMetadata, EventLogEntry, ServiceMetadata};
+use crate::state::{AppState, ConfigFieldMetadata, ServiceMetadata};
 use crate::static_files::serve_static;
 
 /// Supervised Admin Dashboard & Management Service serving an embedded Vue.js SPA and REST/SSE API.
@@ -87,10 +85,7 @@ impl Service for AdminService {
             return Ok(());
         }
 
-        // 2. Setup real-time event broadcasting channel
-        let (event_tx, _) = broadcast::channel::<EventLogEntry>(500);
-
-        // 3. Assemble application state
+        // 2. Assemble application state
         let mut services_list = self.services_metadata.clone();
         if !services_list.iter().any(|s| s.name == "admin-service") {
             services_list.push(ServiceMetadata {
@@ -113,112 +108,11 @@ impl Service for AdminService {
             ctx: ctx.clone(),
             membership: self.membership_handle.clone(),
             start_time: Instant::now(),
-            event_tx: event_tx.clone(),
             static_dir: config.static_dir.clone(),
             services: Arc::new(services_list),
         };
 
-        // 4. Spawn EventHub observers for SSE streaming
-        let event_hub = ctx.event_hub.clone();
-        let sse_tx_membership = event_tx.clone();
-        let token_mem = ctx.token.clone();
-        tokio::spawn(async move {
-            let mut sub = event_hub.subscribe::<MembershipEvent>().await;
-            loop {
-                tokio::select! {
-                    _ = token_mem.cancelled() => break,
-                    event = sub.recv() => {
-                        match event {
-                            Ok(ev) => {
-                                let (event_type, details) = match &ev {
-                                    MembershipEvent::Joined(m) => ("MEMBERSHIP_JOINED", serde_json::json!({ "node_id": m.node_id.id().to_string(), "addr": m.addr.to_string(), "status": format!("{}", m.status), "incarnation": m.incarnation })),
-                                    MembershipEvent::Alive(m) => ("MEMBERSHIP_ALIVE", serde_json::json!({ "node_id": m.node_id.id().to_string(), "addr": m.addr.to_string(), "status": format!("{}", m.status), "incarnation": m.incarnation })),
-                                    MembershipEvent::Suspect(m) => ("MEMBERSHIP_SUSPECT", serde_json::json!({ "node_id": m.node_id.id().to_string(), "addr": m.addr.to_string(), "status": format!("{}", m.status), "incarnation": m.incarnation })),
-                                    MembershipEvent::Dead(m) => ("MEMBERSHIP_DEAD", serde_json::json!({ "node_id": m.node_id.id().to_string(), "addr": m.addr.to_string(), "status": format!("{}", m.status), "incarnation": m.incarnation })),
-                                    MembershipEvent::Left(m) => ("MEMBERSHIP_LEFT", serde_json::json!({ "node_id": m.node_id.id().to_string(), "addr": m.addr.to_string(), "status": format!("{}", m.status), "incarnation": m.incarnation })),
-                                    MembershipEvent::Refuted(m) => ("MEMBERSHIP_REFUTED", serde_json::json!({ "node_id": m.node_id.id().to_string(), "addr": m.addr.to_string(), "status": format!("{}", m.status), "incarnation": m.incarnation })),
-                                };
-                                let entry = EventLogEntry {
-                                    id: node::Uuid::random().to_string(),
-                                    timestamp: chrono_like_timestamp(),
-                                    source: "membership".to_string(),
-                                    event_type: event_type.to_string(),
-                                    details,
-                                };
-                                let _ = sse_tx_membership.send(entry);
-                            }
-                            Err(_) => break,
-                        }
-                    }
-                }
-            }
-        });
-
-        let event_hub = ctx.event_hub.clone();
-        let sse_tx_tracing = event_tx.clone();
-        let token_tracing = ctx.token.clone();
-        tokio::spawn(async move {
-            let mut sub = event_hub.subscribe::<ChangeLogLevel>().await;
-            loop {
-                tokio::select! {
-                    _ = token_tracing.cancelled() => break,
-                    event = sub.recv() => {
-                        match event {
-                            Ok(ev) => {
-                                let entry = EventLogEntry {
-                                    id: node::Uuid::random().to_string(),
-                                    timestamp: chrono_like_timestamp(),
-                                    source: "tracing".to_string(),
-                                    event_type: "CHANGE_LOG_LEVEL".to_string(),
-                                    details: serde_json::json!({ "filter": ev.filter }),
-                                };
-                                let _ = sse_tx_tracing.send(entry);
-                            }
-                            Err(_) => break,
-                        }
-                    }
-                }
-            }
-        });
-
-        let event_hub = ctx.event_hub.clone();
-        let sse_tx_node = event_tx.clone();
-        let token_node = ctx.token.clone();
-        tokio::spawn(async move {
-            let mut sub = event_hub.subscribe::<NodeEvents>().await;
-            loop {
-                tokio::select! {
-                    _ = token_node.cancelled() => break,
-                    event = sub.recv() => {
-                        match event {
-                            Ok(NodeEvents::BindClusterId { cluster_id }) => {
-                                let entry = EventLogEntry {
-                                    id: node::Uuid::random().to_string(),
-                                    timestamp: chrono_like_timestamp(),
-                                    source: "node".to_string(),
-                                    event_type: "BIND_CLUSTER_ID".to_string(),
-                                    details: serde_json::json!({ "cluster_id": cluster_id.to_string() }),
-                                };
-                                let _ = sse_tx_node.send(entry);
-                            }
-                            Ok(NodeEvents::StartService { name }) => {
-                                let entry = EventLogEntry {
-                                    id: node::Uuid::random().to_string(),
-                                    timestamp: chrono_like_timestamp(),
-                                    source: "node".to_string(),
-                                    event_type: "START_SERVICE".to_string(),
-                                    details: serde_json::json!({ "service": name }),
-                                };
-                                let _ = sse_tx_node.send(entry);
-                            }
-                            Err(_) => break,
-                        }
-                    }
-                }
-            }
-        });
-
-        // 5. Build Axum Router
+        // 3. Build Axum Router
         let static_dir = config.static_dir.clone();
         let app = Router::new()
             .nest("/api", create_api_router())
@@ -257,11 +151,4 @@ impl Service for AdminService {
 
         Ok(())
     }
-}
-
-fn chrono_like_timestamp() -> String {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default();
-    format!("{}.{:03}Z", now.as_secs(), now.subsec_millis())
 }

@@ -9,7 +9,6 @@ use crate::state::AppState;
 pub mod cluster;
 pub mod config;
 pub mod env;
-pub mod events;
 pub mod node;
 pub mod services;
 pub mod store;
@@ -41,7 +40,6 @@ pub fn create_api_router() -> Router<AppState> {
         .route("/config/swim", post(config::update_swim_config))
         // Environment
         .route("/env", get(env::get_env_vars))
-        // Live SSE Events Stream
-        .route("/events/stream", get(events::stream_events))
+        .route("/env", post(env::set_env_var))
         .layer(CorsLayer::permissive())
 }

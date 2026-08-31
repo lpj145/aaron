@@ -33,9 +33,7 @@ async fn main() {
     };
 
     let admin_svc = AdminService::with_config(admin_config)
-        .with_membership_handle(handle)
-        .with_service_schema(&membership)
-        .with_service_schema(&tracing_svc);
+        .with_membership_handle(handle);
 
     Node::new()
         .with(tracing_svc)

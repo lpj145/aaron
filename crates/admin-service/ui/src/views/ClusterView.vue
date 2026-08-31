@@ -277,18 +277,17 @@ onMounted(() => {
               </td>
               <td class="px-6 py-4 text-right">
                 <span
-                  v-if="formatLatency(m) as lat"
                   :class="[
                     'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-semibold border cursor-help',
-                    lat.color
+                    formatLatency(m).color
                   ]"
-                  :title="lat.tooltip"
+                  :title="formatLatency(m).tooltip"
                 >
                   <span
                     class="w-1.5 h-1.5 rounded-full"
-                    :class="[lat.dotColor, m.is_local ? 'animate-pulse' : '']"
+                    :class="[formatLatency(m).dotColor, m.is_local ? 'animate-pulse' : '']"
                   ></span>
-                  {{ lat.text }}
+                  {{ formatLatency(m).text }}
                 </span>
               </td>
             </tr>

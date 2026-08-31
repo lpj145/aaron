@@ -111,11 +111,11 @@ onMounted(() => {
         badgeColor="indigo"
       />
       <StatCard
-        title="Supervised Services"
+        title="Services"
         :value="services.length || nodeInfo?.services_count || 0"
-        subtitle="Supervision tree & restart policies"
+        subtitle="Running lifecycle task hierarchy"
         :icon="Layers"
-        badge="Supervised"
+        badge="Running"
         badgeColor="emerald"
       />
       <StatCard

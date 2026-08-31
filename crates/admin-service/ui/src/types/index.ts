@@ -70,14 +70,6 @@ export interface TracingInfo {
   filter: string;
 }
 
-export interface EventLogEntry {
-  id: string;
-  timestamp: string;
-  source: string;
-  event_type: string;
-  details: any;
-}
-
 export interface EnvVarInfo {
   name: string;
   value: string;

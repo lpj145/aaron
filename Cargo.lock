@@ -1402,6 +1402,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+ "tracing-service",
 ]
 
 [[package]]

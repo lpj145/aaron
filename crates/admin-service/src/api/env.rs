@@ -1,5 +1,5 @@
-use axum::{extract::State, response::Json};
-use serde::Serialize;
+use axum::{extract::State, http::StatusCode, response::Json};
+use serde::{Deserialize, Serialize};
 
 use crate::state::AppState;
 
@@ -39,6 +39,73 @@ pub async fn get_env_vars(State(state): State<AppState>) -> Json<EnvListResponse
     list.sort_by(|a, b| a.name.cmp(&b.name));
 
     Json(EnvListResponse { envs: list })
+}
+
+#[derive(Deserialize)]
+pub struct SetEnvVarRequest {
+    pub key: String,
+    pub value: String,
+    #[serde(default)]
+    pub propagate_cluster: bool,
+}
+
+#[derive(Serialize)]
+pub struct SetEnvVarResponse {
+    pub success: bool,
+    pub message: String,
+    pub local_applied: bool,
+    pub propagated_nodes: usize,
+    pub failed_nodes: usize,
+}
+
+pub async fn set_env_var(
+    State(state): State<AppState>,
+    Json(payload): Json<SetEnvVarRequest>,
+) -> Result<Json<SetEnvVarResponse>, (StatusCode, Json<serde_json::Value>)> {
+    let key = payload.key.trim();
+    if key.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Variable name cannot be empty" })),
+        ));
+    }
+
+    // 1. Set locally in node Env
+    let _ = state.ctx.env.set(key, &payload.value);
+
+    // Also publish SetEnvVar on local EventHub
+    state
+        .ctx
+        .event_hub
+        .publish(node::SetEnvVar {
+            key: key.to_string(),
+            value: payload.value.clone(),
+        })
+        .await;
+
+    let mut propagated_nodes = 0;
+    let mut failed_nodes = 0;
+
+    // 2. Propagate to cluster over QUIC if requested
+    if payload.propagate_cluster && let Some(ref handle) = state.membership {
+        let (p, f) = handle
+            .broadcast_config_update(None, None, Some((key.to_string(), payload.value.clone())))
+            .await;
+        propagated_nodes = p;
+        failed_nodes = f;
+    }
+
+    Ok(Json(SetEnvVarResponse {
+        success: true,
+        message: if payload.propagate_cluster {
+            format!("Environment variable '{key}' set locally and propagated to {propagated_nodes} peer(s)")
+        } else {
+            format!("Environment variable '{key}' set locally")
+        },
+        local_applied: true,
+        propagated_nodes,
+        failed_nodes,
+    }))
 }
 
 fn is_secret_var(name: &str) -> bool {

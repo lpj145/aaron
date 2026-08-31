@@ -4,14 +4,11 @@ import {
   Sliders,
   Terminal,
   Network,
-  Radio,
   Share2,
   Check,
   AlertCircle,
   RefreshCw,
-  Zap,
-  Layers,
-  Sparkles,
+  Cpu,
 } from 'lucide-vue-next';
 import { api } from '../api';
 import type { SwimConfig, TracingInfo } from '../types';
@@ -19,8 +16,8 @@ import type { SwimConfig, TracingInfo } from '../types';
 const tracing = ref<TracingInfo | null>(null);
 const currentFilter = ref('info');
 const customFilter = ref('');
-const propagateTracing = ref(false);
-const tracingLoading = ref(false);
+const tracingLoadingLocal = ref(false);
+const tracingLoadingCluster = ref(false);
 
 const swim = ref<SwimConfig>({
   probe_interval_ms: 1000,
@@ -29,8 +26,8 @@ const swim = ref<SwimConfig>({
   indirect_ping_targets: 3,
   gossip_fanout: 3,
 });
-const propagateSwim = ref(false);
-const swimLoading = ref(false);
+const swimLoadingLocal = ref(false);
+const swimLoadingCluster = ref(false);
 
 const toastMsg = ref<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -64,12 +61,16 @@ const setLogLevelPreset = (lvl: string) => {
   customFilter.value = lvl;
 };
 
-const handleApplyTracing = async () => {
+const handleApplyTracing = async (propagate: boolean) => {
   const filter = customFilter.value.trim();
   if (!filter) return;
-  tracingLoading.value = true;
+  if (propagate) {
+    tracingLoadingCluster.value = true;
+  } else {
+    tracingLoadingLocal.value = true;
+  }
   try {
-    const res = await api.updateTracingConfig(filter, propagateTracing.value);
+    const res = await api.updateTracingConfig(filter, propagate);
     currentFilter.value = filter;
     if (tracing.value) tracing.value.filter = filter;
     showToast(
@@ -81,7 +82,8 @@ const handleApplyTracing = async () => {
   } catch (err: any) {
     showToast('error', err.message || 'Failed to update tracing log level');
   } finally {
-    tracingLoading.value = false;
+    tracingLoadingLocal.value = false;
+    tracingLoadingCluster.value = false;
   }
 };
 
@@ -113,12 +115,16 @@ const setSwimPreset = (preset: 'lan' | 'wan' | 'testing') => {
   }
 };
 
-const handleApplySwim = async () => {
-  swimLoading.value = true;
+const handleApplySwim = async (propagate: boolean) => {
+  if (propagate) {
+    swimLoadingCluster.value = true;
+  } else {
+    swimLoadingLocal.value = true;
+  }
   try {
     const res = await api.updateSwimConfig({
       ...swim.value,
-      propagate_cluster: propagateSwim.value,
+      propagate_cluster: propagate,
     });
     showToast(
       'success',
@@ -129,7 +135,8 @@ const handleApplySwim = async () => {
   } catch (err: any) {
     showToast('error', err.message || 'Failed to update SWIM configuration');
   } finally {
-    swimLoading.value = false;
+    swimLoadingLocal.value = false;
+    swimLoadingCluster.value = false;
   }
 };
 
@@ -165,7 +172,7 @@ onMounted(() => {
     <div
       v-if="toastMsg"
       :class="[
-        'p-4 rounded-xl border text-xs font-mono flex items-center gap-3 transition-all duration-300 animate-fadeIn',
+        'p-4 rounded-xl border text-xs font-mono flex items-center gap-3 transition-all duration-300',
         toastMsg.type === 'success'
           ? 'bg-emerald-950/80 border-emerald-800/80 text-emerald-300'
           : 'bg-rose-950/80 border-rose-800/80 text-rose-300'
@@ -226,38 +233,34 @@ onMounted(() => {
                 class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
               />
               <p class="text-[11px] text-slate-400 mt-1.5 font-sans">
-                Applies dynamically at runtime using tracing-subscriber reload handle. No node restarts required.
+                Applies dynamically at runtime using tracing-subscriber reload handle without node restart.
               </p>
-            </div>
-
-            <!-- Propagation Toggle -->
-            <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
-              <div class="space-y-0.5">
-                <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                  <Share2 class="w-3.5 h-3.5 text-indigo-400" />
-                  Propagate to Cluster
-                </div>
-                <div class="text-[11px] text-slate-400">
-                  Broadcast this log filter to all active cluster nodes via SWIM/Cluster mesh
-                </div>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="propagateTracing" class="sr-only peer" />
-                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-              </label>
             </div>
           </div>
         </div>
 
-        <button
-          @click="handleApplyTracing"
-          :disabled="tracingLoading"
-          class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <RefreshCw v-if="tracingLoading" class="w-4 h-4 animate-spin" />
-          <Check v-else class="w-4 h-4" />
-          Apply Log Level Directive
-        </button>
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <button
+            @click="handleApplyTracing(false)"
+            :disabled="tracingLoadingLocal || tracingLoadingCluster"
+            class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw v-if="tracingLoadingLocal" class="w-3.5 h-3.5 animate-spin" />
+            <Cpu v-else class="w-3.5 h-3.5 text-slate-300" />
+            Apply to Local Node
+          </button>
+
+          <button
+            @click="handleApplyTracing(true)"
+            :disabled="tracingLoadingLocal || tracingLoadingCluster"
+            class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw v-if="tracingLoadingCluster" class="w-3.5 h-3.5 animate-spin" />
+            <Share2 v-else class="w-3.5 h-3.5" />
+            Apply to Entire Cluster
+          </button>
+        </div>
       </div>
 
       <!-- 2. SWIM Failure Detector & Protocol Config -->
@@ -377,35 +380,31 @@ onMounted(() => {
                 class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
               />
             </div>
-
-            <!-- Propagation Toggle -->
-            <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
-              <div class="space-y-0.5">
-                <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                  <Share2 class="w-3.5 h-3.5 text-cyan-400" />
-                  Propagate to Cluster
-                </div>
-                <div class="text-[11px] text-slate-400">
-                  Broadcast this SWIM failure detector profile to all active nodes in the cluster
-                </div>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="propagateSwim" class="sr-only peer" />
-                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
-              </label>
-            </div>
           </div>
         </div>
 
-        <button
-          @click="handleApplySwim"
-          :disabled="swimLoading"
-          class="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <RefreshCw v-if="swimLoading" class="w-4 h-4 animate-spin" />
-          <Check v-else class="w-4 h-4" />
-          Apply SWIM Configuration
-        </button>
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <button
+            @click="handleApplySwim(false)"
+            :disabled="swimLoadingLocal || swimLoadingCluster"
+            class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw v-if="swimLoadingLocal" class="w-3.5 h-3.5 animate-spin" />
+            <Cpu v-else class="w-3.5 h-3.5 text-slate-300" />
+            Apply to Local Node
+          </button>
+
+          <button
+            @click="handleApplySwim(true)"
+            :disabled="swimLoadingLocal || swimLoadingCluster"
+            class="py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw v-if="swimLoadingCluster" class="w-3.5 h-3.5 animate-spin" />
+            <Share2 v-else class="w-3.5 h-3.5" />
+            Apply to Entire Cluster
+          </button>
+        </div>
       </div>
     </div>
   </div>

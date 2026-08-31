@@ -269,6 +269,74 @@ impl IngressHandler {
                     self.process_member_update(m).await;
                 }
             }
+            Message::ConfigUpdate {
+                tracing_filter,
+                probe_interval_ms,
+                probe_timeout_ms,
+                suspect_timeout_ms,
+                indirect_ping_targets,
+                gossip_fanout,
+                env_key,
+                env_val,
+                sender,
+            } => {
+                info!(
+                    target: "membership::ingress",
+                    from = %sender.addr,
+                    tracing_filter = %tracing_filter,
+                    probe_interval_ms = probe_interval_ms,
+                    env_key = %env_key,
+                    "Received ConfigUpdate broadcast from cluster peer over QUIC"
+                );
+
+                // 1. Process sender update to maintain cluster liveness
+                self.process_member_update(sender).await;
+
+                // 2. If tracing filter is specified, broadcast ChangeLogLevel on local EventHub
+                if !tracing_filter.is_empty() {
+                    let event = tracing_service::ChangeLogLevel::new(&tracing_filter);
+                    self.event_hub.publish(event).await;
+                }
+
+                // 3. If SWIM parameters specified, broadcast UpdateSwimConfig on local EventHub
+                if probe_interval_ms > 0
+                    || probe_timeout_ms > 0
+                    || suspect_timeout_ms > 0
+                    || indirect_ping_targets > 0
+                    || gossip_fanout > 0
+                {
+                    let update = crate::event::UpdateSwimConfig {
+                        probe_interval: (probe_interval_ms > 0).then(|| Duration::from_millis(probe_interval_ms)),
+                        probe_timeout: (probe_timeout_ms > 0).then(|| Duration::from_millis(probe_timeout_ms)),
+                        suspect_timeout: (suspect_timeout_ms > 0).then(|| Duration::from_millis(suspect_timeout_ms)),
+                        indirect_ping_targets: (indirect_ping_targets > 0).then_some(indirect_ping_targets as usize),
+                        gossip_fanout: (gossip_fanout > 0).then_some(gossip_fanout as usize),
+                    };
+                    self.event_hub.publish(update).await;
+                }
+
+                // 4. If environment variable specified, broadcast SetEnvVar on local EventHub
+                if !env_key.is_empty() {
+                    let event = node::SetEnvVar {
+                        key: env_key,
+                        value: env_val,
+                    };
+                    self.event_hub.publish(event).await;
+                }
+
+                // 5. Send back ConfigAck
+                let local_member = self.table.local_member().await;
+                let ack = Message::ConfigAck {
+                    success: true,
+                    sender: local_member,
+                };
+                let ack_bytes = ack.to_bytes();
+                write_frame(&mut send, &ack_bytes).await?;
+                let _ = send.finish();
+            }
+            Message::ConfigAck { .. } => {
+                // Acknowledged
+            }
         }
 
         Ok(())

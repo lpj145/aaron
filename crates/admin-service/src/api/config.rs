@@ -6,7 +6,6 @@ use axum::{
 use membership_service::UpdateSwimConfig;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use tracing::debug;
 use tracing_service::ChangeLogLevel;
 
 use crate::state::AppState;
@@ -81,46 +80,11 @@ pub async fn update_swim_config(
     let mut propagated_nodes = 0;
     let mut failed_nodes = 0;
 
-    // 2. Propagate to cluster if requested
+    // 2. Propagate to cluster if requested over P2P QUIC
     if payload.propagate_cluster && let Some(ref handle) = state.membership {
-        let local_id = state.ctx.identity.id();
-        let active_peers = handle.active_members().await;
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_millis(800))
-            .build()
-            .unwrap_or_default();
-
-        for peer in active_peers {
-            if peer.node_id.id() == local_id {
-                continue;
-            }
-
-            let peer_ip = peer.addr.ip();
-            // Default admin port assumption for cluster peer admin endpoints
-            let peer_url = format!("http://{}:8080/api/config/swim", peer_ip);
-            let body = serde_json::json!({
-                "probe_interval_ms": payload.probe_interval_ms,
-                "probe_timeout_ms": payload.probe_timeout_ms,
-                "suspect_timeout_ms": payload.suspect_timeout_ms,
-                "indirect_ping_targets": payload.indirect_ping_targets,
-                "gossip_fanout": payload.gossip_fanout,
-                "propagate_cluster": false
-            });
-
-            match client.post(&peer_url).json(&body).send().await {
-                Ok(res) if res.status().is_success() => {
-                    propagated_nodes += 1;
-                }
-                Ok(res) => {
-                    debug!(target: "admin", status = %res.status(), peer = %peer_ip, "Cluster SWIM config propagation returned non-200");
-                    failed_nodes += 1;
-                }
-                Err(err) => {
-                    debug!(target: "admin", error = %err, peer = %peer_ip, "Could not reach peer for cluster SWIM config propagation");
-                    failed_nodes += 1;
-                }
-            }
-        }
+        let (p, f) = handle.broadcast_config_update(None, Some(update.clone()), None).await;
+        propagated_nodes = p;
+        failed_nodes = f;
     }
 
     Ok(Json(ConfigUpdateResponse {
@@ -165,41 +129,11 @@ pub async fn update_tracing_config(
     let mut propagated_nodes = 0;
     let mut failed_nodes = 0;
 
-    // 2. Propagate to cluster if requested
+    // 2. Propagate to cluster if requested over P2P QUIC
     if payload.propagate_cluster && let Some(ref handle) = state.membership {
-        let local_id = state.ctx.identity.id();
-        let active_peers = handle.active_members().await;
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_millis(800))
-            .build()
-            .unwrap_or_default();
-
-        for peer in active_peers {
-            if peer.node_id.id() == local_id {
-                continue;
-            }
-
-            let peer_ip = peer.addr.ip();
-            let peer_url = format!("http://{}:8080/api/config/tracing", peer_ip);
-            let body = serde_json::json!({
-                "filter": filter,
-                "propagate_cluster": false
-            });
-
-            match client.post(&peer_url).json(&body).send().await {
-                Ok(res) if res.status().is_success() => {
-                    propagated_nodes += 1;
-                }
-                Ok(res) => {
-                    debug!(target: "admin", status = %res.status(), peer = %peer_ip, "Cluster tracing config propagation returned non-200");
-                    failed_nodes += 1;
-                }
-                Err(err) => {
-                    debug!(target: "admin", error = %err, peer = %peer_ip, "Could not reach peer for cluster tracing config propagation");
-                    failed_nodes += 1;
-                }
-            }
-        }
+        let (p, f) = handle.broadcast_config_update(Some(filter.to_string()), None, None).await;
+        propagated_nodes = p;
+        failed_nodes = f;
     }
 
     Ok(Json(ConfigUpdateResponse {
