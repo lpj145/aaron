@@ -1,0 +1,9 @@
+[package]
+name = "aaron"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+node = { path = "../node" }
+membership-service = { path = "../membership-service" }
+tracing-service = { path = "../tracing-service" }
