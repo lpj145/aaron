@@ -39,17 +39,31 @@ export const api = {
   // Node
   getNodeInfo: () => request<NodeInfo>('/node'),
   getHealth: () => request<{ status: string; node_id: string; uptime_secs: number }>('/health'),
+  shutdownNode: () =>
+    request<{ success: boolean; message: string }>('/node/shutdown', {
+      method: 'POST',
+    }),
 
   // Cluster & Membership
   getClusterInfo: () => request<ClusterInfo>('/cluster'),
-  joinCluster: (target_addr: string) =>
+  joinCluster: (seed: string) =>
     request<{ success: boolean; message: string }>('/cluster/join', {
       method: 'POST',
-      body: JSON.stringify({ target_addr }),
+      body: JSON.stringify({ seed }),
     }),
   leaveCluster: () =>
     request<{ success: boolean; message: string }>('/cluster/leave', {
       method: 'POST',
+    }),
+  startClusterNode: (node_id?: string, addr?: string) =>
+    request<{ success: boolean; node_id?: string; message: string }>('/cluster/nodes/start', {
+      method: 'POST',
+      body: JSON.stringify({ node_id, addr }),
+    }),
+  removeClusterNode: (node_id: string) =>
+    request<{ success: boolean; message: string }>('/cluster/nodes/remove', {
+      method: 'POST',
+      body: JSON.stringify({ node_id }),
     }),
 
   // Services
@@ -95,6 +109,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ name: keyspace }),
     }),
+  runBenchmark: (keyspace?: string, operations = 1000, val_size_bytes = 128) =>
+    request<BenchmarkResult>('/store/benchmark', {
+      method: 'POST',
+      body: JSON.stringify({ keyspace, operations, val_size_bytes }),
+    }),
 
   // Tracing & Runtime Config
   getTracingInfo: () => request<TracingInfo>('/tracing'),
@@ -121,5 +140,45 @@ export const api = {
     request<ConfigUpdateResult>('/env', {
       method: 'POST',
       body: JSON.stringify({ key, value, propagate_cluster }),
+    }),
+
+  // Control Plane (Raft Consensus)
+  getControlPlaneStatus: () => request<import('../types').ControlPlaneStatus>('/control-plane/status'),
+  initControlPlaneCluster: (
+    voters: import('../types').ControlPlaneNodeInfo[],
+    learners: import('../types').ControlPlaneNodeInfo[] = []
+  ) =>
+    request<{ success: boolean; message: string }>('/control-plane/init', {
+      method: 'POST',
+      body: JSON.stringify({ voters, learners }),
+    }),
+  changeControlPlaneMembership: (
+    voter_uuids: string[],
+    nodes: import('../types').ControlPlaneNodeInfo[] = [],
+    retain = true
+  ) =>
+    request<{ success: boolean; message: string }>('/control-plane/membership', {
+      method: 'POST',
+      body: JSON.stringify({ voter_uuids, nodes, retain }),
+    }),
+  addControlPlaneLearner: (node: import('../types').ControlPlaneNodeInfo) =>
+    request<{ success: boolean; message: string }>('/control-plane/learner', {
+      method: 'POST',
+      body: JSON.stringify(node),
+    }),
+  removeControlPlaneNode: (uuid: string) =>
+    request<{ success: boolean; message: string }>('/control-plane/remove-node', {
+      method: 'POST',
+      body: JSON.stringify({ uuid }),
+    }),
+  writeControlPlaneState: (key: string, value: string) =>
+    request<{ success: boolean; value?: string; message: string }>('/control-plane/write', {
+      method: 'POST',
+      body: JSON.stringify({ key, value }),
+    }),
+  deleteControlPlaneState: (key: string) =>
+    request<{ success: boolean; value?: string; message: string }>('/control-plane/delete', {
+      method: 'POST',
+      body: JSON.stringify({ key }),
     }),
 };

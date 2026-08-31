@@ -141,6 +141,25 @@ async fn test_admin_api_and_spa_serving() {
         .unwrap();
     assert_eq!(res.status(), 200);
 
+    // 6b. Test POST /api/store/benchmark
+    let res = client
+        .post(format!("{base_url}/api/store/benchmark"))
+        .json(&serde_json::json!({
+            "keyspace": "benchmark_test",
+            "operations": 100,
+            "val_size_bytes": 64
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(res.status(), 200);
+    let bench_json: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(bench_json["keyspace"], "benchmark_test");
+    assert_eq!(bench_json["operations"], 100);
+    assert!(bench_json["write_ops_sec"].as_f64().unwrap() > 0.0);
+    assert!(bench_json["read_ops_sec"].as_f64().unwrap() > 0.0);
+    assert!(bench_json["total_duration_ms"].as_f64().unwrap() > 0.0);
+
     // 7. Test Dynamic Tracing Reload API
     let mut tracing_events = ctx.event_hub.subscribe::<ChangeLogLevel>().await;
 

@@ -130,10 +130,10 @@ onMounted(() => {
       <div>
         <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
           <SlidersHorizontal class="w-6 h-6 text-indigo-400" />
-          Environment & System Configuration
+          Environment
         </h2>
         <p class="text-xs text-slate-400 mt-1 font-mono">
-          Fail-fast typed variables, runtime configuration injection, and cluster-wide sync
+          Node environment variables
         </p>
       </div>
 

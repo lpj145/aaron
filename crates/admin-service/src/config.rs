@@ -16,7 +16,7 @@ pub struct AdminConfig {
 impl Default for AdminConfig {
     fn default() -> Self {
         Self {
-            bind_addr: "127.0.0.1:8080".parse().unwrap(),
+            bind_addr: "0.0.0.0:8080".parse().unwrap(),
             enabled: true,
             static_dir: None,
         }
@@ -27,7 +27,7 @@ impl ServiceConfig for AdminConfig {
     fn schema() -> Vec<ConfigField> {
         vec![
             ConfigField::new("ADMIN_BIND_ADDR", "SocketAddr")
-                .default("127.0.0.1:8080")
+                .default("0.0.0.0:8080")
                 .description("HTTP address and port for the Vue.js admin dashboard and REST API"),
             ConfigField::new("ADMIN_ENABLED", "bool")
                 .default("true")
@@ -40,7 +40,7 @@ impl ServiceConfig for AdminConfig {
     fn from_env(env: &Env) -> Result<Self, ConfigError> {
         let bind_addr = env
             .get::<SocketAddr>("ADMIN_BIND_ADDR")
-            .unwrap_or_else(|| "127.0.0.1:8080".parse().unwrap());
+            .unwrap_or_else(|| "0.0.0.0:8080".parse().unwrap());
 
         let enabled = env.get::<bool>("ADMIN_ENABLED").unwrap_or(true);
 

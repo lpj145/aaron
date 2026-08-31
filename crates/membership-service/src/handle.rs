@@ -301,4 +301,20 @@ impl MembershipHandle {
 
         (propagated, failed)
     }
+
+    /// Marks a specific remote member as Dead, notifies event_hub, and purges it from the table.
+    pub async fn remove_member(&self, node_uuid: Uuid) -> bool {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            if let Some(mut m) = inner.table.get(&node_uuid).await {
+                m.status = crate::member::MemberStatus::Dead;
+                inner.event_hub.publish(MembershipEvent::Dead(m)).await;
+                inner.table.delete(&node_uuid).await
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
 }

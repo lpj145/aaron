@@ -1,0 +1,100 @@
+include "node.fbs";
+
+namespace Aaron.ControlPlane;
+
+enum RaftRole : uint8 {
+  Leader = 0,
+  Candidate = 1,
+  Follower = 2,
+  Learner = 3
+}
+
+table NodeEndpoint {
+  uuid: Aaron.Node.Uuid;
+  addr: string;
+}
+
+table VoteRequest {
+  term: uint64;
+  candidate_id: Aaron.Node.Uuid;
+  last_log_term: uint64;
+  last_log_index: uint64;
+}
+
+table VoteResponse {
+  term: uint64;
+  vote_granted: bool;
+  last_log_term: uint64;
+  last_log_index: uint64;
+  voted_for: Aaron.Node.Uuid;
+}
+
+table LogEntry {
+  term: uint64;
+  index: uint64;
+  entry_type: uint8;
+  payload: [ubyte];
+}
+
+table AppendEntriesRequest {
+  term: uint64;
+  leader_id: Aaron.Node.Uuid;
+  prev_log_term: uint64;
+  prev_log_index: uint64;
+  entries: [LogEntry];
+  leader_commit: uint64;
+}
+
+table AppendEntriesResponse {
+  term: uint64;
+  success: bool;
+  last_log_term: uint64;
+  last_log_index: uint64;
+  conflict_term: uint64;
+  conflict_index: uint64;
+  voted_for: Aaron.Node.Uuid;
+}
+
+table InstallSnapshotRequest {
+  term: uint64;
+  leader_id: Aaron.Node.Uuid;
+  last_included_term: uint64;
+  last_included_index: uint64;
+  offset: uint64;
+  data: [ubyte];
+  done: bool;
+}
+
+table InstallSnapshotResponse {
+  term: uint64;
+  success: bool;
+  voted_for: Aaron.Node.Uuid;
+}
+
+table KeyValueCommand {
+  op_type: uint8; // 0 = Set, 1 = Delete
+  key: string;
+  value: string;
+}
+
+table KeyValueResponse {
+  success: bool;
+  value: string;
+}
+
+union ControlPlanePayload {
+  VoteRequest,
+  VoteResponse,
+  AppendEntriesRequest,
+  AppendEntriesResponse,
+  InstallSnapshotRequest,
+  InstallSnapshotResponse,
+  KeyValueCommand,
+  KeyValueResponse
+}
+
+table ControlPlaneMessage {
+  payload: ControlPlanePayload;
+}
+
+root_type ControlPlaneMessage;

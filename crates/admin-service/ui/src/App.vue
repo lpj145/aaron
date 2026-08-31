@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import Sidebar from './components/Sidebar.vue';
 import Header from './components/Header.vue';
 import Toast, { type ToastItem } from './components/Toast.vue';
+import DefaultLayout from './layouts/DefaultLayout.vue';
+import FullLayout from './layouts/FullLayout.vue';
 import { api } from './api';
 import type { NodeInfo } from './types';
+
+const route = useRoute();
+const layoutComponent = computed(() => {
+  return route.meta?.layout === 'full' ? FullLayout : DefaultLayout;
+});
 
 const nodeInfo = ref<NodeInfo | null>(null);
 const loading = ref(false);
@@ -41,17 +49,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden">
+  <div class="flex h-screen w-screen bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden">
     <!-- Sidebar -->
     <Sidebar :node-info="nodeInfo" />
 
     <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-950">
+    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-950">
       <Header :node-info="nodeInfo" :loading="loading" @refresh="fetchNode" />
 
-      <main class="flex-1 overflow-y-auto p-8 max-w-7xl w-full mx-auto">
+      <component :is="layoutComponent">
         <router-view :node-info="nodeInfo" :loading="loading" @toast="addToast" />
-      </main>
+      </component>
     </div>
 
     <!-- Global Toast Notifications -->

@@ -4,7 +4,9 @@ use axum::{
     response::Json,
 };
 use membership_service::{Member, MemberStatus};
+use node::Uuid;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
 use std::net::SocketAddr;
 
 use crate::state::AppState;
@@ -18,13 +20,30 @@ pub struct MemberInfoResponse {
     pub is_local: bool,
     pub rtt_us: Option<u64>,
     pub rtt_ms: Option<f64>,
+    pub raft_node_id: Option<u64>,
+    pub raft_role: String,
+    pub raft_addr: String,
+}
+
+pub fn derive_cp_port(swim_port: u16) -> u16 {
+    match swim_port {
+        7946 | 17946 => 18946,
+        other if other < 10000 => other + 11000,
+        other => other + 1000,
+    }
 }
 
 impl MemberInfoResponse {
-    fn from_member_with_rtt(
+    #[allow(clippy::too_many_arguments)]
+    fn from_member_with_rtt_and_raft(
         m: Member,
-        local_id: node::Uuid,
+        local_id: Uuid,
         rtt: Option<std::time::Duration>,
+        voter_ids: &BTreeSet<u64>,
+        learner_ids: &BTreeSet<u64>,
+        uuid_to_raft: &BTreeMap<Uuid, (u64, String)>,
+        current_leader: Option<u64>,
+        is_local_leader: bool,
     ) -> Self {
         let is_local = m.node_id.id() == local_id;
         let status = match m.status {
@@ -45,14 +64,36 @@ impl MemberInfoResponse {
             (None, None)
         };
 
+        let member_uuid = m.node_id.id();
+        let (raft_node_id, raft_addr) = if let Some((nid, addr)) = uuid_to_raft.get(&member_uuid) {
+            (*nid, addr.clone())
+        } else {
+            let nid = member_uuid.low;
+            let port = derive_cp_port(m.addr.port());
+            (nid, format!("{}:{}", m.addr.ip(), port))
+        };
+
+        let raft_role = if Some(raft_node_id) == current_leader || (is_local && is_local_leader) {
+            "leader".to_string()
+        } else if voter_ids.contains(&raft_node_id) {
+            "voter".to_string()
+        } else if learner_ids.contains(&raft_node_id) {
+            "learner".to_string()
+        } else {
+            "member".to_string()
+        };
+
         Self {
-            id: m.node_id.id().to_string(),
+            id: member_uuid.to_string(),
             addr: m.addr.to_string(),
             status,
             incarnation: m.incarnation,
             is_local,
             rtt_us,
             rtt_ms,
+            raft_node_id: Some(raft_node_id),
+            raft_role,
+            raft_addr,
         }
     }
 }
@@ -69,19 +110,61 @@ pub struct ClusterInfoResponse {
 pub async fn get_cluster_info(State(state): State<AppState>) -> Json<ClusterInfoResponse> {
     let local_id = state.ctx.identity.id();
 
+    // Extract OpenRaft cluster state if control_plane is attached
+    let mut voter_ids = BTreeSet::new();
+    let mut learner_ids = BTreeSet::new();
+    let mut uuid_to_raft = BTreeMap::new();
+    let mut current_leader = None;
+    let mut is_local_leader = false;
+
+    if let Some(ref cp) = state.control_plane {
+        is_local_leader = cp.is_leader();
+        current_leader = cp.current_leader();
+
+        if let Some(m) = cp.metrics() {
+            for vid in m.membership_config.membership().voter_ids() {
+                voter_ids.insert(vid);
+            }
+            for (nid, node) in m.membership_config.membership().nodes() {
+                if !voter_ids.contains(nid) {
+                    learner_ids.insert(*nid);
+                }
+                uuid_to_raft.insert(node.node_uuid(), (*nid, node.addr.clone()));
+            }
+        }
+    }
+
     if let Some(ref handle) = state.membership {
         let cluster_id = handle.cluster_id().await.map(|c| c.to_string());
         let local_member = handle
             .local_member()
             .await
-            .map(|m| MemberInfoResponse::from_member_with_rtt(m, local_id, Some(std::time::Duration::ZERO)));
+            .map(|m| MemberInfoResponse::from_member_with_rtt_and_raft(
+                m,
+                local_id,
+                Some(std::time::Duration::ZERO),
+                &voter_ids,
+                &learner_ids,
+                &uuid_to_raft,
+                current_leader,
+                is_local_leader,
+            ));
 
         let all_with_rtt = handle.all_members_with_rtt().await;
         let active = handle.active_members().await;
 
         let members: Vec<MemberInfoResponse> = all_with_rtt
             .into_iter()
-            .map(|(m, rtt)| MemberInfoResponse::from_member_with_rtt(m, local_id, rtt))
+            .map(|(m, rtt)| MemberInfoResponse::from_member_with_rtt_and_raft(
+                m,
+                local_id,
+                rtt,
+                &voter_ids,
+                &learner_ids,
+                &uuid_to_raft,
+                current_leader,
+                is_local_leader,
+            ))
             .collect();
 
         Json(ClusterInfoResponse {
@@ -125,30 +208,56 @@ pub async fn join_cluster(
         )
     })?;
 
-    let seed_addr: SocketAddr = payload.seed.trim().parse().map_err(|e| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({ "error": format!("Invalid seed address '{}': {}", payload.seed, e) })),
-        )
-    })?;
+    let seed_trim = payload.seed.trim();
+    let seed_addrs: Vec<SocketAddr> = if let Ok(addr) = seed_trim.parse::<SocketAddr>() {
+        vec![addr]
+    } else {
+        match tokio::net::lookup_host(seed_trim).await {
+            Ok(addrs) => {
+                let list: Vec<SocketAddr> = addrs.collect();
+                if list.is_empty() {
+                    return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(serde_json::json!({ "error": format!("DNS resolved zero socket addresses for seed host '{}'", seed_trim) })),
+                    ));
+                }
+                list
+            }
+            Err(e) => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({ "error": format!("Could not resolve seed host '{}': {}", seed_trim, e) })),
+                ));
+            }
+        }
+    };
 
-    match handle.join(seed_addr).await {
-        Ok(peers) => Ok(Json(JoinResponse {
-            success: true,
-            discovered_peers: peers.len(),
-            message: format!("Successfully joined cluster via seed '{}'", seed_addr),
-        })),
-        Err(err) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": format!("Failed to join cluster: {}", err) })),
-        )),
+    let mut last_error = None;
+    for seed_addr in seed_addrs {
+        match handle.join(seed_addr).await {
+            Ok(peers) => {
+                return Ok(Json(JoinResponse {
+                    success: true,
+                    discovered_peers: peers.len(),
+                    message: format!("Successfully joined cluster via seed '{}'", seed_addr),
+                }));
+            }
+            Err(err) => {
+                last_error = Some(err);
+            }
+        }
     }
+
+    let err_msg = last_error.map(|e| e.to_string()).unwrap_or_else(|| "No reachable seed addresses".to_string());
+    Err((
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(serde_json::json!({ "error": format!("Failed to join cluster: {}", err_msg) })),
+    ))
 }
 
 pub async fn leave_cluster(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
-    // If membership handle is active, emit left
     if let Some(ref handle) = state.membership
         && let Some(mut local) = handle.local_member().await
     {
@@ -164,5 +273,100 @@ pub async fn leave_cluster(
     Ok(Json(serde_json::json!({
         "success": true,
         "message": "Node broadcasted Left status"
+    })))
+}
+
+#[derive(Deserialize, Default)]
+pub struct StartNodeRequest {
+    pub node_id: Option<String>,
+    pub addr: Option<String>,
+}
+
+pub async fn start_node(
+    State(state): State<AppState>,
+    Json(payload): Json<StartNodeRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+    let uuid = if let Some(ref nid) = payload.node_id
+        && !nid.trim().is_empty()
+    {
+        nid.trim().parse::<node::Uuid>().map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": format!("Invalid Node UUID '{nid}': {e}") })),
+            )
+        })?
+    } else {
+        node::Uuid::random()
+    };
+
+    let addr = payload.addr.filter(|s| !s.trim().is_empty());
+
+    state
+        .ctx
+        .event_hub
+        .publish(node::NodeEvent::StartNode {
+            node_id: uuid,
+            addr,
+        })
+        .await;
+
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "node_id": uuid.to_string(),
+        "message": format!("StartNode event published for node {uuid}")
+    })))
+}
+
+#[derive(Deserialize)]
+pub struct RemoveNodeRequest {
+    pub node_id: String,
+}
+
+pub async fn remove_node(
+    State(state): State<AppState>,
+    Json(payload): Json<RemoveNodeRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+    let uuid = payload.node_id.trim().parse::<node::Uuid>().map_err(|e| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": format!("Invalid Node UUID '{}': {}", payload.node_id, e) })),
+        )
+    })?;
+
+    // Verify node is not part of the active Raft consensus
+    if let Some(ref cp) = state.control_plane
+        && let Some(metrics) = cp.metrics() {
+            let nid = uuid.low;
+            if metrics.membership_config.membership().voter_ids().any(|v| v == nid) {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "error": format!("Node '{uuid}' is still an active Raft voter. Demote from Raft quorum first before removing from cluster.")
+                    })),
+                ));
+            }
+            if metrics.membership_config.membership().nodes().any(|(n, _)| *n == nid) {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "error": format!("Node '{uuid}' is still registered in Raft control plane. Remove it from Raft first.")
+                    })),
+                ));
+            }
+        }
+
+    if let Some(ref handle) = state.membership {
+        let _ = handle.remove_member(uuid).await;
+    }
+
+    state
+        .ctx
+        .event_hub
+        .publish(node::NodeEvent::RemoveNode { node_id: uuid })
+        .await;
+
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "message": format!("Node {uuid} removed from cluster")
     })))
 }

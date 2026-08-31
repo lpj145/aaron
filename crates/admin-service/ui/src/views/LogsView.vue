@@ -41,7 +41,7 @@ const applyLogLevel = async (level: string) => {
     const res = await api.updateLogLevel(level);
     tracing.value = { filter: res.filter };
     selectedLevel.value = res.filter;
-    successMsg.value = `Log filter dynamically updated to '${res.filter}' via EventHub!`;
+    successMsg.value = `Log filter updated to '${res.filter}'.`;
     setTimeout(() => {
       successMsg.value = null;
     }, 4000);
@@ -91,10 +91,10 @@ onUnmounted(() => {
       <div>
         <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
           <Terminal class="w-6 h-6 text-indigo-400" />
-          Dynamic Observability & Tracing
+          Logs & Tracing
         </h2>
         <p class="text-xs text-slate-400 mt-1 font-mono">
-          Zero-restart runtime log filter reloading over lockless EventHub
+          Live log stream and tracing filter
         </p>
       </div>
 

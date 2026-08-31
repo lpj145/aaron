@@ -124,3 +124,83 @@ fn test_duplicate_service_registration_panics() {
     // Attempting to register two services with the same name must fail fast with panic
     let _ = Node::new().with(worker1).with(worker2);
 }
+
+#[tokio::test]
+async fn test_start_node_remove_node_and_ctx_shutdown() {
+    use node::NodeEvent;
+
+    let tmp = tempdir().unwrap();
+    let path = tmp.path().to_path_buf();
+
+    let (start_tx, mut start_rx) = tokio::sync::mpsc::channel(10);
+    let (remove_tx, mut remove_rx) = tokio::sync::mpsc::channel(10);
+
+    #[derive(Clone)]
+    struct LifecycleSubscriberService {
+        start_tx: tokio::sync::mpsc::Sender<Uuid>,
+        remove_tx: tokio::sync::mpsc::Sender<Uuid>,
+    }
+
+    impl Service for LifecycleSubscriberService {
+        type Config = ();
+
+        fn name(&self) -> &str {
+            "lifecycle-subscriber"
+        }
+
+        async fn run(&self, ctx: Context) -> Result<(), BoxError> {
+            let mut node_sub = ctx.event_hub.subscribe::<NodeEvent>().await;
+
+            let start_sender = self.start_tx.clone();
+            let remove_sender = self.remove_tx.clone();
+
+            tokio::spawn(async move {
+                while let Ok(ev) = node_sub.recv().await {
+                    match ev {
+                        NodeEvent::StartNode { node_id, .. } => {
+                            let _ = start_sender.send(node_id).await;
+                        }
+                        NodeEvent::RemoveNode { node_id } => {
+                            let _ = remove_sender.send(node_id).await;
+                        }
+                        _ => {}
+                    }
+                }
+            });
+
+            tokio::time::sleep(Duration::from_millis(50)).await;
+
+            // Publish NodeEvent::StartNode
+            ctx.event_hub
+                .publish(NodeEvent::StartNode {
+                    node_id: Uuid::random(),
+                    addr: Some("10.0.0.1:17946".to_string()),
+                })
+                .await;
+
+            // Publish NodeEvent::RemoveNode
+            ctx.event_hub
+                .publish(NodeEvent::RemoveNode {
+                    node_id: Uuid::random(),
+                })
+                .await;
+
+            tokio::time::sleep(Duration::from_millis(50)).await;
+
+            // Test ctx.shutdown()
+            ctx.shutdown();
+            Ok(())
+        }
+    }
+
+    let svc = LifecycleSubscriberService {
+        start_tx,
+        remove_tx,
+    };
+
+    let node = Node::new().with_dir_path(&path).with(svc);
+    node.run().await.unwrap();
+
+    assert!(start_rx.recv().await.is_some());
+    assert!(remove_rx.recv().await.is_some());
+}

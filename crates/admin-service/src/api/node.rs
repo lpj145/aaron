@@ -58,3 +58,14 @@ pub async fn get_health(State(state): State<AppState>) -> Json<HealthResponse> {
         uptime_secs: state.start_time.elapsed().as_secs(),
     })
 }
+
+pub async fn shutdown_node(
+    State(state): State<AppState>,
+) -> Json<serde_json::Value> {
+    tracing::info!(target: "admin_service", "Node shutdown initiated via Admin REST API");
+    state.ctx.shutdown();
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Node shutdown sequence initiated successfully"
+    }))
+}

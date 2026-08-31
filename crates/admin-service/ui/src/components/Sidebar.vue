@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import {
   LayoutDashboard,
   Network,
+  ShieldCheck,
   Sliders,
   Layers,
   Database,
@@ -20,10 +21,10 @@ const route = useRoute();
 
 const navItems = [
   { name: 'Overview', path: '/', icon: LayoutDashboard },
-  { name: 'Cluster & SWIM', path: '/cluster', icon: Network },
+  { name: 'Cluster', path: '/cluster', icon: Network },
   { name: 'Configuration', path: '/config', icon: Sliders },
   { name: 'Services', path: '/services', icon: Layers },
-  { name: 'LSM Store Explorer', path: '/store', icon: Database },
+  { name: 'Storage', path: '/store', icon: Database },
   { name: 'Environment', path: '/env', icon: SlidersHorizontal },
 ];
 
@@ -42,9 +43,9 @@ const shortId = computed(() => {
       </div>
       <div>
         <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5 font-mono">
-          AARON <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">RUNTIME</span>
+          AARON
         </h1>
-        <p class="text-[10px] text-slate-400 font-medium">Distributed Supervisor</p>
+        <p class="text-[10px] text-slate-400 font-medium">Node Dashboard</p>
       </div>
     </div>
 

@@ -65,19 +65,16 @@ onMounted(() => {
       <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div class="flex items-center gap-3 mb-2">
-            <span class="px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-mono font-bold tracking-wide">
-              SUPERVISED DISTRIBUTED NODE
-            </span>
-            <span class="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
+            <span class="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium font-mono">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Operational
+              Online
             </span>
           </div>
           <h2 class="text-3xl font-extrabold text-white tracking-tight font-mono">
-            Node {{ nodeInfo?.hostname || 'Daemon' }}
+            {{ nodeInfo?.hostname || 'Node' }}
           </h2>
           <p class="mt-2 text-sm text-slate-300 max-w-2xl font-mono text-xs text-slate-400">
-            UUID: {{ nodeInfo?.id || 'Initializing...' }}
+            UUID: {{ nodeInfo?.id || 'Connecting...' }}
           </p>
         </div>
 
@@ -87,14 +84,14 @@ onMounted(() => {
             class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition"
           >
             <Network class="w-4 h-4" />
-            Cluster Topology
+            Cluster
           </router-link>
           <router-link
             to="/store"
             class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-200 text-xs font-semibold transition"
           >
             <Database class="w-4 h-4" />
-            Explore Store
+            Storage
           </router-link>
         </div>
       </div>
@@ -105,7 +102,7 @@ onMounted(() => {
       <StatCard
         title="Cluster Peers"
         :value="cluster ? `${cluster.active_count} Active` : '1 Local'"
-        :subtitle="cluster?.cluster_id ? `Cluster: ${cluster.cluster_id.substring(0, 10)}...` : 'Standalone / Seedless'"
+        :subtitle="cluster?.cluster_id ? `Cluster: ${cluster.cluster_id.substring(0, 8)}...` : 'Standalone'"
         :icon="Network"
         badge="SWIM"
         badgeColor="indigo"
@@ -113,7 +110,7 @@ onMounted(() => {
       <StatCard
         title="Services"
         :value="services.length || nodeInfo?.services_count || 0"
-        subtitle="Running lifecycle task hierarchy"
+        subtitle="Running services"
         :icon="Layers"
         badge="Running"
         badgeColor="emerald"
@@ -127,9 +124,9 @@ onMounted(() => {
         badgeColor="amber"
       />
       <StatCard
-        title="Tracing Log Filter"
+        title="Tracing Level"
         :value="tracing?.filter || 'info'"
-        subtitle="Dynamic runtime reload via EventHub"
+        subtitle="Active log filter"
         :icon="Terminal"
         badge="Dynamic"
         badgeColor="indigo"
@@ -143,7 +140,7 @@ onMounted(() => {
         <div class="flex items-center justify-between pb-4 border-b border-slate-800">
           <div class="flex items-center gap-2.5">
             <Server class="w-4 h-4 text-indigo-400" />
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Node Hardware & Network</h3>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Node Information</h3>
           </div>
           <span class="text-xs font-mono text-slate-400">Incarnation: {{ nodeInfo?.incarnation }}</span>
         </div>

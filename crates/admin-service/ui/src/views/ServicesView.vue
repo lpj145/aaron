@@ -73,7 +73,7 @@ onMounted(() => {
           Services
         </h2>
         <p class="text-xs text-slate-400 mt-1 font-mono">
-          Declared configuration schemas, runtime isolation, and lifecycle task hierarchy
+          Supervised services and configuration schemas
         </p>
       </div>
 

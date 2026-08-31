@@ -1,3 +1,4 @@
+use control_plane_service::ControlPlaneHandle;
 use membership_service::MembershipHandle;
 use node::Context;
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,7 @@ pub struct ServiceMetadata {
 pub struct AppState {
     pub ctx: Context,
     pub membership: Option<MembershipHandle>,
+    pub control_plane: Option<ControlPlaneHandle>,
     pub start_time: Instant,
     pub static_dir: Option<PathBuf>,
     pub services: Arc<Vec<ServiceMetadata>>,

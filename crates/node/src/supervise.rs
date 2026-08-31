@@ -64,12 +64,23 @@ pub async fn supervise(
         info!("[{}] Initializing...", svc.service.dyn_name());
         let handle = AbortOnDrop(tokio::spawn(async move { service.dyn_run(run_ctx).await }));
         let result = match handle.await {
-            Ok(result) => result,
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(err)) => {
+                error!(
+                    target: "supervisor",
+                    service = svc.service.dyn_name(),
+                    error = %err,
+                    "Service execution failed"
+                );
+                Err(err)
+            }
             Err(err) => {
-                // A panic (or the task being aborted) is treated as a failed
-                // run so `restart_policy` still gets a say, instead of
-                // unconditionally giving up here.
-                error!("{err}");
+                error!(
+                    target: "supervisor",
+                    service = svc.service.dyn_name(),
+                    error = %err,
+                    "Service task panicked or aborted"
+                );
                 Err(Box::new(err) as BoxError)
             }
         };

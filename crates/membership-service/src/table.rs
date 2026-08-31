@@ -423,4 +423,10 @@ impl MembershipTable {
         self.rng_state.store(x, Ordering::Relaxed);
         x
     }
+
+    /// Immediately deletes a member from the table (used when explicitly purging a removed node).
+    pub async fn delete(&self, id: &Uuid) -> bool {
+        let mut table = self.entries.write().await;
+        table.remove(id).is_some()
+    }
 }

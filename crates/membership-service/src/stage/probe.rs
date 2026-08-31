@@ -45,7 +45,7 @@ impl ProbeLoop {
         // Skip first immediate tick to allow initial network stabilization
         interval.tick().await;
 
-        let mut tombstone_interval = tokio::time::interval(Duration::from_secs(300));
+        let mut tombstone_interval = tokio::time::interval(Duration::from_secs(3600));
         tombstone_interval.tick().await;
 
         let mut config_events = self.event_hub.subscribe::<UpdateSwimConfig>().await;
@@ -95,8 +95,8 @@ impl ProbeLoop {
                     }
                 }
                 _ = tombstone_interval.tick() => {
-                    // Purge dead members older than 24 hours
-                    let reaped = self.table.reap_tombstones(Duration::from_secs(86400)).await;
+                    // Low-frequency maintenance: purge dead member tombstones older than 1 hour
+                    let reaped = self.table.reap_tombstones(Duration::from_secs(3600)).await;
                     if reaped > 0 {
                         info!(target: "membership", reaped = reaped, "Purged old Dead/Left tombstones from membership table");
                     }

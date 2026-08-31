@@ -21,6 +21,9 @@ export interface MemberInfo {
   is_local: boolean;
   rtt_us: number | null;
   rtt_ms: number | null;
+  raft_node_id?: number | null;
+  raft_role?: 'leader' | 'voter' | 'learner' | 'member';
+  raft_addr?: string;
 }
 
 export interface ClusterInfo {
@@ -66,6 +69,19 @@ export interface KeyspaceScanResult {
   total_scanned: number;
 }
 
+export interface BenchmarkResult {
+  keyspace: string;
+  operations: number;
+  val_size_bytes: number;
+  write_ops_sec: number;
+  write_latency_avg_us: number;
+  write_throughput_mb_s: number;
+  read_ops_sec: number;
+  read_latency_avg_us: number;
+  read_throughput_mb_s: number;
+  total_duration_ms: number;
+}
+
 export interface TracingInfo {
   filter: string;
 }
@@ -92,4 +108,30 @@ export interface ConfigUpdateResult {
   local_applied: boolean;
   propagated_nodes: number;
   failed_nodes: number;
+}
+
+export interface ControlPlaneNodeInfo {
+  uuid: string;
+  addr: string;
+  node_id?: number;
+}
+
+export interface ControlPlaneStatus {
+  available: boolean;
+  node_uuid?: string | null;
+  is_leader: boolean;
+  leader_uuid?: string | null;
+  current_term: number;
+  last_log_index: number;
+  last_applied_index: number;
+  voter_uuids: string[];
+  learner_uuids: string[];
+  nodes: Record<string, ControlPlaneNodeInfo>;
+  state_data: Record<string, string>;
+  node_id?: number | null;
+  node_id_str?: string | null;
+  current_leader?: number | null;
+  current_leader_str?: string | null;
+  voters?: number[];
+  learners?: number[];
 }

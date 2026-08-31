@@ -8,7 +8,7 @@ use tokio::task::JoinSet;
 pub use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
-pub use crate::events::{NodeEvents, SetEnvVar};
+pub use crate::events::{NodeEvent, NodeEvents, SetEnvVar};
 // `supervise`/`SupervisedService`/`TaskResult` are internal plumbing, not part
 // of the normal public API — but exposed under `test-util` so integration
 // tests in `tests/` can exercise them directly instead of only through `Node`.
@@ -60,9 +60,14 @@ impl Default for Node {
 
 impl Node {
     pub fn new() -> Self {
+        let dir_path = std::env::var("DATA_DIR")
+            .or_else(|_| std::env::var("NODE_DATA_DIR"))
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("./data"));
+
         Self {
             services: vec![],
-            dir_path: PathBuf::from("./data"),
+            dir_path,
             env: None,
             cancel_token: None,
         }
@@ -391,6 +396,25 @@ impl Node {
                                 "StartServiceCommand received for unregistered service name"
                             );
                         }
+                    },
+                    Ok(NodeEvents::StartNode { node_id, addr }) => {
+                        info!(
+                            target: "node",
+                            node_id = %node_id,
+                            addr = ?addr,
+                            "Received StartNode lifecycle event via EventHub"
+                        );
+                    },
+                    Ok(NodeEvents::RemoveNode { node_id }) => {
+                        info!(
+                            target: "node",
+                            node_id = %node_id,
+                            "Received RemoveNode lifecycle event via EventHub"
+                        );
+                    },
+                    Ok(NodeEvents::SetEnvVar { key, value }) => {
+                        let _ = env.set(&key, &value);
+                        info!(target: "node", key = %key, "Environment variable updated dynamically via EventHub");
                     },
                     Err(err) => {
                         error!("Error during get event {err}");

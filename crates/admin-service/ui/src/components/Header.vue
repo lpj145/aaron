@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Copy, Check, RefreshCw, Radio } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { Copy, Check, RefreshCw, Power } from 'lucide-vue-next';
+import { api } from '../api';
 import type { NodeInfo } from '../types';
 
 const props = defineProps<{
@@ -14,6 +14,7 @@ const emit = defineEmits<{
 }>();
 
 const copied = ref(false);
+const isShuttingDown = ref(false);
 
 const copyId = async () => {
   if (!props.nodeInfo?.id) return;
@@ -22,6 +23,20 @@ const copyId = async () => {
   setTimeout(() => {
     copied.value = false;
   }, 2000);
+};
+
+const handleShutdown = async () => {
+  if (!confirm('Are you sure you want to stop this Node? All services will be terminated.')) {
+    return;
+  }
+  isShuttingDown.value = true;
+  try {
+    await api.shutdownNode();
+  } catch (err: any) {
+    alert('Shutdown request failed: ' + err.message);
+  } finally {
+    isShuttingDown.value = false;
+  }
 };
 
 const formatUptime = computed(() => {
@@ -68,6 +83,17 @@ const formatUptime = computed(() => {
         <Check v-if="copied" class="w-3.5 h-3.5 text-emerald-400" />
         <Copy v-else class="w-3.5 h-3.5 text-slate-400" />
         <span>{{ copied ? 'UUID Copied' : 'Copy UUID' }}</span>
+      </button>
+
+      <!-- Shutdown Node Button -->
+      <button
+        @click="handleShutdown"
+        :disabled="isShuttingDown"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-mono transition disabled:opacity-50"
+        title="Trigger graceful node shutdown (ctx.shutdown)"
+      >
+        <Power class="w-3.5 h-3.5" />
+        <span>{{ isShuttingDown ? 'Stopping...' : 'Shutdown' }}</span>
       </button>
 
       <!-- Refresh Button -->

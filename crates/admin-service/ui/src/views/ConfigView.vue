@@ -152,10 +152,10 @@ onMounted(() => {
       <div>
         <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
           <Sliders class="w-6 h-6 text-indigo-400" />
-          Runtime Configuration & Tuning
+          Configuration
         </h2>
         <p class="text-xs text-slate-400 mt-1 font-mono">
-          Live dynamic adjustment of Tracing observability and SWIM failure detector protocols with cluster gossip propagation
+          Adjust log filter level and SWIM protocol settings
         </p>
       </div>
 

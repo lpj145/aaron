@@ -1,0 +1,28 @@
+[package]
+name = "control-plane-service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+node = { path = "../node" }
+membership-service = { path = "../membership-service" }
+openraft = { version = "0.9", features = ["single-term-leader", "tracing-log"] }
+tokio.workspace = true
+tracing.workspace = true
+tokio-util.workspace = true
+snafu.workspace = true
+planus = "1.3.0"
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls", "ring"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+futures-util = "0.3"
+bytes = "1.10"
+
+[build-dependencies]
+planus-translation = "1.3.0"
+planus-codegen = "1.3.0"
+
+[dev-dependencies]
+node = { path = "../node" }
+tempfile = "3"
+tracing-subscriber.workspace = true

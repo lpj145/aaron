@@ -109,6 +109,34 @@ impl std::str::FromStr for Uuid {
     }
 }
 
+impl serde::Serialize for Uuid {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.to_string())
+        } else {
+            (self.high, self.low).serialize(serializer)
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Uuid {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            s.parse::<Self>().map_err(serde::de::Error::custom)
+        } else {
+            let (high, low) = <(u64, u64)>::deserialize(deserializer)?;
+            Ok(Self::new(high, low))
+        }
+    }
+}
+
 impl NodeId {
     /// Creates a new `NodeId` with specified ID, incarnation timestamp, and optional cluster ID.
     pub const fn new(id: Uuid, incarnation: u64, cluster_id: Option<Uuid>) -> Self {

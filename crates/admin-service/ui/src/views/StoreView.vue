@@ -1,9 +1,24 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { Database, Plus, Search, Trash2, Edit3, HardDrive, RefreshCw, FolderPlus, Check, Copy } from 'lucide-vue-next';
+import {
+  Database,
+  Plus,
+  Search,
+  Trash2,
+  Edit3,
+  HardDrive,
+  RefreshCw,
+  FolderPlus,
+  Check,
+  Copy,
+  Gauge,
+  Zap,
+  Activity,
+  Timer,
+} from 'lucide-vue-next';
 import Modal from '../components/Modal.vue';
 import { api } from '../api';
-import type { StoreInfo, KeyEntry, KeyspaceScanResult } from '../types';
+import type { StoreInfo, KeyEntry, BenchmarkResult } from '../types';
 
 const storeInfo = ref<StoreInfo | null>(null);
 const selectedKeyspace = ref<string>('node');
@@ -16,9 +31,16 @@ const successMsg = ref<string | null>(null);
 // Modals
 const showSetModal = ref(false);
 const showCreateKsModal = ref(false);
+const showBenchModal = ref(false);
 const setForm = ref({ key: '', value: '' });
 const newKsName = ref('');
 const modalLoading = ref(false);
+
+// Benchmark on-demand state
+const benchOps = ref(1000);
+const benchValSize = ref(128);
+const benchLoading = ref(false);
+const benchResult = ref<BenchmarkResult | null>(null);
 
 // Inspect selected entry
 const inspectingEntry = ref<KeyEntry | null>(null);
@@ -43,7 +65,7 @@ const scanCurrentKeyspace = async () => {
     const res = await api.scanKeyspace(selectedKeyspace.value, prefix.value.trim(), 100);
     entries.value = res.entries;
     if (inspectingEntry.value) {
-      const match = res.entries.find(e => e.key === inspectingEntry.value?.key);
+      const match = res.entries.find((e) => e.key === inspectingEntry.value?.key);
       inspectingEntry.value = match || null;
     }
   } catch (err: any) {
@@ -100,6 +122,20 @@ const handleCreateKeyspace = async () => {
   }
 };
 
+const handleRunBenchmark = async () => {
+  benchLoading.value = true;
+  errorMsg.value = null;
+  try {
+    const res = await api.runBenchmark(selectedKeyspace.value, benchOps.value, benchValSize.value);
+    benchResult.value = res;
+    successMsg.value = `Benchmark completed for keyspace '${res.keyspace}' in ${res.total_duration_ms.toFixed(1)} ms!`;
+  } catch (err: any) {
+    errorMsg.value = err.message || 'Benchmark execution failed';
+  } finally {
+    benchLoading.value = false;
+  }
+};
+
 const openEditModal = (entry: KeyEntry) => {
   setForm.value = {
     key: entry.key,
@@ -134,14 +170,21 @@ onMounted(async () => {
       <div>
         <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
           <Database class="w-6 h-6 text-indigo-400" />
-          LSM-Tree Persistent Store Explorer
+          Storage
         </h2>
         <p class="text-xs text-slate-400 mt-1 font-mono">
-          Embedded zero-dependency ACID storage engine (Fjall 3.1)
+          Embedded LSM keyspaces and data inspection
         </p>
       </div>
 
       <div class="flex items-center gap-3">
+        <button
+          @click="showBenchModal = true"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-800/60 text-cyan-300 hover:text-white text-xs font-semibold shadow-lg shadow-cyan-950/30 transition"
+        >
+          <Gauge class="w-4 h-4 text-cyan-400" />
+          Run Benchmark
+        </button>
         <button
           @click="showCreateKsModal = true"
           class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition"
@@ -169,6 +212,75 @@ onMounted(async () => {
       <button @click="errorMsg = null" class="text-rose-400 hover:text-white">&times;</button>
     </div>
 
+    <!-- Live Benchmark Result Banner (If Executed) -->
+    <div
+      v-if="benchResult"
+      class="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 border border-cyan-500/30 p-5 shadow-2xl backdrop-blur relative overflow-hidden animate-in fade-in duration-300"
+    >
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+            <Activity class="w-4 h-4" />
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+              LSM Performance Benchmark Results
+            </h3>
+            <p class="text-[11px] text-slate-400 font-mono">
+              Keyspace: <code>{{ benchResult.keyspace }}</code> • {{ benchResult.operations.toLocaleString() }} Ops • {{ benchResult.val_size_bytes }} B Payload
+            </p>
+          </div>
+        </div>
+        <button @click="benchResult = null" class="text-slate-500 hover:text-slate-300 text-sm font-mono">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono">
+        <!-- Write Performance -->
+        <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>WRITE THROUGHPUT</span>
+            <Zap class="w-3.5 h-3.5 text-emerald-400" />
+          </div>
+          <div class="text-xl font-bold text-emerald-400">
+            {{ Math.round(benchResult.write_ops_sec).toLocaleString() }} <span class="text-xs font-normal text-slate-400">ops/s</span>
+          </div>
+          <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-900">
+            <span>Bandwidth: <b class="text-slate-200">{{ benchResult.write_throughput_mb_s.toFixed(2) }} MB/s</b></span>
+            <span>Latency: <b class="text-slate-200">{{ benchResult.write_latency_avg_us < 1000 ? `${benchResult.write_latency_avg_us.toFixed(1)} µs` : `${(benchResult.write_latency_avg_us / 1000).toFixed(2)} ms` }}</b></span>
+          </div>
+        </div>
+
+        <!-- Read Performance -->
+        <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>READ THROUGHPUT</span>
+            <HardDrive class="w-3.5 h-3.5 text-cyan-400" />
+          </div>
+          <div class="text-xl font-bold text-cyan-400">
+            {{ Math.round(benchResult.read_ops_sec).toLocaleString() }} <span class="text-xs font-normal text-slate-400">ops/s</span>
+          </div>
+          <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-900">
+            <span>Bandwidth: <b class="text-slate-200">{{ benchResult.read_throughput_mb_s.toFixed(2) }} MB/s</b></span>
+            <span>Latency: <b class="text-slate-200">{{ benchResult.read_latency_avg_us < 1000 ? `${benchResult.read_latency_avg_us.toFixed(1)} µs` : `${(benchResult.read_latency_avg_us / 1000).toFixed(2)} ms` }}</b></span>
+          </div>
+        </div>
+
+        <!-- Total Test Duration -->
+        <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>TOTAL ELAPSED TIME</span>
+            <Timer class="w-3.5 h-3.5 text-indigo-400" />
+          </div>
+          <div class="text-xl font-bold text-indigo-300">
+            {{ benchResult.total_duration_ms.toFixed(1) }} <span class="text-xs font-normal text-slate-400">ms</span>
+          </div>
+          <div class="text-[11px] text-slate-400 pt-1 border-t border-slate-900">
+            Engine: Fjall LSM
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Store Metadata Card -->
     <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-5 backdrop-blur flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
       <div class="flex items-center gap-3">
@@ -184,7 +296,7 @@ onMounted(async () => {
             'px-2.5 py-1 rounded-full text-[11px] font-bold border',
             storeInfo?.maintenance
               ? 'bg-rose-950 text-rose-400 border-rose-800 animate-pulse'
-              : 'bg-emerald-950/60 text-emerald-400 border-emerald-800/50'
+              : 'bg-emerald-950/60 text-emerald-400 border-emerald-800/50',
           ]"
         >
           {{ storeInfo?.maintenance ? 'LOCKED (SNAPSHOT ACTIVE)' : 'READY (WRITABLE)' }}
@@ -208,7 +320,7 @@ onMounted(async () => {
               'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-mono transition text-left',
               selectedKeyspace === ks
                 ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 font-bold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent',
             ]"
           >
             <div class="flex items-center gap-2 truncate">
@@ -264,7 +376,7 @@ onMounted(async () => {
                   'p-3 flex items-center justify-between cursor-pointer transition',
                   inspectingEntry?.key === entry.key
                     ? 'bg-indigo-950/40 border-l-2 border-indigo-500'
-                    : 'hover:bg-slate-800/30'
+                    : 'hover:bg-slate-800/30',
                 ]"
               >
                 <div class="truncate mr-2">
@@ -348,6 +460,65 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <!-- Benchmark Configuration Modal -->
+    <Modal
+      :show="showBenchModal"
+      title="LSM Store Benchmark"
+      :subtitle="`Execute live read/write performance testing against keyspace '${selectedKeyspace}'`"
+      @close="showBenchModal = false"
+    >
+      <div class="space-y-4 font-mono text-xs">
+        <p class="text-slate-400 font-sans text-xs leading-relaxed">
+          This test performs sequential writes and point reads directly on the LSM storage engine, measuring ops/sec, latency, and MB/s throughput without blocking Tokio async worker threads.
+        </p>
+
+        <div>
+          <label class="block font-semibold text-slate-300 uppercase mb-1">Operations Count</label>
+          <select
+            v-model="benchOps"
+            class="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-cyan-500 font-mono"
+          >
+            <option :value="500">500 operations</option>
+            <option :value="1000">1,000 operations (Recommended)</option>
+            <option :value="5000">5,000 operations</option>
+            <option :value="10000">10,000 operations</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 uppercase mb-1">Payload Size per Key</label>
+          <select
+            v-model="benchValSize"
+            class="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-cyan-500 font-mono"
+          >
+            <option :value="64">64 Bytes (Small record)</option>
+            <option :value="128">128 Bytes (Standard state)</option>
+            <option :value="1024">1 KB (Medium JSON document)</option>
+            <option :value="4096">4 KB (Large page)</option>
+          </select>
+        </div>
+      </div>
+
+      <template #footer>
+        <button
+          type="button"
+          @click="showBenchModal = false"
+          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+        >
+          Close
+        </button>
+        <button
+          type="button"
+          @click="showBenchModal = false; handleRunBenchmark();"
+          :disabled="benchLoading"
+          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold shadow-lg shadow-cyan-600/20 transition"
+        >
+          <Zap class="w-3.5 h-3.5" />
+          {{ benchLoading ? 'Running Benchmark...' : 'Start Benchmark' }}
+        </button>
+      </template>
+    </Modal>
 
     <!-- Set Key Modal -->
     <Modal

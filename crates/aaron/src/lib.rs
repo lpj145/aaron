@@ -22,3 +22,12 @@ pub use admin_service::{
     AdminError,
     AdminService,
 };
+pub use control_plane_service::{
+    ClientRequest,
+    ClientResponse,
+    ControlPlaneConfig,
+    ControlPlaneHandle,
+    ControlPlaneNode,
+    ControlPlaneService,
+    RaftMessage,
+};
