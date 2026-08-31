@@ -120,6 +120,8 @@ impl Service for MembershipService {
         local_identity.cluster_id = Some(cluster_id);
 
         let table = MembershipTable::new(local_identity, local_addr);
+        let config_arc = std::sync::Arc::new(tokio::sync::RwLock::new(config.clone()));
+
         let ingress = IngressHandler::new(
             table.clone(),
             ctx.event_hub.clone(),
@@ -131,7 +133,7 @@ impl Service for MembershipService {
             table.clone(),
             ctx.event_hub.clone(),
             ctx.network.quic.clone(),
-            config.clone(),
+            config_arc.clone(),
         );
 
         // Initialize public MembershipHandle
@@ -140,6 +142,7 @@ impl Service for MembershipService {
                 table.clone(),
                 ctx.network.quic.clone(),
                 ctx.event_hub.clone(),
+                config_arc.clone(),
             )
             .await;
 

@@ -30,6 +30,7 @@ pub enum MembershipChange {
 struct TableEntry {
     member: Member,
     state_updated_at: Instant,
+    last_rtt: Option<Duration>,
 }
 
 /// Thread-safe cluster membership table implementing SWIM conflict resolution rules.
@@ -171,6 +172,7 @@ impl MembershipTable {
                 TableEntry {
                     member: update,
                     state_updated_at: Instant::now(),
+                    last_rtt: None,
                 },
             );
 
@@ -201,6 +203,44 @@ impl MembershipTable {
             {
                 list.push(entry.member.clone());
             }
+        }
+        list
+    }
+
+    /// Returns a list of all known members in the table (including Dead and Left), plus local node.
+    pub async fn all_members(&self) -> Vec<Member> {
+        let local = self.local_node.read().await.clone();
+        let table = self.entries.read().await;
+
+        let mut list = vec![local];
+        for entry in table.values() {
+            list.push(entry.member.clone());
+        }
+        list
+    }
+
+    /// Records the observed probe round-trip latency (RTT) for a member.
+    pub async fn record_rtt(&self, id: &Uuid, rtt: Duration) {
+        let mut table = self.entries.write().await;
+        if let Some(entry) = table.get_mut(id) {
+            entry.last_rtt = Some(rtt);
+        }
+    }
+
+    /// Retrieves the last measured RTT latency for a member.
+    pub async fn get_rtt(&self, id: &Uuid) -> Option<Duration> {
+        let table = self.entries.read().await;
+        table.get(id).and_then(|e| e.last_rtt)
+    }
+
+    /// Returns a list of all known members along with their last observed RTT latency.
+    pub async fn all_members_with_rtt(&self) -> Vec<(Member, Option<Duration>)> {
+        let local = self.local_node.read().await.clone();
+        let table = self.entries.read().await;
+
+        let mut list = vec![(local, Some(Duration::ZERO))];
+        for entry in table.values() {
+            list.push((entry.member.clone(), entry.last_rtt));
         }
         list
     }
@@ -327,6 +367,7 @@ impl MembershipTable {
                 TableEntry {
                     member: update,
                     state_updated_at: Instant::now(),
+                    last_rtt: None,
                 },
             );
             Some(change)

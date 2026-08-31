@@ -28,6 +28,7 @@ tempfile = "3"
 criterion = { version = "0.8", features = ["async_tokio", "html_reports"] }
 tracing-service = { path = "../tracing-service" }
 membership-service = { path = "../membership-service" }
+admin-service = { path = "../admin-service" }
 # Self-dependency so integration tests in `tests/` can opt into the
 # `test-util` feature (same pattern tokio itself uses) and reach the
 # supervisor internals without making them part of the normal public API.

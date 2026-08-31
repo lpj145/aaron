@@ -91,7 +91,8 @@ aaron/
 ├── crates/
 │   ├── node/                   # Core runtime host, Context, Supervision, Network, Store, EventHub, Error
 │   ├── tracing-service/        # Structured JSON/Pretty logging with dynamic runtime level reload
-│   └── membership-service/     # SWIM cluster membership & failure detection over QUIC FlatBuffers
+│   ├── membership-service/     # SWIM cluster membership & failure detection over QUIC FlatBuffers
+│   └── admin-service/          # Supervised HTTP dashboard serving embedded Vue.js SPA & REST/SSE APIs
 ├── schemas/
 │   └── membership.fbs          # FlatBuffers binary protocol definitions
 └── Cargo.toml                  # Workspace manifest
@@ -102,6 +103,7 @@ aaron/
 - **[`node`](./crates/node/README.md)**: Core runtime container providing `Node`, `Context`, `Service`, `ServiceConfig`, `EventHub`, `Network`, `Store`, and unified `Error`/`ErrorKind`.
 - **[`tracing-service`](./crates/tracing-service/README.md)**: Dynamic observability service reacting to `ChangeLogLevel` events via `EventHub`.
 - **[`membership-service`](./crates/membership-service/README.md)**: SWIM-based cluster membership, failure detection (Ping + PingReq), and gossip dissemination over QUIC with strict `cluster_id` authorization.
+- **[`admin-service`](./crates/admin-service/README.md)**: Embedded Vue.js 3 single-page application and REST/SSE management interface for cluster, keyspace, and runtime inspection.
 
 ---
 
@@ -120,6 +122,9 @@ cargo run --example tracing_node
 
 # 3. Cluster Membership with Admin Handle & SWIM Gossip
 cargo run --example cluster_admin
+
+# 4. Full Node with Embedded Vue.js Admin Dashboard (http://127.0.0.1:8080)
+cargo run --example admin_node
 ```
 
 ### Running Tests and Benchmarks
@@ -142,4 +147,5 @@ cargo clippy --all-targets --release
 - [Node Architecture & Service Development Guide](./crates/node/README.md)
 - [SWIM Membership Service & Protocol Specification](./crates/membership-service/README.md)
 - [Tracing Service & Dynamic Reloading](./crates/tracing-service/README.md)
+- [Admin Service & Vue.js Dashboard Guide](./crates/admin-service/README.md)
 - [Architectural Conventions & Directives](./CONVENTIONS.md)

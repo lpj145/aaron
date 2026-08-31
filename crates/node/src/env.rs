@@ -143,6 +143,11 @@ impl Env {
         self.read_tracked().clone()
     }
 
+    /// Returns a snapshot map of all currently loaded environment variables.
+    pub fn all_vars(&self) -> HashMap<String, String> {
+        self.read_envs().clone()
+    }
+
     /// Generates content for a `.env.example` file based on all tracked environment variables.
     pub fn generate_env_example(&self) -> String {
         let tracked = self.tracked();

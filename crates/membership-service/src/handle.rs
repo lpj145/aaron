@@ -3,8 +3,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{RwLock, watch};
-
-use crate::event::MembershipEvent;
+use crate::config::MembershipConfig;
+use crate::event::{MembershipEvent, UpdateSwimConfig};
 use crate::member::Member;
 use crate::stage::egress::EgressTransport;
 use crate::table::{MembershipChange, MembershipTable};
@@ -14,6 +14,7 @@ pub(crate) struct MembershipHandleInner {
     pub table: MembershipTable,
     pub quic: QuicManager,
     pub event_hub: EventHub,
+    pub config: Arc<RwLock<MembershipConfig>>,
 }
 
 /// A cloneable, thread-safe handle for querying cluster topology and performing dynamic operations.
@@ -47,12 +48,14 @@ impl MembershipHandle {
         table: MembershipTable,
         quic: QuicManager,
         event_hub: EventHub,
+        config: Arc<RwLock<MembershipConfig>>,
     ) {
         let mut guard = self.inner.write().await;
         *guard = Some(MembershipHandleInner {
             table,
             quic,
             event_hub,
+            config,
         });
         let _ = self.ready_tx.send(true);
     }
@@ -80,6 +83,36 @@ impl MembershipHandle {
         }
     }
 
+    /// Returns a list of all known cluster members in the topology table (including Dead and Left).
+    pub async fn all_members(&self) -> Vec<Member> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            inner.table.all_members().await
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Returns a list of all known cluster members with their last measured probe RTT latency.
+    pub async fn all_members_with_rtt(&self) -> Vec<(Member, Option<Duration>)> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            inner.table.all_members_with_rtt().await
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Returns the last measured RTT latency for a specific member UUID.
+    pub async fn get_rtt(&self, id: &Uuid) -> Option<Duration> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            inner.table.get_rtt(id).await
+        } else {
+            None
+        }
+    }
+
     /// Returns the local node's member representation if initialized.
     pub async fn local_member(&self) -> Option<Member> {
         let guard = self.inner.read().await;
@@ -97,6 +130,24 @@ impl MembershipHandle {
             inner.table.cluster_id().await
         } else {
             None
+        }
+    }
+
+    /// Returns the active SWIM protocol configuration.
+    pub async fn config(&self) -> Option<MembershipConfig> {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            Some(inner.config.read().await.clone())
+        } else {
+            None
+        }
+    }
+
+    /// Dynamically updates the active SWIM configuration parameters via EventHub.
+    pub async fn update_config(&self, update: UpdateSwimConfig) {
+        let guard = self.inner.read().await;
+        if let Some(inner) = &*guard {
+            inner.event_hub.publish(update).await;
         }
     }
 
@@ -127,6 +178,7 @@ impl MembershipHandle {
         };
 
         let local_member = inner.table.local_member().await;
+        let start_time = std::time::Instant::now();
         let (seed_cluster_id, members) = EgressTransport::join(
             &inner.quic,
             seed_addr,
@@ -134,6 +186,7 @@ impl MembershipHandle {
             Duration::from_millis(2000),
         )
         .await?;
+        let join_rtt = start_time.elapsed();
 
         if let Some(expected_cid) = inner.table.cluster_id().await {
             if seed_cluster_id != expected_cid {
@@ -146,6 +199,9 @@ impl MembershipHandle {
         }
 
         for m in &members {
+            if m.addr == seed_addr {
+                inner.table.record_rtt(&m.node_id.id(), join_rtt).await;
+            }
             if let Some(change) = inner.table.upsert(m.clone()).await {
                 let event = match change {
                     MembershipChange::Joined(m) => MembershipEvent::Joined(m),

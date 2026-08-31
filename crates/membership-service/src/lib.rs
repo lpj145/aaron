@@ -16,7 +16,7 @@ pub mod table;
 
 pub use config::MembershipConfig;
 pub use error::MembershipError;
-pub use event::{JoinClusterCommand, MembershipEvent};
+pub use event::{JoinClusterCommand, MembershipEvent, UpdateSwimConfig};
 pub use handle::MembershipHandle;
 pub use member::{Member, MemberStatus};
 pub use message::{Message, MessageError};

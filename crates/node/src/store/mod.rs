@@ -310,6 +310,16 @@ impl Store {
     pub fn raw_db(&self) -> Database {
         self.read_state().db.clone()
     }
+
+    /// Returns a list of all existing keyspace names in the database.
+    pub fn list_keyspaces(&self) -> Vec<String> {
+        self.read_state()
+            .db
+            .list_keyspace_names()
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect()
+    }
 }
 
 impl fmt::Debug for Store {

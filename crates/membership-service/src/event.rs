@@ -63,3 +63,18 @@ impl JoinClusterCommand {
         }
     }
 }
+
+/// Event published to `EventHub` to dynamically update SWIM probe parameters at runtime.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct UpdateSwimConfig {
+    /// New direct probe interval.
+    pub probe_interval: Option<std::time::Duration>,
+    /// New direct probe timeout.
+    pub probe_timeout: Option<std::time::Duration>,
+    /// New suspicion window before declaring a node Dead.
+    pub suspect_timeout: Option<std::time::Duration>,
+    /// Number of random indirect ping intermediaries (k).
+    pub indirect_ping_targets: Option<usize>,
+    /// Gossip dissemination fanout (beta).
+    pub gossip_fanout: Option<usize>,
+}
