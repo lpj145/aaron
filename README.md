@@ -3,7 +3,7 @@
 An opinionated, high-performance distributed systems runtime and actor-service framework in Rust, designed for resilient peer-to-peer (P2P) networking, embedded LSM-tree persistence, lockless event-driven architecture, and supervised service lifecycles.
 
 > **Origins & Vision**:
-> Aaron represents the culmination of **5 years of research, architectural experiments, and distributed systems engineering**. Bringing a runtime of this scope and precision to life is an immense challenge for a solo developer—accelerated and made tangible through pair-programming with **Gemini**. Every model, invariant, and subsystem in Aaron was designed by a mind deeply dedicated to **correctness, mechanical efficiency, and long-term architectural clarity**.
+> Aaron represents the culmination of **5 years of research, architectural experiments, and distributed systems engineering**. Not 5 years of experience but a decade of trying to build system that really work's as expected and scale well. I've written many docs, hand papers, diagrams on many tools, a lot of loc's trying make this work's very closest to the vision that I have in mind, to be honest maybe this version is a 52 version of the project but work's and look's very closest to what I thought. Bringing this such system is very difficult for a solo developer and that's why I used Gemini to build and maintain those pieces, but I try hard to architect it and put strong pattern decisions, perfect? not even close, but if you have something please open issue or contact me.
 
 ---
 
