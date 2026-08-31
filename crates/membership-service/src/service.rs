@@ -91,7 +91,7 @@ impl Service for MembershipService {
 
         // Notify Node runtime to bind and persist cluster ID
         ctx.event_hub
-            .publish(node::BindClusterIdCommand::new(cluster_id))
+            .publish(node::NodeEvents::BindClusterId { cluster_id })
             .await;
 
         // 3. Bind QUIC server endpoint with TLS certificate bound to this node's UUID
@@ -101,7 +101,11 @@ impl Service for MembershipService {
             .listen_for_node(&config.bind_addr, ctx.identity.id())
             .await?;
 
-        let local_addr = endpoint.local_addr()?;
+        let mut local_addr = endpoint.local_addr()?;
+        if local_addr.ip().is_unspecified() {
+            local_addr = ctx.env.resolve_socket_addr(local_addr);
+        }
+
         info!(
             target: "membership",
             bind_addr = %config.bind_addr,
@@ -141,53 +145,90 @@ impl Service for MembershipService {
 
         // 5. Bootstrap cluster join by contacting configured seed nodes
         let local_member = table.local_member().await;
-        for seed_str in &config.seeds {
-            if let Ok(seed_addr) = SocketAddr::from_str(seed_str) {
-                if seed_addr == local_addr {
-                    continue; // Skip self
-                }
+        if !config.seeds.is_empty() {
+            let mut joined = false;
+            for attempt in 1..=5 {
+                for seed_str in &config.seeds {
+                    let seed_addrs: Vec<SocketAddr> = match tokio::net::lookup_host(seed_str).await {
+                        Ok(addrs) => addrs.collect(),
+                        Err(_) => match SocketAddr::from_str(seed_str) {
+                            Ok(addr) => vec![addr],
+                            Err(err) => {
+                                warn!(
+                                    target: "membership",
+                                    seed = %seed_str,
+                                    attempt = attempt,
+                                    error = %err,
+                                    "Could not parse or resolve seed address"
+                                );
+                                vec![]
+                            }
+                        },
+                    };
 
-                info!(target: "membership", seed = %seed_addr, cluster_id = %cluster_id, "Attempting to join cluster via seed node");
-                match EgressTransport::join(
-                    &ctx.network.quic,
-                    seed_addr,
-                    local_member.clone(),
-                    Duration::from_millis(1000),
-                )
-                .await
-                {
-                    Ok((seed_cluster_id, members)) => {
-                        if seed_cluster_id != cluster_id {
-                            warn!(
-                                target: "membership",
-                                seed = %seed_addr,
-                                expected_cluster = %cluster_id,
-                                seed_cluster = %seed_cluster_id,
-                                "Seed node returned mismatched cluster_id, rejecting join"
-                            );
-                            continue;
+                    for seed_addr in seed_addrs {
+                        if seed_addr == local_addr {
+                            continue; // Skip self
                         }
 
-                        info!(
-                            target: "membership",
-                            seed = %seed_addr,
-                            cluster_id = %cluster_id,
-                            discovered = members.len(),
-                            "Successfully joined cluster"
-                        );
-                        for m in members {
-                            ingress.process_member_update(m).await;
+                        info!(target: "membership", seed = %seed_addr, cluster_id = %cluster_id, attempt = attempt, "Attempting to join cluster via seed node");
+                        match EgressTransport::join(
+                            &ctx.network.quic,
+                            seed_addr,
+                            local_member.clone(),
+                            Duration::from_millis(1500),
+                        )
+                        .await
+                        {
+                            Ok((seed_cluster_id, members)) => {
+                                if seed_cluster_id != cluster_id {
+                                    warn!(
+                                        target: "membership",
+                                        seed = %seed_addr,
+                                        expected_cluster = %cluster_id,
+                                        seed_cluster = %seed_cluster_id,
+                                        "Seed node returned mismatched cluster_id, rejecting join"
+                                    );
+                                    continue;
+                                }
+
+                                info!(
+                                    target: "membership",
+                                    seed = %seed_addr,
+                                    cluster_id = %cluster_id,
+                                    discovered = members.len(),
+                                    "Successfully joined cluster"
+                                );
+                                for m in members {
+                                    ingress.process_member_update(m).await;
+                                }
+                                joined = true;
+                                break;
+                            }
+                            Err(err) => {
+                                warn!(
+                                    target: "membership",
+                                    seed = %seed_addr,
+                                    attempt = attempt,
+                                    error = %err,
+                                    "Failed to contact seed node"
+                                );
+                            }
                         }
+                    }
+
+                    if joined {
                         break;
                     }
-                    Err(err) => {
-                        warn!(
-                            target: "membership",
-                            seed = %seed_addr,
-                            error = %err,
-                            "Failed to contact seed node, trying next"
-                        );
-                    }
+                }
+
+                if joined || ctx.token.is_cancelled() {
+                    break;
+                }
+
+                tokio::select! {
+                    _ = ctx.token.cancelled() => break,
+                    _ = tokio::time::sleep(Duration::from_millis(1000)) => {}
                 }
             }
         }

@@ -166,6 +166,41 @@ impl Env {
         std::fs::write(path, content)?;
         Ok(())
     }
+
+    /// Returns the primary detected local IPv4 address as `Ipv4Addr`.
+    pub fn primary_ipv4(&self) -> Option<Ipv4Addr> {
+        self.ipv4.first().and_then(|s| s.parse().ok())
+    }
+
+    /// Returns the primary detected local IPv6 address as `Ipv6Addr`.
+    pub fn primary_ipv6(&self) -> Option<Ipv6Addr> {
+        self.ipv6.first().and_then(|s| s.parse().ok())
+    }
+
+    /// Resolves an unspecified IP (0.0.0.0 or ::) to the primary non-loopback IP detected on network interfaces.
+    pub fn resolve_ip(&self, ip: std::net::IpAddr) -> std::net::IpAddr {
+        if ip.is_unspecified() {
+            match ip {
+                std::net::IpAddr::V4(_) => self
+                    .primary_ipv4()
+                    .map(std::net::IpAddr::V4)
+                    .unwrap_or(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST)),
+                std::net::IpAddr::V6(_) => self
+                    .primary_ipv6()
+                    .map(std::net::IpAddr::V6)
+                    .unwrap_or(std::net::IpAddr::V6(Ipv6Addr::LOCALHOST)),
+            }
+        } else {
+            ip
+        }
+    }
+
+    /// Resolves an unspecified SocketAddr (e.g. 0.0.0.0:7946) to the primary non-loopback IP with the same port.
+    pub fn resolve_socket_addr(&self, addr: std::net::SocketAddr) -> std::net::SocketAddr {
+        let mut resolved = addr;
+        resolved.set_ip(self.resolve_ip(addr.ip()));
+        resolved
+    }
 }
 
 fn simplify_type_name(type_name: &str) -> String {
