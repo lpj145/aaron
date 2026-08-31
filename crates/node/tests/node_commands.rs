@@ -1,7 +1,4 @@
-use node::{
-    BindClusterIdCommand, BoxError, CancellationToken, Context, Node, NodeId, Service,
-    StartServiceCommand, Store, Uuid,
-};
+use node::{BoxError, CancellationToken, Context, Node, NodeEvents, NodeId, Service, Store, Uuid};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
@@ -43,19 +40,19 @@ impl Service for SpawnerService {
 
         // Dynamically spawn 2 more instances of "dynamic-worker"
         ctx.event_hub
-            .publish(StartServiceCommand::new("dynamic-worker"))
+            .publish(NodeEvents::StartService { name: "dynamic-worker".to_owned() })
             .await;
         tokio::time::sleep(Duration::from_millis(50)).await;
 
         ctx.event_hub
-            .publish(StartServiceCommand::new("dynamic-worker"))
+            .publish(NodeEvents::StartService { name: "dynamic-worker".to_owned() })
             .await;
         tokio::time::sleep(Duration::from_millis(50)).await;
 
         // Also publish a BindClusterIdCommand to test persistence
         let test_cluster_id = Uuid::random();
         ctx.event_hub
-            .publish(BindClusterIdCommand::new(test_cluster_id))
+            .publish(NodeEvents::BindClusterId { cluster_id: test_cluster_id })
             .await;
         tokio::time::sleep(Duration::from_millis(100)).await;
 

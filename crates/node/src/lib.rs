@@ -1,13 +1,13 @@
 pub use service::{
-    AnonymousService, BackoffStrategy, BindClusterIdCommand, BoxError, ConfigError, ConfigField,
-    Context, RestartPolicy, Service, ServiceConfig, ServiceHandler, ServiceOpts,
-    StartServiceCommand, service_fn,
+    AnonymousService, BackoffStrategy, BoxError, ConfigError, ConfigField, Context, RestartPolicy,
+    Service, ServiceConfig, ServiceHandler, ServiceOpts, service_fn,
 };
 use std::{path::Path, path::PathBuf, sync::Arc, time::Duration};
 use tokio::task::JoinSet;
 pub use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
+pub use crate::events::NodeEvents;
 // `supervise`/`SupervisedService`/`TaskResult` are internal plumbing, not part
 // of the normal public API — but exposed under `test-util` so integration
 // tests in `tests/` can exercise them directly instead of only through `Node`.
@@ -37,6 +37,7 @@ pub use store::{
 
 mod env;
 mod event_hub;
+mod events;
 mod identity;
 mod network;
 mod service;
@@ -312,8 +313,7 @@ impl Node {
         );
 
         // Subscriptions for Node core management
-        let mut bind_cluster_sub = event_hub.subscribe::<BindClusterIdCommand>().await;
-        let mut start_service_sub = event_hub.subscribe::<StartServiceCommand>().await;
+        let mut node_events = event_hub.subscribe::<NodeEvents>().await;
 
         // 7. Supervised execution
         let mut tasks: JoinSet<TaskResult> = JoinSet::new();
@@ -335,19 +335,17 @@ impl Node {
                     token.cancel();
                     break;
                 },
-                cmd = bind_cluster_sub.recv() => {
-                    if let Ok(BindClusterIdCommand { cluster_id }) = cmd
-                        && let Err(err) = Self::update_persisted_cluster_id(&store, cluster_id)
-                    {
-                        error!("Failed to update node cluster identity: {err}");
-                    }
-                },
-                cmd = start_service_sub.recv() => {
-                    if let Ok(StartServiceCommand { service_name }) = cmd {
-                        if let Some(target_svc) = services.iter().find(|s| s.service.dyn_name() == service_name) {
+                event = node_events.recv() => match event {
+                    Ok(NodeEvents::BindClusterId { cluster_id }) => {
+                        Self::update_persisted_cluster_id(&store, cluster_id).unwrap_or_else(|err| {
+                            error!("Failed to update cluster identity {err}");
+                        });
+                    },
+                    Ok(NodeEvents::StartService { name }) => {
+                        if let Some(target_svc) = services.iter().find(|s| s.service.dyn_name() == name) {
                             info!(
                                 target: "node",
-                                service = %service_name,
+                                service = %name,
                                 "Spawning dynamic service instance via StartServiceCommand"
                             );
                             tasks.spawn(supervise(
@@ -358,10 +356,13 @@ impl Node {
                         } else {
                             warn!(
                                 target: "node",
-                                service = %service_name,
+                                service = %name,
                                 "StartServiceCommand received for unregistered service name"
                             );
                         }
+                    },
+                    Err(err) => {
+                        error!("Error during get event {err}");
                     }
                 },
                 task = tasks.join_next() => {
