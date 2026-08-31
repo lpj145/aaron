@@ -1,2 +1,19 @@
+# Rust
 /target
 /data
+*.jnl
+
+# Node & Frontend
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+
+# Logs & Temporary Files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local
+.env.*.local
+.DS_Store
