@@ -127,16 +127,18 @@ impl ControlPlaneNetwork {
             Ok::<Vec<u8>, RPCError<u64, ControlPlaneNode, RaftError<u64>>>(resp_bytes)
         };
 
-        tokio::time::timeout(timeout, send_future)
-            .await
-            .map_err(|_| {
-                RPCError::Timeout(openraft::error::Timeout {
+        match tokio::time::timeout(timeout, send_future).await {
+            Ok(res) => res,
+            Err(_) => {
+                *self.cached_conn.lock().await = None;
+                Err(RPCError::Timeout(openraft::error::Timeout {
                     action: RPCTypes::Vote,
                     id: self.target,
                     target: self.target,
                     timeout,
-                })
-            })?
+                }))
+            }
+        }
     }
 }
 

@@ -139,6 +139,49 @@ impl ControlPlaneStorage {
             }
         }
 
+        // 5. Load last applied log id
+        if let Ok(Some(applied_bytes)) = ks.get(b"meta/last_applied") {
+            if applied_bytes.len() >= 16 {
+                let term = u64::from_le_bytes(applied_bytes[0..8].try_into().unwrap());
+                let index = u64::from_le_bytes(applied_bytes[8..16].try_into().unwrap());
+                *self.last_applied.write().await = Some(LogId::new(CommittedLeaderId::new(term, 0u64), index));
+            }
+        }
+
+        // 6. Load last membership
+        if let Ok(Some(sm_bytes)) = ks.get(b"meta/last_membership") {
+            if sm_bytes.len() >= 20 {
+                let term = u64::from_le_bytes(sm_bytes[0..8].try_into().unwrap());
+                let index = u64::from_le_bytes(sm_bytes[8..16].try_into().unwrap());
+                let len = u32::from_le_bytes(sm_bytes[16..20].try_into().unwrap()) as usize;
+                if sm_bytes.len() >= 20 + len {
+                    if let EntryPayload::Membership(mem) = decode_payload(&sm_bytes[20..20 + len]) {
+                        *self.last_membership.write().await = StoredMembership::new(
+                            Some(LogId::new(CommittedLeaderId::new(term, 0u64), index)),
+                            mem,
+                        );
+                    }
+                }
+            }
+        }
+
+        // Fallback: If last_membership is still empty, scan log backwards to recover membership
+        if self.last_membership.read().await.membership().nodes().next().is_none() {
+            for (_, entry) in log_guard.iter().rev() {
+                if let EntryPayload::Membership(ref mem) = entry.payload {
+                    *self.last_membership.write().await = StoredMembership::new(Some(entry.log_id), mem.clone());
+                    break;
+                }
+            }
+        }
+
+        // Fallback: If last_applied is still None, recover from highest log entry
+        if self.last_applied.read().await.is_none() {
+            if let Some((_, last_entry)) = log_guard.iter().next_back() {
+                *self.last_applied.write().await = Some(last_entry.log_id);
+            }
+        }
+
         Ok(())
     }
 
@@ -287,6 +330,12 @@ impl RaftStorage<TypeConfig> for ControlPlaneStorage {
         for entry in entries {
             *self.last_applied.write().await = Some(entry.log_id);
 
+            // Persist last_applied metadata
+            let mut applied_bytes = Vec::with_capacity(16);
+            applied_bytes.extend_from_slice(&entry.log_id.leader_id.term.to_le_bytes());
+            applied_bytes.extend_from_slice(&entry.log_id.index.to_le_bytes());
+            let _ = ks.insert(b"meta/last_applied", applied_bytes.as_slice());
+
             match entry.payload {
                 EntryPayload::Blank => {
                     res.push(ClientResponse {
@@ -315,7 +364,18 @@ impl RaftStorage<TypeConfig> for ControlPlaneStorage {
                     }
                 },
                 EntryPayload::Membership(ref mem) => {
-                    *self.last_membership.write().await = StoredMembership::new(Some(entry.log_id), mem.clone());
+                    let sm = StoredMembership::new(Some(entry.log_id), mem.clone());
+                    *self.last_membership.write().await = sm;
+
+                    // Persist last_membership metadata to disk
+                    let mem_payload = encode_payload(&EntryPayload::Membership(mem.clone()));
+                    let mut stored_mem_bytes = Vec::with_capacity(20 + mem_payload.len());
+                    stored_mem_bytes.extend_from_slice(&entry.log_id.leader_id.term.to_le_bytes());
+                    stored_mem_bytes.extend_from_slice(&entry.log_id.index.to_le_bytes());
+                    stored_mem_bytes.extend_from_slice(&(mem_payload.len() as u32).to_le_bytes());
+                    stored_mem_bytes.extend_from_slice(&mem_payload);
+                    let _ = ks.insert(b"meta/last_membership", stored_mem_bytes.as_slice());
+
                     res.push(ClientResponse {
                         success: true,
                         value: None,
@@ -421,5 +481,70 @@ impl RaftSnapshotBuilder<TypeConfig> for ControlPlaneStorage {
         *self.current_snapshot.write().await = Some(snapshot.clone());
 
         Ok(snapshot)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::ControlPlaneNode;
+    use node::{Context, Env, EventHub, Network, NodeId, Store, Uuid};
+    use openraft::Membership;
+    use std::sync::Arc;
+    use tempfile::tempdir;
+    use tokio_util::sync::CancellationToken;
+
+    #[tokio::test]
+    async fn test_storage_restart_recovery_of_membership_and_applied() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let tmp = tempdir().map_err(|e| e.to_string())?;
+        let store = Store::open(&tmp).map_err(|e| e.to_string())?;
+        let ctx = Context::new(
+            EventHub::new(),
+            Network::new(),
+            store.clone(),
+            NodeId::new(Uuid::random(), 1, None),
+            Arc::new(Env::detect()),
+            CancellationToken::new(),
+        );
+
+        // 1. Initial boot: write membership and normal log entries
+        let mut storage = ControlPlaneStorage::new(ctx.clone(), "control-plane").await?;
+        let node_id = 100u64;
+        let mut nodes = BTreeMap::new();
+        nodes.insert(node_id, ControlPlaneNode::new("10.0.0.1:18946", Uuid::random()));
+        let membership = Membership::new(vec![std::collections::BTreeSet::from([node_id])], nodes);
+
+        let mem_entry = Entry {
+            log_id: LogId::new(CommittedLeaderId::new(1, 0), 1),
+            payload: EntryPayload::Membership(membership.clone()),
+        };
+        let normal_entry = Entry {
+            log_id: LogId::new(CommittedLeaderId::new(1, 0), 2),
+            payload: EntryPayload::Normal(ClientRequest::Set {
+                key: "cluster/status".to_string(),
+                value: "active".to_string(),
+            }),
+        };
+
+        storage.append_to_log(vec![mem_entry.clone(), normal_entry.clone()]).await?;
+        storage.apply_to_state_machine(&[mem_entry, normal_entry]).await?;
+
+        let (applied, mem) = storage.last_applied_state().await?;
+        assert_eq!(applied.unwrap().index, 2);
+        assert_eq!(mem.membership().voter_ids().collect::<Vec<_>>(), vec![100]);
+
+        // 2. Simulate Node Crash / Restart (Create new storage instance from same underlying store)
+        let mut recovered_storage = ControlPlaneStorage::new(ctx, "control-plane").await?;
+        let (rec_applied, rec_mem) = recovered_storage.last_applied_state().await?;
+
+        assert_eq!(rec_applied.unwrap().index, 2, "last_applied must be preserved across restarts");
+        assert_eq!(
+            rec_mem.membership().voter_ids().collect::<Vec<_>>(),
+            vec![100],
+            "membership must be preserved across restarts"
+        );
+        assert_eq!(recovered_storage.get_data("cluster/status").await, Some("active".to_string()));
+
+        Ok(())
     }
 }
