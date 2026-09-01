@@ -238,43 +238,6 @@ onUnmounted(() => {
     </div>
 
     <template v-else>
-    <!-- Stats Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Slots</div>
-        <div class="text-2xl font-black text-white font-mono">
-          {{ overview?.total_shards ?? 1024 }}
-        </div>
-      </div>
-
-      <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Assigned Partitions</div>
-        <div class="text-2xl font-black text-indigo-400 font-mono">
-          {{ overview?.assigned_count ?? 0 }}
-        </div>
-      </div>
-
-      <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Active Cluster Nodes</div>
-        <div class="text-2xl font-black text-emerald-400 font-mono">
-          {{ aliveMembers.length }}
-        </div>
-      </div>
-
-      <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Control Plane Raft</div>
-        <div class="flex items-center gap-2 mt-1">
-          <span
-            class="w-2.5 h-2.5 rounded-full"
-            :class="overview?.is_control_plane_ready ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-amber-400 animate-pulse'"
-          ></span>
-          <span class="text-xs font-bold text-slate-200">
-            {{ overview?.is_control_plane_ready ? (overview.is_leader ? 'Leader Active' : 'Quorum Connected') : 'No Raft Quorum' }}
-          </span>
-        </div>
-      </div>
-    </div>
-
     <!-- Shards Table -->
     <div class="rounded-2xl bg-slate-900/60 border border-slate-800/80 overflow-hidden">
       <!-- Search & Filter bar -->
