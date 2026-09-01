@@ -96,6 +96,12 @@ async fn test_stage1_round_robin_and_manual_assignment() -> Result<(), Box<dyn s
         .await?;
     assert_eq!(assigned_count, 16);
 
+    // Tentativa de executar Bootstrap uma 2ª vez DEVE ser estritamente bloqueada
+    let second_bootstrap = coord
+        .bootstrap_round_robin(&[uuid_a, uuid_b, uuid_c], Some(&ctx))
+        .await;
+    assert!(matches!(second_bootstrap, Err(ShardError::AlreadyBootstrapped)));
+
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     // Verifica que todos os 16 shards foram designados e sincronizados

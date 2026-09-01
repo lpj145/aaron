@@ -22,6 +22,7 @@ pub fn router() -> Router<AppState> {
 struct ShardsOverviewResponse {
     total_shards: u32,
     assigned_count: usize,
+    is_bootstrapped: bool,
     is_control_plane_ready: bool,
     is_leader: bool,
     current_leader: Option<u64>,
@@ -40,11 +41,15 @@ async fn get_shards_overview(State(state): State<AppState>) -> impl IntoResponse
     };
 
     let total_shards = shard_handle.total_shards().await;
+    let mut is_bootstrapped = shard_handle.is_bootstrapped().await;
     let mut placements = shard_handle.all_placements().await;
 
     // Se o Control Plane tiver placements no Raft ainda não sincronizados, mescla
     if let Some(cp) = &state.control_plane {
         let all_data = cp.all_data().await;
+        if all_data.contains_key("shards/system/bootstrapped") {
+            is_bootstrapped = true;
+        }
         for (k, v) in all_data {
             if let Some(shard_id_str) = k.strip_prefix("shards/") {
                 if let Ok(shard_id) = shard_id_str.parse::<u32>() {
@@ -56,6 +61,10 @@ async fn get_shards_overview(State(state): State<AppState>) -> impl IntoResponse
                 }
             }
         }
+    }
+
+    if !placements.is_empty() {
+        is_bootstrapped = true;
     }
 
     placements.sort_by_key(|p| p.shard_id);
@@ -78,6 +87,7 @@ async fn get_shards_overview(State(state): State<AppState>) -> impl IntoResponse
         Json(serde_json::json!(ShardsOverviewResponse {
             total_shards,
             assigned_count: placements.len(),
+            is_bootstrapped,
             is_control_plane_ready,
             is_leader,
             current_leader,

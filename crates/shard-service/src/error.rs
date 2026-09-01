@@ -6,6 +6,9 @@ pub enum ShardError {
     #[snafu(display("Control Plane Raft quorum is not available or local node is not the elected leader"))]
     ControlPlaneUnavailable,
 
+    #[snafu(display("Bootstrap Round-Robin has already been completed on this cluster. Automatic mass redistribution is disabled"))]
+    AlreadyBootstrapped,
+
     #[snafu(display("Manual shard assignment requires at least 3 distinct nodes (1 Primary + >=2 Replicas), but received {count} nodes"))]
     InsufficientNodes { count: usize },
 

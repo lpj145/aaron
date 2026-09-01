@@ -62,6 +62,9 @@ impl ShardCoordinator {
     /// Sincroniza as partições existentes no Raft para a memória local.
     pub async fn sync_from_raft(&self, _ctx: &Context) {
         let all_data = self.control_plane.all_data().await;
+        if all_data.contains_key("shards/system/bootstrapped") {
+            self.handle.set_bootstrapped(true).await;
+        }
         for (k, v) in all_data {
             if let Some(shard_id_str) = k.strip_prefix("shards/") {
                 if let Ok(_shard_id) = shard_id_str.parse::<ShardId>() {
@@ -91,6 +94,13 @@ impl ShardCoordinator {
         ctx: Option<&Context>,
     ) -> Result<usize, ShardError> {
         self.check_control_plane_health()?;
+
+        // Validação: Bootstrap só pode ocorrer UMA ÚNICA VEZ para evitar rebalance acidental
+        if self.handle.is_bootstrapped().await
+            || self.control_plane.get("shards/system/bootstrapped").await.is_some()
+        {
+            return Err(ShardError::AlreadyBootstrapped);
+        }
 
         // Validação: Mínimo de 3 nós selecionados para garantir quórum de replicação
         if nodes.len() < 3 {
@@ -138,6 +148,13 @@ impl ShardCoordinator {
             self.handle.update_placement(placement).await;
             assigned += 1;
         }
+
+        // Grava no consenso do Control Plane que o bootstrap inicial foi concluído
+        let _ = self
+            .control_plane
+            .set("shards/system/bootstrapped", "true")
+            .await;
+        self.handle.set_bootstrapped(true).await;
 
         info!(
             target: "shard_coordinator",

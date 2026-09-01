@@ -185,6 +185,7 @@ onUnmounted(() => {
         </button>
 
         <button
+          v-if="!overview?.is_bootstrapped && (overview?.assigned_count ?? 0) === 0"
           @click="handleBootstrapRoundRobin"
           :disabled="actionLoading || !overview?.is_control_plane_ready || aliveMembers.length < 3"
           class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50"

@@ -101,6 +101,7 @@ export interface ShardPlacement {
 export interface ShardsOverviewResponse {
   total_shards: number;
   assigned_count: number;
+  is_bootstrapped: boolean;
   is_control_plane_ready: boolean;
   is_leader: boolean;
   current_leader: number | null;

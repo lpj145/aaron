@@ -7,6 +7,7 @@ use tokio::sync::RwLock;
 struct Inner {
     local_node_id: Uuid,
     total_shards: u32,
+    bootstrapped: bool,
     placements: BTreeMap<ShardId, ShardPlacement>,
 }
 
@@ -22,6 +23,7 @@ impl ShardHandle {
             inner: Arc::new(RwLock::new(Inner {
                 local_node_id,
                 total_shards,
+                bootstrapped: false,
                 placements: BTreeMap::new(),
             })),
         }
@@ -41,6 +43,15 @@ impl ShardHandle {
 
     pub async fn set_total_shards(&self, total: u32) {
         self.inner.write().await.total_shards = total;
+    }
+
+    pub async fn is_bootstrapped(&self) -> bool {
+        let inner = self.inner.read().await;
+        inner.bootstrapped || !inner.placements.is_empty()
+    }
+
+    pub async fn set_bootstrapped(&self, val: bool) {
+        self.inner.write().await.bootstrapped = val;
     }
 
     pub async fn get_placement(&self, shard_id: ShardId) -> Option<ShardPlacement> {
