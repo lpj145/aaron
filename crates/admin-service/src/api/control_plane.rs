@@ -256,7 +256,7 @@ pub async fn init_control_plane_cluster(
 }
 
 /// Transparently proxies a Control Plane mutating request to the current Raft leader's Admin Service HTTP port.
-async fn proxy_request_to_leader<T: Serialize>(
+pub(crate) async fn proxy_request_to_leader<T: Serialize>(
     state: &AppState,
     leader_id: u64,
     path: &str,

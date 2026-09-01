@@ -96,7 +96,7 @@ async fn get_shards_overview(State(state): State<AppState>) -> impl IntoResponse
     )
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct BootstrapRequest {
     nodes: Option<Vec<Uuid>>,
 }
@@ -104,16 +104,28 @@ struct BootstrapRequest {
 async fn bootstrap_round_robin(
     State(state): State<AppState>,
     Json(req): Json<BootstrapRequest>,
-) -> impl IntoResponse {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     let (shard_handle, cp_handle) = match (&state.shard, &state.control_plane) {
         (Some(s), Some(cp)) => (s, cp),
         _ => {
-            return (
+            return Err((
                 StatusCode::SERVICE_UNAVAILABLE,
                 Json(serde_json::json!({ "error": "Shard or Control Plane service not configured" })),
-            )
+            ))
         }
     };
+
+    // Se o nó local não for o líder Raft atual, redireciona transparentemente a requisição para o líder
+    if !cp_handle.is_leader()
+        && let Some(leader_id) = cp_handle.current_leader() {
+            return crate::api::control_plane::proxy_request_to_leader(
+                &state,
+                leader_id,
+                "/api/shards/bootstrap",
+                reqwest::Method::POST,
+                Some(&req),
+            ).await;
+        }
 
     let total_shards = shard_handle.total_shards().await;
     let coord = ShardCoordinator::new(
@@ -141,23 +153,20 @@ async fn bootstrap_round_robin(
     };
 
     match coord.bootstrap_round_robin(&target_nodes, Some(&state.ctx)).await {
-        Ok(count) => (
-            StatusCode::OK,
-            Json(serde_json::json!({
-                "success": true,
-                "assigned_count": count,
-                "total_shards": total_shards,
-                "nodes": target_nodes,
-            })),
-        ),
-        Err(e) => (
+        Ok(count) => Ok(Json(serde_json::json!({
+            "success": true,
+            "assigned_count": count,
+            "total_shards": total_shards,
+            "nodes": target_nodes,
+        }))),
+        Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({ "error": format!("{e}") })),
-        ),
+        )),
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct AssignManualRequest {
     shard_id: u32,
     primary: Uuid,
@@ -167,16 +176,28 @@ struct AssignManualRequest {
 async fn assign_manual(
     State(state): State<AppState>,
     Json(req): Json<AssignManualRequest>,
-) -> impl IntoResponse {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     let (shard_handle, cp_handle) = match (&state.shard, &state.control_plane) {
         (Some(s), Some(cp)) => (s, cp),
         _ => {
-            return (
+            return Err((
                 StatusCode::SERVICE_UNAVAILABLE,
                 Json(serde_json::json!({ "error": "Shard or Control Plane service not configured" })),
-            )
+            ))
         }
     };
+
+    // Se o nó local não for o líder Raft atual, redireciona transparentemente a requisição para o líder
+    if !cp_handle.is_leader()
+        && let Some(leader_id) = cp_handle.current_leader() {
+            return crate::api::control_plane::proxy_request_to_leader(
+                &state,
+                leader_id,
+                "/api/shards/assign",
+                reqwest::Method::POST,
+                Some(&req),
+            ).await;
+        }
 
     let total_shards = shard_handle.total_shards().await;
     let coord = ShardCoordinator::new(
@@ -190,16 +211,13 @@ async fn assign_manual(
     );
 
     match coord.assign_manual(req.shard_id, req.primary, req.replicas, Some(&state.ctx)).await {
-        Ok(placement) => (
-            StatusCode::OK,
-            Json(serde_json::json!({
-                "success": true,
-                "placement": placement,
-            })),
-        ),
-        Err(e) => (
+        Ok(placement) => Ok(Json(serde_json::json!({
+            "success": true,
+            "placement": placement,
+        }))),
+        Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({ "error": format!("{e}") })),
-        ),
+        )),
     }
 }
