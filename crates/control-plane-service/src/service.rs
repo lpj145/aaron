@@ -119,6 +119,7 @@ impl Service for ControlPlaneService {
         // 3. Instantiate Network and Storage implementations
         let network_factory = ControlPlaneNetworkFactory::new(ctx.network.quic.clone());
         let routing_table = network_factory.routing_table();
+        let routing_table_sub = routing_table.clone();
         let mut membership_sub = ctx.event_hub.subscribe::<MembershipEvent>().await;
         let token_sub = ctx.token.clone();
         tokio::spawn(async move {
@@ -137,7 +138,7 @@ impl Service for ControlPlaneService {
                                     m.addr.port() + 1000
                                 };
                                 let cp_addr = SocketAddr::new(m.addr.ip(), cp_port);
-                                routing_table.write().await.insert(node_id_u64, cp_addr);
+                                routing_table_sub.write().await.insert(node_id_u64, cp_addr);
                                 trace!(
                                     target: "control_plane",
                                     node_id = node_id_u64,
@@ -170,7 +171,16 @@ impl Service for ControlPlaneService {
 
         let metrics_rx = raft.metrics();
 
-        self.handle.init(raft.clone(), storage.clone(), metrics_rx, node_id);
+        self.handle.init(
+            raft.clone(),
+            storage.clone(),
+            metrics_rx,
+            node_id,
+            ctx.identity.id(),
+            ctx.network.quic.clone(),
+            ctx.event_hub.clone(),
+            routing_table.clone(),
+        );
 
         // 4. Bind dedicated QUIC listener for Control Plane RPCs
         let endpoint: quinn::Endpoint = ctx
@@ -204,6 +214,7 @@ impl Service for ControlPlaneService {
 
                     let raft_conn = raft_clone.clone();
                     let conn_token = token.child_token();
+                    let conn_event_hub = ctx.event_hub.clone();
 
                     tokio::spawn(async move {
                         let connection: quinn::Connection = match connecting.await {
@@ -224,6 +235,7 @@ impl Service for ControlPlaneService {
                                     };
 
                                     let r = raft_conn.clone();
+                                    let event_hub = conn_event_hub.clone();
                                     tokio::spawn(async move {
                                         let rpc_task = async {
                                             let req_bytes: Vec<u8> = match read_frame(&mut recv).await {
@@ -272,6 +284,47 @@ impl Service for ControlPlaneService {
                                                             warn!(target: "control_plane", error = ?e, "InstallSnapshot RPC failed");
                                                             return;
                                                         }
+                                                    }
+                                                }
+                                                RaftMessage::ShardCommand {
+                                                    shard_id,
+                                                    role,
+                                                    primary_high,
+                                                    primary_low,
+                                                    replicas,
+                                                    epoch,
+                                                } => {
+                                                    let shard_role = if role == 0 {
+                                                        node::ShardRole::Primary
+                                                    } else {
+                                                        node::ShardRole::Replica
+                                                    };
+                                                    let primary = node::Uuid::new(primary_high, primary_low);
+                                                    let replica_uuids = replicas
+                                                        .into_iter()
+                                                        .map(|(h, l)| node::Uuid::new(h, l))
+                                                        .collect();
+
+                                                    let event = node::ShardEvent::Assigned {
+                                                        shard_id,
+                                                        role: shard_role,
+                                                        primary,
+                                                        replicas: replica_uuids,
+                                                        epoch,
+                                                    };
+
+                                                    info!(
+                                                        target: "control_plane",
+                                                        shard_id = shard_id,
+                                                        role = ?shard_role,
+                                                        "Received ShardCommand frame from Control Plane, dispatching ShardEvent to EventHub"
+                                                    );
+
+                                                    event_hub.publish(event).await;
+
+                                                    RaftMessage::ShardCommandResp {
+                                                        success: true,
+                                                        shard_id,
                                                     }
                                                 }
                                                 _ => return,

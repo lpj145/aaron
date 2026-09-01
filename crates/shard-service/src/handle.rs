@@ -69,4 +69,44 @@ impl ShardHandle {
     pub async fn update_placement(&self, placement: ShardPlacement) {
         self.inner.write().await.placements.insert(placement.shard_id, placement);
     }
+
+    /// Retorna todas as partições em que o nó local participa (como Primary ou Réplica).
+    pub async fn my_shards(&self) -> Vec<(ShardId, crate::types::ShardRole, ShardPlacement)> {
+        let inner = self.inner.read().await;
+        let local_id = inner.local_node_id;
+        let mut result = Vec::new();
+        for (id, p) in &inner.placements {
+            if p.primary == local_id {
+                result.push((*id, crate::types::ShardRole::Primary, p.clone()));
+            } else if p.replicas.contains(&local_id) {
+                result.push((*id, crate::types::ShardRole::Replica, p.clone()));
+            }
+        }
+        result
+    }
+
+    /// Retorna o papel do nó local na partição informada (`Primary`, `Replica` ou `None`).
+    pub async fn my_role(&self, shard_id: ShardId) -> Option<crate::types::ShardRole> {
+        let inner = self.inner.read().await;
+        let local_id = inner.local_node_id;
+        if let Some(p) = inner.placements.get(&shard_id) {
+            if p.primary == local_id {
+                Some(crate::types::ShardRole::Primary)
+            } else if p.replicas.contains(&local_id) {
+                Some(crate::types::ShardRole::Replica)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub async fn is_my_primary(&self, shard_id: ShardId) -> bool {
+        matches!(self.my_role(shard_id).await, Some(crate::types::ShardRole::Primary))
+    }
+
+    pub async fn is_my_replica(&self, shard_id: ShardId) -> bool {
+        matches!(self.my_role(shard_id).await, Some(crate::types::ShardRole::Replica))
+    }
 }

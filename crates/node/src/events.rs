@@ -36,3 +36,28 @@ pub struct SetEnvVar {
     pub key: String,
     pub value: String,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum ShardRole {
+    Primary,
+    Replica,
+}
+
+/// Unified domain event for Shard partitions lifecycle and assignments.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum ShardEvent {
+    /// Uma partição foi designada (Primary ou Replica) para o nó.
+    Assigned {
+        shard_id: u32,
+        role: ShardRole,
+        primary: Uuid,
+        replicas: Vec<Uuid>,
+        epoch: u64,
+    },
+    /// O bootstrap inicial de todas as partições foi concluído.
+    BootstrapCompleted {
+        total_shards: u32,
+        assigned_count: usize,
+        epoch: u64,
+    },
+}

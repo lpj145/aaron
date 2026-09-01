@@ -33,6 +33,18 @@ pub enum RaftMessage {
     AppendResp(AppendEntriesResponse<u64>),
     Snapshot(InstallSnapshotRequest<TypeConfig>),
     SnapshotResp(InstallSnapshotResponse<u64>),
+    ShardCommand {
+        shard_id: u32,
+        role: u8,
+        primary_high: u64,
+        primary_low: u64,
+        replicas: Vec<(u64, u64)>,
+        epoch: u64,
+    },
+    ShardCommandResp {
+        success: bool,
+        shard_id: u32,
+    },
 }
 
 pub(crate) fn encode_payload(payload: &EntryPayload<TypeConfig>) -> Vec<u8> {
@@ -264,6 +276,42 @@ impl RaftMessage {
                     },
                 ))
             }
+            Self::ShardCommand {
+                shard_id,
+                role,
+                primary_high,
+                primary_low,
+                replicas,
+                epoch,
+            } => {
+                let primary_proto = proto_node::Uuid {
+                    high: *primary_high,
+                    low: *primary_low,
+                };
+                let replicas_proto: Vec<_> = replicas
+                    .iter()
+                    .map(|(high, low)| proto_node::Uuid {
+                        high: *high,
+                        low: *low,
+                    })
+                    .collect();
+
+                proto::ControlPlanePayload::ShardCommand(Box::new(proto::ShardCommand {
+                    shard_id: *shard_id,
+                    role: *role,
+                    primary: Some(primary_proto),
+                    replicas: Some(replicas_proto),
+                    epoch: *epoch,
+                }))
+            }
+            Self::ShardCommandResp { success, shard_id } => {
+                proto::ControlPlanePayload::ShardCommandResponse(Box::new(
+                    proto::ShardCommandResponse {
+                        success: *success,
+                        shard_id: *shard_id,
+                    },
+                ))
+            }
         };
 
         let msg = proto::ControlPlaneMessage {
@@ -425,6 +473,33 @@ impl RaftMessage {
                 Ok(Self::SnapshotResp(InstallSnapshotResponse {
                     vote: Vote::new(term, voted_for),
                 }))
+            }
+            proto::ControlPlanePayloadRef::ShardCommand(cmd) => {
+                let shard_id = cmd.shard_id()?;
+                let role = cmd.role()?;
+                let p = cmd.primary()?.ok_or(MessageError::MissingField { field: "primary" })?;
+                let primary_high = p.high();
+                let primary_low = p.low();
+                let mut replicas = Vec::new();
+                if let Some(reps) = cmd.replicas()? {
+                    for rep in reps {
+                        replicas.push((rep.high(), rep.low()));
+                    }
+                }
+                let epoch = cmd.epoch()?;
+                Ok(Self::ShardCommand {
+                    shard_id,
+                    role,
+                    primary_high,
+                    primary_low,
+                    replicas,
+                    epoch,
+                })
+            }
+            proto::ControlPlanePayloadRef::ShardCommandResponse(resp) => {
+                let success = resp.success()?;
+                let shard_id = resp.shard_id()?;
+                Ok(Self::ShardCommandResp { success, shard_id })
             }
             _ => Err(MessageError::UnknownPayload),
         }

@@ -1,4 +1,5 @@
 use node::Uuid;
+pub use node::{ShardEvent, ShardRole};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
@@ -9,12 +10,6 @@ pub enum ShardStatus {
     Healthy,
     Degraded,
     Unassigned,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ShardRole {
-    Primary,
-    Replica,
 }
 
 /// Registro de designação de uma partição (Estágio 1).
@@ -54,20 +49,15 @@ impl ShardPlacement {
     }
 }
 
-/// Eventos reativos emitidos para o barramento `EventHub`.
+/// Comandos disparados pelo Control Plane para nós de dados (Data-Plane).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ShardEvent {
-    /// Uma partição foi designada (Round-Robin ou Manual).
-    Assigned {
+pub enum ShardCommand {
+    /// Atribuição de partição enviada via canal de controle de frame.
+    Assign {
         shard_id: ShardId,
+        role: ShardRole,
         primary: Uuid,
         replicas: Vec<Uuid>,
-        epoch: u64,
-    },
-    /// O bootstrap inicial de todas as partições foi concluído.
-    BootstrapCompleted {
-        total_shards: u32,
-        assigned_count: usize,
         epoch: u64,
     },
 }

@@ -156,12 +156,28 @@ impl ShardCoordinator {
             .await;
         self.handle.set_bootstrapped(true).await;
 
+        // Dispara os comandos de partição via canal do Control Plane para os nós Primary e Réplicas
+        for shard_id in 0..total_shards {
+            if let Some(p) = self.handle.get_placement(shard_id).await {
+                let _ = self
+                    .control_plane
+                    .dispatch_shard_command(p.primary, shard_id, 0, p.primary, &p.replicas, epoch)
+                    .await;
+                for rep in &p.replicas {
+                    let _ = self
+                        .control_plane
+                        .dispatch_shard_command(*rep, shard_id, 1, p.primary, &p.replicas, epoch)
+                        .await;
+                }
+            }
+        }
+
         info!(
             target: "shard_coordinator",
             total_assigned = assigned,
             total_nodes = nodes.len(),
             epoch,
-            "Round-Robin Shard Bootstrap completed successfully via Raft"
+            "Round-Robin Shard Bootstrap completed successfully via Raft and dispatched to nodes"
         );
 
         if let Some(c) = ctx {
@@ -183,7 +199,7 @@ impl ShardCoordinator {
         shard_id: ShardId,
         primary: Uuid,
         replicas: Vec<Uuid>,
-        ctx: Option<&Context>,
+        _ctx: Option<&Context>,
     ) -> Result<ShardPlacement, ShardError> {
         self.check_control_plane_health()?;
 
@@ -241,23 +257,28 @@ impl ShardCoordinator {
 
         self.handle.update_placement(placement.clone()).await;
 
+        // Dispara comando via canal do Control Plane para o Primary
+        let _ = self
+            .control_plane
+            .dispatch_shard_command(primary, shard_id, 0, primary, &replicas, epoch)
+            .await;
+
+        // Dispara comando via canal do Control Plane para cada Réplica
+        for rep in &replicas {
+            let _ = self
+                .control_plane
+                .dispatch_shard_command(*rep, shard_id, 1, primary, &replicas, epoch)
+                .await;
+        }
+
         info!(
             target: "shard_coordinator",
             shard_id,
             %primary,
             replicas_count = replicas.len(),
             epoch,
-            "Manual Shard Assignment committed to Raft"
+            "Manual Shard Assignment committed to Raft and dispatched to nodes"
         );
-
-        if let Some(c) = ctx {
-            let _ = c.event_hub.publish(ShardEvent::Assigned {
-                shard_id,
-                primary,
-                replicas,
-                epoch,
-            }).await;
-        }
 
         Ok(placement)
     }

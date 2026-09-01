@@ -1,6 +1,6 @@
 use control_plane_service::{ControlPlaneConfig, ControlPlaneNode, ControlPlaneService};
 use node::{Context, Env, EventHub, Network, NodeId, Service, Store, Uuid};
-use shard_service::{ShardConfig, ShardCoordinator, ShardError, ShardService};
+use shard_service::{ShardConfig, ShardCoordinator, ShardError, ShardEvent, ShardRole, ShardService};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -121,18 +121,33 @@ async fn test_stage1_round_robin_and_manual_assignment() -> Result<(), Box<dyn s
     assert!(matches!(manual_dup, Err(ShardError::DuplicateNodeAssignment { .. })));
 
     // c) Designação Manual válida (1 Primary + 2 Réplicas)
-    let uuid_d = Uuid::random();
-    let manual_ok = coord.assign_manual(0, uuid_b, vec![uuid_c, uuid_d], Some(&ctx)).await?;
+    let mut shard_sub = ctx.event_hub.subscribe::<ShardEvent>().await;
+    let manual_ok = coord.assign_manual(0, uuid_a, vec![uuid_b, uuid_c], Some(&ctx)).await?;
     assert_eq!(manual_ok.shard_id, 0);
-    assert_eq!(manual_ok.primary, uuid_b);
-    assert_eq!(manual_ok.replicas, vec![uuid_c, uuid_d]);
+    assert_eq!(manual_ok.primary, uuid_a);
+    assert_eq!(manual_ok.replicas, vec![uuid_b, uuid_c]);
 
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    // Valida que o evento reativo foi emitido no EventHub do nó local (uuid_a)
+    let event = tokio::time::timeout(Duration::from_millis(500), shard_sub.recv())
+        .await
+        .expect("Should receive ShardEvent on EventHub")
+        .expect("Event receive failed");
+    match event {
+        ShardEvent::Assigned { shard_id, role, primary, replicas, epoch: _ } => {
+            assert_eq!(shard_id, 0);
+            assert_eq!(role, ShardRole::Primary);
+            assert_eq!(primary, uuid_a);
+            assert_eq!(replicas, vec![uuid_b, uuid_c]);
+        }
+        _ => panic!("Expected ShardEvent::Assigned"),
+    }
 
-    // Verifica atualização no handle
-    let updated_0 = shard_handle.get_placement(0).await.unwrap();
-    assert_eq!(updated_0.primary, uuid_b);
-    assert_eq!(updated_0.replicas, vec![uuid_c, uuid_d]);
+    // 6. Validação dos Métodos de Consulta do Data-Plane (ShardHandle)
+    assert!(shard_handle.is_my_primary(0).await);
+    assert!(!shard_handle.is_my_replica(0).await);
+    assert_eq!(shard_handle.my_role(0).await, Some(ShardRole::Primary));
+    let my_shards = shard_handle.my_shards().await;
+    assert!(!my_shards.is_empty());
 
     token.cancel();
     Ok(())

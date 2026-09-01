@@ -82,6 +82,19 @@ table KeyValueResponse {
   value: string;
 }
 
+table ShardCommand {
+  shard_id: uint32;
+  role: uint8; // 0 = Primary, 1 = Replica
+  primary: Aaron.Node.Uuid;
+  replicas: [Aaron.Node.Uuid];
+  epoch: uint64;
+}
+
+table ShardCommandResponse {
+  success: bool;
+  shard_id: uint32;
+}
+
 union ControlPlanePayload {
   VoteRequest,
   VoteResponse,
@@ -90,7 +103,9 @@ union ControlPlanePayload {
   InstallSnapshotRequest,
   InstallSnapshotResponse,
   KeyValueCommand,
-  KeyValueResponse
+  KeyValueResponse,
+  ShardCommand,
+  ShardCommandResponse
 }
 
 table ControlPlaneMessage {

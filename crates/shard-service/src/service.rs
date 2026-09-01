@@ -48,6 +48,27 @@ impl Service for ShardService {
         self.handle.set_local_node_id(my_id).await;
         self.handle.set_total_shards(config.total_shards).await;
 
+        let mut shard_events = ctx.event_hub.subscribe::<node::ShardEvent>().await;
+        let handle_clone = self.handle.clone();
+        let token_clone = ctx.token.clone();
+        tokio::spawn(async move {
+            loop {
+                tokio::select! {
+                    _ = token_clone.cancelled() => break,
+                    event_res = shard_events.recv() => {
+                        match event_res {
+                            Ok(node::ShardEvent::Assigned { shard_id, role: _, primary, replicas, epoch }) => {
+                                let placement = crate::types::ShardPlacement::new(shard_id, primary, replicas, epoch);
+                                handle_clone.update_placement(placement).await;
+                            }
+                            Ok(_) => {}
+                            Err(_) => break,
+                        }
+                    }
+                }
+            }
+        });
+
         let coord = ShardCoordinator::new(config, self.control_plane.clone(), self.handle.clone());
         coord.run_loop(ctx).await;
         Ok(())

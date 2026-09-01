@@ -8,7 +8,7 @@ use tokio::task::JoinSet;
 pub use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
-pub use crate::events::{NodeEvent, NodeEvents, SetEnvVar};
+pub use crate::events::{NodeEvent, NodeEvents, SetEnvVar, ShardEvent, ShardRole};
 // `supervise`/`SupervisedService`/`TaskResult` are internal plumbing, not part
 // of the normal public API — but exposed under `test-util` so integration
 // tests in `tests/` can exercise them directly instead of only through `Node`.
