@@ -23,7 +23,11 @@ const errorMsg = ref<string | null>(null);
 const successMsg = ref<string | null>(null);
 const searchQuery = ref('');
 
-// Modal state
+// Bootstrap Modal state
+const isBootstrapModalOpen = ref(false);
+const bootstrapSelectedNodes = ref<string[]>([]);
+
+// Manual Modal state
 const isModalOpen = ref(false);
 const modalShardId = ref<number>(0);
 const modalPrimary = ref<string>('');
@@ -33,6 +37,10 @@ let pollTimer: any = null;
 
 const aliveMembers = computed(() => {
   return members.value.filter((m) => m.status === 'Alive');
+});
+
+const isBootstrapValid = computed(() => {
+  return bootstrapSelectedNodes.value.length >= 3;
 });
 
 const distinctModalCount = computed(() => {
@@ -79,16 +87,45 @@ async function fetchOverview() {
   }
 }
 
-async function handleBootstrapRoundRobin() {
-  if (!confirm(`Are you sure you want to bootstrap all partitions using Round-Robin across ${aliveMembers.value.length} active nodes?`)) {
-    return;
+function openBootstrapModal() {
+  bootstrapSelectedNodes.value = aliveMembers.value.map((m) => m.id);
+  isBootstrapModalOpen.value = true;
+}
+
+function toggleBootstrapNode(id: string) {
+  const idx = bootstrapSelectedNodes.value.indexOf(id);
+  if (idx >= 0) {
+    bootstrapSelectedNodes.value.splice(idx, 1);
+  } else {
+    bootstrapSelectedNodes.value.push(id);
   }
+}
+
+function selectAllBootstrap() {
+  bootstrapSelectedNodes.value = aliveMembers.value.map((m) => m.id);
+}
+
+function excludeControlPlaneBootstrap() {
+  const nonCp = aliveMembers.value
+    .filter((m) => m.raft_role !== 'leader' && m.raft_role !== 'voter')
+    .map((m) => m.id);
+  if (nonCp.length >= 3) {
+    bootstrapSelectedNodes.value = nonCp;
+  } else {
+    // If not enough non-CP nodes, keep all
+    bootstrapSelectedNodes.value = aliveMembers.value.map((m) => m.id);
+  }
+}
+
+async function handleExecuteBootstrap() {
+  if (!isBootstrapValid.value) return;
   actionLoading.value = true;
   errorMsg.value = null;
   successMsg.value = null;
   try {
-    const res = await api.bootstrapShards();
+    const res = await api.bootstrapShards(bootstrapSelectedNodes.value);
     successMsg.value = `Round-Robin bootstrap completed! ${res.assigned_count} shards assigned across ${res.nodes.length} nodes.`;
+    isBootstrapModalOpen.value = false;
     await fetchOverview();
   } catch (err: any) {
     errorMsg.value = err.message || 'Bootstrap failed';
@@ -186,7 +223,7 @@ onUnmounted(() => {
 
         <button
           v-if="!overview?.is_bootstrapped && (overview?.assigned_count ?? 0) === 0"
-          @click="handleBootstrapRoundRobin"
+          @click="openBootstrapModal()"
           :disabled="actionLoading || !overview?.is_control_plane_ready || aliveMembers.length < 3"
           class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50"
         >
@@ -418,6 +455,112 @@ onUnmounted(() => {
             class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all disabled:opacity-50"
           >
             {{ actionLoading ? 'Saving...' : 'Assign Shard' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for Bootstrap Round-Robin Node Selection & Filtering -->
+    <div
+      v-if="isBootstrapModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+    >
+      <div class="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-2">
+            <Sparkles class="w-5 h-5 text-indigo-400" />
+            <h2 class="text-base font-bold text-white">Bootstrap Shards (Select Nodes)</h2>
+          </div>
+          <button @click="isBootstrapModalOpen = false" class="text-slate-400 hover:text-white">&times;</button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Quick filter toolbar -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <button
+                @click="selectAllBootstrap"
+                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition-colors"
+              >
+                Select All
+              </button>
+              <button
+                @click="excludeControlPlaneBootstrap"
+                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition-colors"
+                title="Only select nodes that are not Raft Voters/Leaders"
+              >
+                Exclude Control-Plane
+              </button>
+            </div>
+            <span class="text-[11px] font-bold" :class="isBootstrapValid ? 'text-emerald-400' : 'text-amber-400'">
+              Selected: {{ bootstrapSelectedNodes.length }} / 3 min nodes
+            </span>
+          </div>
+
+          <!-- Nodes List -->
+          <div class="space-y-2 max-h-64 overflow-y-auto p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+            <div
+              v-for="m in aliveMembers"
+              :key="m.id"
+              @click="toggleBootstrapNode(m.id)"
+              :class="[
+                'flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors text-xs font-mono',
+                bootstrapSelectedNodes.includes(m.id)
+                  ? 'bg-indigo-600/20 border border-indigo-500/40 text-indigo-200'
+                  : 'hover:bg-slate-800/60 text-slate-400 border border-transparent'
+              ]"
+            >
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="w-4 h-4 rounded border flex items-center justify-center transition-colors"
+                  :class="bootstrapSelectedNodes.includes(m.id) ? 'bg-indigo-600 border-indigo-500' : 'border-slate-700 bg-slate-900'"
+                >
+                  <Check v-if="bootstrapSelectedNodes.includes(m.id)" class="w-3 h-3 text-white" />
+                </div>
+                <div>
+                  <div class="text-white font-semibold flex items-center gap-2">
+                    <span>{{ shortUuid(m.id) }}</span>
+                    <!-- Role badge -->
+                    <span
+                      v-if="m.raft_role === 'leader'"
+                      class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-bold uppercase tracking-wider"
+                    >
+                      CP Leader
+                    </span>
+                    <span
+                      v-else-if="m.raft_role === 'voter'"
+                      class="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 text-[9px] font-bold uppercase tracking-wider"
+                    >
+                      CP Voter
+                    </span>
+                    <span
+                      v-else
+                      class="px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 text-[9px] font-bold uppercase tracking-wider"
+                    >
+                      Member
+                    </span>
+                  </div>
+                  <div class="text-[10px] text-slate-400">{{ m.addr }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <button
+            @click="isBootstrapModalOpen = false"
+            class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="handleExecuteBootstrap"
+            :disabled="!isBootstrapValid || actionLoading"
+            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all disabled:opacity-50"
+          >
+            {{ actionLoading ? 'Bootstrapping...' : 'Bootstrap Shards' }}
           </button>
         </div>
       </div>
