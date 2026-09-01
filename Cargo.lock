@@ -10,6 +10,7 @@ dependencies = [
  "control-plane-service",
  "membership-service",
  "node",
+ "shard-service",
  "tracing-service",
 ]
 
@@ -28,6 +29,7 @@ dependencies = [
  "rust-embed",
  "serde",
  "serde_json",
+ "shard-service",
  "snafu",
  "tempfile",
  "tokio",
@@ -2802,6 +2804,23 @@ checksum = "77fd7028345d415a4034cf8777cd4f8ab1851274233b45f84e3d955502d93874"
 dependencies = [
  "digest 0.10.7",
  "keccak",
+]
+
+[[package]]
+name = "shard-service"
+version = "0.1.0"
+dependencies = [
+ "control-plane-service",
+ "membership-service",
+ "node",
+ "serde",
+ "serde_json",
+ "snafu",
+ "tempfile",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

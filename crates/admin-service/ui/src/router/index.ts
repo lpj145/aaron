@@ -1,6 +1,6 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
 import OverviewView from '../views/OverviewView.vue';
 import ClusterView from '../views/ClusterView.vue';
+import ShardsView from '../views/ShardsView.vue';
 import ServicesView from '../views/ServicesView.vue';
 import StoreView from '../views/StoreView.vue';
 import ConfigView from '../views/ConfigView.vue';
@@ -20,6 +20,12 @@ const router = createRouter({
       name: 'cluster',
       component: ClusterView,
       meta: { layout: 'full' },
+    },
+    {
+      path: '/shards',
+      name: 'shards',
+      component: ShardsView,
+      meta: { layout: 'default' },
     },
     {
       path: '/control-plane',

@@ -9,3 +9,4 @@ membership-service = { path = "../membership-service" }
 tracing-service = { path = "../tracing-service" }
 admin-service = { path = "../admin-service" }
 control-plane-service = { path = "../control-plane-service" }
+shard-service = { path = "../shard-service" }

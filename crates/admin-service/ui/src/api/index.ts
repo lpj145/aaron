@@ -181,4 +181,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ key }),
     }),
+
+  // Shards (Stage 1: Assignment)
+  getShardsOverview: () => request<import('../types').ShardsOverviewResponse>('/shards'),
+  bootstrapShards: (nodes?: string[]) =>
+    request<{ success: boolean; assigned_count: number; total_shards: number; nodes: string[] }>('/shards/bootstrap', {
+      method: 'POST',
+      body: JSON.stringify({ nodes }),
+    }),
+  assignShard: (shard_id: number, primary: string, replicas: string[]) =>
+    request<{ success: boolean; placement: import('../types').ShardPlacement }>('/shards/assign', {
+      method: 'POST',
+      body: JSON.stringify({ shard_id, primary, replicas }),
+    }),
 };

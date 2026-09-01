@@ -31,3 +31,15 @@ pub use control_plane_service::{
     ControlPlaneService,
     RaftMessage,
 };
+pub use shard_service::{
+    ShardConfig,
+    ShardCoordinator,
+    ShardError,
+    ShardEvent,
+    ShardHandle,
+    ShardId,
+    ShardPlacement,
+    ShardRole,
+    ShardService,
+    ShardStatus,
+};

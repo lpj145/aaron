@@ -12,11 +12,14 @@ pub mod control_plane;
 pub mod env;
 pub mod node;
 pub mod services;
+pub mod shards;
 pub mod store;
 pub mod tracing;
 
 pub fn create_api_router() -> Router<AppState> {
     Router::new()
+        // Shard Virtual Partitions (Stage 1: Assignment)
+        .nest("/shards", shards::router())
         // Node & Health
         .route("/health", get(node::get_health))
         .route("/node", get(node::get_node_info))

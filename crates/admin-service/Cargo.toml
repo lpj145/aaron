@@ -12,6 +12,7 @@ node = { path = "../node" }
 membership-service = { path = "../membership-service" }
 tracing-service = { path = "../tracing-service" }
 control-plane-service = { path = "../control-plane-service" }
+shard-service = { path = "../shard-service" }
 openraft = { version = "0.9", features = ["single-term-leader", "tracing-log"] }
 
 axum = { version = "0.8", default-features = false, features = ["tokio", "http1", "http2", "json", "matched-path", "query"] }

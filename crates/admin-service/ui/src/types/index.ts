@@ -86,6 +86,27 @@ export interface TracingInfo {
   filter: string;
 }
 
+export interface EnvResponse {
+  vars: Record<string, string>;
+}
+
+export interface ShardPlacement {
+  shard_id: number;
+  primary: string;
+  replicas: string[];
+  status: 'Healthy' | 'Degraded' | 'Unassigned';
+  epoch: number;
+}
+
+export interface ShardsOverviewResponse {
+  total_shards: number;
+  assigned_count: number;
+  is_control_plane_ready: boolean;
+  is_leader: boolean;
+  current_leader: number | null;
+  placements: ShardPlacement[];
+}
+
 export interface EnvVarInfo {
   name: string;
   value: string;

@@ -1,0 +1,20 @@
+[package]
+name = "shard-service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+node = { path = "../node" }
+control-plane-service = { path = "../control-plane-service" }
+membership-service = { path = "../membership-service" }
+tokio.workspace = true
+tracing.workspace = true
+tokio-util.workspace = true
+snafu.workspace = true
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+node = { path = "../node" }
+tempfile = "3"
+tracing-subscriber.workspace = true

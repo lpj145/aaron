@@ -2,6 +2,7 @@ use axum::Router;
 use control_plane_service::ControlPlaneHandle;
 use membership_service::MembershipHandle;
 use node::{BoxError, Context, Service, ServiceConfig};
+use shard_service::ShardHandle;
 use std::sync::Arc;
 use std::time::Instant;
 use tracing::info;
@@ -18,6 +19,7 @@ pub struct AdminService {
     config_override: Option<AdminConfig>,
     membership_handle: Option<MembershipHandle>,
     control_plane_handle: Option<ControlPlaneHandle>,
+    shard_handle: Option<ShardHandle>,
     services_metadata: Vec<ServiceMetadata>,
 }
 
@@ -28,6 +30,7 @@ impl AdminService {
             config_override: None,
             membership_handle: None,
             control_plane_handle: None,
+            shard_handle: None,
             services_metadata: Vec::new(),
         }
     }
@@ -38,6 +41,7 @@ impl AdminService {
             config_override: Some(config),
             membership_handle: None,
             control_plane_handle: None,
+            shard_handle: None,
             services_metadata: Vec::new(),
         }
     }
@@ -51,6 +55,12 @@ impl AdminService {
     /// Associates a [`ControlPlaneHandle`] to enable Raft consensus control and state machine inspection.
     pub fn with_control_plane_handle(mut self, handle: ControlPlaneHandle) -> Self {
         self.control_plane_handle = Some(handle);
+        self
+    }
+
+    /// Associates a [`ShardHandle`] to enable Shard partition inspection and assignment.
+    pub fn with_shard_handle(mut self, handle: ShardHandle) -> Self {
+        self.shard_handle = Some(handle);
         self
     }
 
@@ -118,6 +128,7 @@ impl Service for AdminService {
             ctx: ctx.clone(),
             membership: self.membership_handle.clone(),
             control_plane: self.control_plane_handle.clone(),
+            shard: self.shard_handle.clone(),
             start_time: Instant::now(),
             static_dir: config.static_dir.clone(),
             services: Arc::new(services_list),

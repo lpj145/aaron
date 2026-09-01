@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
+use shard_service::ShardHandle;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigFieldMetadata {
     pub name: String,
@@ -27,6 +29,7 @@ pub struct AppState {
     pub ctx: Context,
     pub membership: Option<MembershipHandle>,
     pub control_plane: Option<ControlPlaneHandle>,
+    pub shard: Option<ShardHandle>,
     pub start_time: Instant,
     pub static_dir: Option<PathBuf>,
     pub services: Arc<Vec<ServiceMetadata>>,

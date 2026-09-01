@@ -16,6 +16,8 @@ mod generated {
 pub use generated::aaron::node::{NodeId, NodeIdBuilder, NodeIdRef, Uuid, UuidRef};
 
 impl Uuid {
+    pub const NIL: Self = Self::new(0, 0);
+
     /// Creates a new `Uuid` from high and low 64-bit unsigned integers.
     pub const fn new(high: u64, low: u64) -> Self {
         Self { high, low }
