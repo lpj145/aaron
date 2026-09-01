@@ -159,16 +159,8 @@ onUnmounted(() => {
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <Layers class="w-6 h-6 text-indigo-400" />
-          <h1 class="text-xl font-bold text-white tracking-tight">Shard Partitioning (Stage 1: Assignment)</h1>
-        </div>
-        <p class="text-xs text-slate-400 mt-1">
-          Authoritative partition assignment with Round-Robin bootstrap and manual minimum-3-node quorum.
-        </p>
-      </div>
+    <div class="flex items-center justify-between gap-4">
+      <h1 class="text-base font-bold text-white">Shards</h1>
 
       <!-- Action buttons -->
       <div v-if="overview?.is_control_plane_ready" class="flex items-center gap-3">
@@ -192,7 +184,7 @@ onUnmounted(() => {
         <button
           @click="handleBootstrapRoundRobin"
           :disabled="actionLoading || !overview?.is_control_plane_ready || aliveMembers.length < 3"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50"
         >
           <Sparkles class="w-4 h-4 text-white" />
           <span>Bootstrap Round-Robin</span>
@@ -203,7 +195,7 @@ onUnmounted(() => {
     <!-- Alert / Toast Messages -->
     <div
       v-if="errorMsg"
-      class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between"
+      class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between"
     >
       <div class="flex items-center gap-2">
         <AlertTriangle class="w-4 h-4 text-rose-400 shrink-0" />
@@ -214,7 +206,7 @@ onUnmounted(() => {
 
     <div
       v-if="successMsg"
-      class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between"
+      class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between"
     >
       <div class="flex items-center gap-2">
         <CheckCircle2 class="w-4 h-4 text-emerald-400 shrink-0" />
@@ -226,25 +218,9 @@ onUnmounted(() => {
     <!-- Empty state when Control Plane is not initialized -->
     <div
       v-if="!overview?.is_control_plane_ready"
-      class="p-12 rounded-3xl bg-slate-900/60 border border-slate-800/80 text-center space-y-4 max-w-xl mx-auto my-8"
+      class="py-32 text-center"
     >
-      <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-        <ShieldCheck class="w-8 h-8" />
-      </div>
-      <div class="space-y-1.5">
-        <h2 class="text-base font-bold text-white">Please initialize control-plane cluster first</h2>
-        <p class="text-xs text-slate-400 max-w-md mx-auto">
-          Authoritative partition assignment requires an active Raft consensus quorum on the Control Plane.
-        </p>
-      </div>
-      <div class="pt-2">
-        <router-link
-          to="/cluster"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-500/20"
-        >
-          <span>Go to Cluster to Initialize</span>
-        </router-link>
-      </div>
+      <p class="text-xs font-semibold text-slate-400">Please initialize control-plane cluster first</p>
     </div>
 
     <template v-else>
