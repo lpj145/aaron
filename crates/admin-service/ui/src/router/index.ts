@@ -1,3 +1,4 @@
+import { createRouter, createWebHashHistory } from 'vue-router';
 import OverviewView from '../views/OverviewView.vue';
 import ClusterView from '../views/ClusterView.vue';
 import ShardsView from '../views/ShardsView.vue';
