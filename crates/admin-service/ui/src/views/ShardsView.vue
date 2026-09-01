@@ -171,7 +171,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Action buttons -->
-      <div class="flex items-center gap-3">
+      <div v-if="overview?.is_control_plane_ready" class="flex items-center gap-3">
         <button
           @click="fetchOverview"
           class="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors"
@@ -223,6 +223,31 @@ onUnmounted(() => {
       <button @click="successMsg = null" class="text-slate-400 hover:text-white">&times;</button>
     </div>
 
+    <!-- Empty state when Control Plane is not initialized -->
+    <div
+      v-if="!overview?.is_control_plane_ready"
+      class="p-12 rounded-3xl bg-slate-900/60 border border-slate-800/80 text-center space-y-4 max-w-xl mx-auto my-8"
+    >
+      <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+        <ShieldCheck class="w-8 h-8" />
+      </div>
+      <div class="space-y-1.5">
+        <h2 class="text-base font-bold text-white">Please initialize control-plane cluster first</h2>
+        <p class="text-xs text-slate-400 max-w-md mx-auto">
+          Authoritative partition assignment requires an active Raft consensus quorum on the Control Plane.
+        </p>
+      </div>
+      <div class="pt-2">
+        <router-link
+          to="/cluster"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-500/20"
+        >
+          <span>Go to Cluster to Initialize</span>
+        </router-link>
+      </div>
+    </div>
+
+    <template v-else>
     <!-- Stats Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
@@ -351,6 +376,7 @@ onUnmounted(() => {
         </table>
       </div>
     </div>
+    </template>
 
     <!-- Modal for Manual Assignment (Stage 1: Min 3 Nodes) -->
     <div
