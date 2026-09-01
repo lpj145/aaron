@@ -160,7 +160,10 @@ onUnmounted(() => {
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between gap-4">
-      <h1 class="text-base font-bold text-white">Shards</h1>
+      <div class="flex items-center gap-2">
+        <Layers class="w-5 h-5 text-indigo-400" />
+        <h1 class="text-base font-bold text-white">Shards</h1>
+      </div>
 
       <!-- Action buttons -->
       <div v-if="overview?.is_control_plane_ready" class="flex items-center gap-3">
@@ -218,9 +221,20 @@ onUnmounted(() => {
     <!-- Empty state when Control Plane is not initialized -->
     <div
       v-if="!overview?.is_control_plane_ready"
-      class="py-32 text-center"
+      class="p-12 rounded-2xl bg-slate-900/60 border border-slate-800/80 text-center space-y-4 max-w-md mx-auto my-12"
     >
-      <p class="text-xs font-semibold text-slate-400">Please initialize control-plane cluster first</p>
+      <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto">
+        <ShieldCheck class="w-6 h-6" />
+      </div>
+      <h2 class="text-sm font-semibold text-slate-200">Please initialize control-plane cluster first</h2>
+      <div class="pt-2">
+        <router-link
+          to="/cluster"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-500/20"
+        >
+          <span>Go to Cluster</span>
+        </router-link>
+      </div>
     </div>
 
     <template v-else>
