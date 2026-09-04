@@ -55,9 +55,6 @@
       will-change: transform;
       transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
     }
-    .parallax-item {
-      will-change: transform;
-    }
     @keyframes scanline {
       0% { transform: translateY(-100%); }
       100% { transform: translateY(450%); }
@@ -129,7 +126,7 @@
       </div>
     </header>
 
-    <!-- Hero Content: Compact Copy + Widescreen Animated Architectural Vector Schematic -->
+    <!-- Hero Content: Compact Copy + Widescreen Centralizer Concept Illustration -->
     <div class="relative z-10 max-w-6xl mx-auto px-6 pt-6 pb-4 w-full flex flex-col items-center text-center my-auto">
       
       <!-- Compact Eyebrow Tag -->
@@ -137,17 +134,17 @@
         <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
         <span>ALPHA v0.1.0</span>
         <span class="text-slate-600">&bull;</span>
-        <span class="text-amber-200">Distributed Cluster Runtime for Rust</span>
+        <span class="text-amber-200">Distributed Cluster Runtime</span>
       </div>
 
-      <!-- Compact Title (Small & Proportional) -->
+      <!-- Compact Title -->
       <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
         The Opinionated Distributed Cluster Runtime for Rust
       </h1>
 
-      <!-- Compact 1-2 sentence description -->
+      <!-- Compact Description focused on connecting solutions & functionality -->
       <p class="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed mb-4 font-normal">
-        Resilient, self-healing clusters in a single compiled binary. Embedded Fjall LSM storage, decentralized SWIM gossip, and zero-copy QUIC streaming without external coordination daemons.
+        Aaron is an autonomous cluster runtime that connects distributed services, event pipelines, stateful storage, and peer nodes in a single compiled binary.
       </p>
 
       <!-- Compact Action Buttons -->
@@ -160,222 +157,13 @@
         </a>
       </div>
 
-      <!-- Widescreen Fluent Bit-Style Vector Architecture Schematic -->
-      <div class="w-full relative rounded-2xl border border-white/10 bg-[#090d16]/95 p-3 sm:p-5 shadow-2xl backdrop-blur-sm overflow-hidden">
-        
-        <!-- Schematic Top Header Bar -->
-        <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-[11px] font-mono text-slate-400">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-slate-200 font-bold">aaron-cluster // topology</span>
-            <span class="text-slate-600 hidden sm:inline">|</span>
-            <span class="text-cyan-400 hidden sm:inline">3 Autonomous Nodes</span>
-          </div>
-          <div class="flex items-center gap-4 text-[10px]">
-            <span class="flex items-center gap-1.5 text-emerald-300">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span>SWIM :7946</span>
-            </span>
-            <span class="flex items-center gap-1.5 text-purple-300">
-              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-              <span>QUIC :18946</span>
-            </span>
-            <span class="flex items-center gap-1.5 text-amber-300 hidden md:flex">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-              <span>Fjall LSM</span>
-            </span>
-            <span class="flex items-center gap-1.5 text-cyan-300 hidden md:flex">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-              <span>OpenRaft Quorum</span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Inline High-Precision Animated Vector SVG -->
-        <svg viewBox="0 0 1000 310" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="nodeBg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#111827" stop-opacity="0.95"/>
-              <stop offset="100%" stop-color="#0b1120" stop-opacity="0.95"/>
-            </linearGradient>
-            <linearGradient id="cyanLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#06b6d4"/>
-              <stop offset="50%" stop-color="#6366f1"/>
-              <stop offset="100%" stop-color="#a855f7"/>
-            </linearGradient>
-            <linearGradient id="amberLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#f59e0b"/>
-              <stop offset="100%" stop-color="#ef4444"/>
-            </linearGradient>
-            <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glowAmber" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          <!-- Top Network Line: SWIM Gossip Mesh (Arc across all 3 nodes) -->
-          <path id="swimPath" d="M 180 50 Q 500 0 820 50" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6"/>
-          <text x="500" y="24" fill="#34d399" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">SWIM Gossip Mesh Probes [UDP :7946] • O(1) Failure Detection</text>
-          
-          <!-- Animated Packets on SWIM Line -->
-          <circle r="4" fill="#34d399" filter="url(#glowGreen)">
-            <animateMotion repeatCount="indefinite" dur="3.5s" path="M 180 50 Q 500 0 820 50" />
-          </circle>
-          <circle r="3" fill="#6ee7b7" filter="url(#glowGreen)">
-            <animateMotion repeatCount="indefinite" dur="3.5s" begin="1.75s" path="M 820 50 Q 500 0 180 50" />
-          </circle>
-
-          <!-- Middle Network Line: QUIC Multi-Stream Data Bus -->
-          <line x1="320" y1="135" x2="360" y2="135" stroke="url(#cyanLine)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="640" y1="135" x2="680" y2="135" stroke="url(#cyanLine)" stroke-width="2.5" stroke-linecap="round"/>
-          
-          <!-- Animated Packets on QUIC Interconnects -->
-          <circle cy="135" r="3.5" fill="#38bdf8" filter="url(#glowCyan)">
-            <animate attributeName="cx" values="320;360;320" dur="1.2s" repeatCount="indefinite" />
-          </circle>
-          <circle cy="135" r="3.5" fill="#c084fc">
-            <animate attributeName="cx" values="640;680;640" dur="1.4s" repeatCount="indefinite" />
-          </circle>
-
-          <!-- Bottom Network Line: OpenRaft Quorum Consensus Replication -->
-          <path id="raftPath" d="M 180 255 Q 500 305 820 255" fill="none" stroke="url(#amberLine)" stroke-width="1.5" opacity="0.7"/>
-          <text x="500" y="295" fill="#fbbf24" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">OpenRaft Synchronous Quorum Replication [AppendEntries &amp; Heartbeats]</text>
-          
-          <!-- Animated Packets on Raft Line -->
-          <circle r="4" fill="#fbbf24" filter="url(#glowAmber)">
-            <animateMotion repeatCount="indefinite" dur="2.8s" path="M 180 255 Q 500 305 820 255" />
-          </circle>
-          <circle r="3" fill="#f59e0b">
-            <animateMotion repeatCount="indefinite" dur="2.8s" begin="1.4s" path="M 820 255 Q 500 305 180 255" />
-          </circle>
-
-          <!-- ============================================== -->
-          <!-- NODE 01: SEED / RAFT LEADER (CONTROL PLANE)   -->
-          <!-- ============================================== -->
-          <g transform="translate(40, 50)">
-            <rect width="280" height="205" rx="12" fill="url(#nodeBg)" stroke="#06b6d4" stroke-width="1.5"/>
-            <!-- Node Header -->
-            <rect width="280" height="32" rx="12" fill="#0e1726"/>
-            <circle cx="18" cy="16" r="4" fill="#06b6d4" filter="url(#glowCyan)"/>
-            <text x="30" y="20" fill="#f8fafc" font-size="11" font-family="monospace" font-weight="bold">NODE 01</text>
-            <rect x="85" y="8" width="55" height="16" rx="4" fill="#06b6d4" fill-opacity="0.2"/>
-            <text x="112" y="19" fill="#22d3ee" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">LEADER</text>
-            <text x="265" y="20" fill="#94a3b8" font-size="9" font-family="monospace" text-anchor="end">:18946</text>
-
-            <!-- Internal Component 1: OpenRaft -->
-            <g transform="translate(12, 42)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#38bdf8" font-size="10" font-family="monospace" font-weight="bold">OpenRaft Consensus Engine</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Term: 4 &bull; Quorum: 3/3 Nodes &bull; Leader Lease</text>
-            </g>
-
-            <!-- Internal Component 2: Quinn QUIC Multi-Stream -->
-            <g transform="translate(12, 92)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#c084fc" font-size="10" font-family="monospace" font-weight="bold">Quinn QUIC &bull; Zero-Copy Framing</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">FlatBuffers Read O(1) &bull; Zero HoL Blocking</text>
-            </g>
-
-            <!-- Internal Component 3: Embedded Fjall LSM -->
-            <g transform="translate(12, 142)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Fjall LSM Disk Engine (fsync WAL)</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Disk Path: ./data/node-01 &bull; Zero External DB</text>
-            </g>
-
-            <!-- Bottom Status Footer -->
-            <text x="14" y="197" fill="#10b981" font-size="9" font-family="monospace">&bull; SWIM: 0.0.0.0:7946</text>
-            <text x="265" y="197" fill="#64748b" font-size="9" font-family="monospace" text-anchor="end">HTTP: :8080</text>
-          </g>
-
-          <!-- ============================================== -->
-          <!-- NODE 02: WORKER A (SHARD / STATEFUL ACTOR)    -->
-          <!-- ============================================== -->
-          <g transform="translate(360, 50)">
-            <rect width="280" height="205" rx="12" fill="url(#nodeBg)" stroke="#6366f1" stroke-width="1.5"/>
-            <!-- Node Header -->
-            <rect width="280" height="32" rx="12" fill="#0e1726"/>
-            <circle cx="18" cy="16" r="4" fill="#6366f1"/>
-            <text x="30" y="20" fill="#f8fafc" font-size="11" font-family="monospace" font-weight="bold">NODE 02</text>
-            <rect x="85" y="8" width="55" height="16" rx="4" fill="#6366f1" fill-opacity="0.2"/>
-            <text x="112" y="19" fill="#818cf8" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">WORKER</text>
-            <text x="265" y="20" fill="#94a3b8" font-size="9" font-family="monospace" text-anchor="end">:18946</text>
-
-            <!-- Internal Component 1: Shard Engine -->
-            <g transform="translate(12, 42)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#818cf8" font-size="10" font-family="monospace" font-weight="bold">Shard Ingestion &amp; Key Routing</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Partitions: #0..#31 &bull; Parallel Stream RX</text>
-            </g>
-
-            <!-- Internal Component 2: EventHub & Supervision -->
-            <g transform="translate(12, 92)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#34d399" font-size="10" font-family="monospace" font-weight="bold">EventHub &bull; Supervision Tree</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Actor Restarts: OneForOne &bull; Type-Safe Hub</text>
-            </g>
-
-            <!-- Internal Component 3: Embedded Fjall LSM -->
-            <g transform="translate(12, 142)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Fjall Partitioned LSM Keyspaces</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Disk Path: ./data/node-02 &bull; LSM Compaction</text>
-            </g>
-
-            <!-- Bottom Status Footer -->
-            <text x="14" y="197" fill="#10b981" font-size="9" font-family="monospace">&bull; SWIM: 0.0.0.0:7946</text>
-            <text x="265" y="197" fill="#64748b" font-size="9" font-family="monospace" text-anchor="end">Peer Connected</text>
-          </g>
-
-          <!-- ============================================== -->
-          <!-- NODE 03: WORKER B (SHARD / STATEFUL ACTOR)    -->
-          <!-- ============================================== -->
-          <g transform="translate(680, 50)">
-            <rect width="280" height="205" rx="12" fill="url(#nodeBg)" stroke="#f59e0b" stroke-width="1.5"/>
-            <!-- Node Header -->
-            <rect width="280" height="32" rx="12" fill="#0e1726"/>
-            <circle cx="18" cy="16" r="4" fill="#f59e0b" filter="url(#glowAmber)"/>
-            <text x="30" y="20" fill="#f8fafc" font-size="11" font-family="monospace" font-weight="bold">NODE 03</text>
-            <rect x="85" y="8" width="55" height="16" rx="4" fill="#f59e0b" fill-opacity="0.2"/>
-            <text x="112" y="19" fill="#fbbf24" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">WORKER</text>
-            <text x="265" y="20" fill="#94a3b8" font-size="9" font-family="monospace" text-anchor="end">:18946</text>
-
-            <!-- Internal Component 1: Shard Engine -->
-            <g transform="translate(12, 42)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Shard Ingestion &amp; Key Routing</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Partitions: #32..#63 &bull; Parallel Stream RX</text>
-            </g>
-
-            <!-- Internal Component 2: Dynamic Tracing -->
-            <g transform="translate(12, 92)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#f43f5e" font-size="10" font-family="monospace" font-weight="bold">Dynamic Tracing &amp; Telemetry</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Ring Buffer Spans &bull; Live Event Filtering</text>
-            </g>
-
-            <!-- Internal Component 3: Embedded Fjall LSM -->
-            <g transform="translate(12, 142)">
-              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
-              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Fjall Partitioned LSM Keyspaces</text>
-              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Disk Path: ./data/node-03 &bull; LSM Compaction</text>
-            </g>
-
-            <!-- Bottom Status Footer -->
-            <text x="14" y="197" fill="#10b981" font-size="9" font-family="monospace">&bull; SWIM: 0.0.0.0:7946</text>
-            <text x="265" y="197" fill="#64748b" font-size="9" font-family="monospace" text-anchor="end">Peer Connected</text>
-          </g>
-
-        </svg>
-
+      <!-- Widescreen Centralizer Concept Illustration (Fluent Bit Style) -->
+      <div class="w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(6,182,212,0.12)] bg-[#070a10]">
+        <img 
+          src="/cluster-concept.webp" 
+          alt="Aaron Runtime Hub: Connecting Distributed Services, Event Pipelines, Stateful Storage, and Cluster Nodes" 
+          class="w-full h-auto object-cover"
+        />
       </div>
 
     </div>
@@ -664,84 +452,84 @@
           <!-- Choice 1: Autonomous Nodes -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-brand-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">01 &bull; Single-Binary Philosophy</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">01 &bull; Single-Binary Runtime</span>
             </div>
-            <h3 class="font-bold text-base text-white mb-2">Autonomous Nodes</h3>
+            <h3 class="font-bold text-base text-white mb-2">Autonomous Node Runtime</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
-              <strong class="text-slate-300">The Choice:</strong> Every node packages supervision, storage, gossip, and transport inside a single Rust process.
+              <strong class="text-slate-300">The Choice:</strong> Every node packages actor supervision, storage, discovery, and transport inside a single Rust binary.
             </p>
             <p class="text-xs text-slate-400 leading-relaxed">
-              <strong class="text-cyan-300">Why:</strong> Standard microservices require deploying Redis for caches, ZooKeeper/etcd for locks, and separate sidecars. With Aaron, you eliminate external moving parts: a production cluster is born simply by launching instances of your compiled binary.
+              <strong class="text-cyan-300">Why:</strong> Standard clusters require deploying external caches, coordination sidecars, and separate storage daemons. With Aaron, you eliminate external moving parts: an autonomous production cluster forms simply by running instances of your compiled binary.
             </p>
           </div>
 
-          <!-- Choice 2: QUIC Transport -->
+          <!-- Choice 2: Multiplexed Transport -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-cyan-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">02 &bull; Quinn / Rustls</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">02 &bull; Zero HoL Blocking</span>
             </div>
-            <h3 class="font-bold text-base text-white mb-2">QUIC Multi-Stream Fabric</h3>
+            <h3 class="font-bold text-base text-white mb-2">Multiplexed Stream Transport</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
-              <strong class="text-slate-300">The Choice:</strong> QUIC over UDP with mandatory mutual TLS 1.3 encryption by default.
+              <strong class="text-slate-300">The Choice:</strong> UDP-based multi-stream transport with mandatory TLS 1.3 encryption across all internal traffic.
             </p>
             <p class="text-xs text-slate-400 leading-relaxed">
-              <strong class="text-cyan-300">Why:</strong> TCP clusters suffer from Head-of-Line blocking—a dropped packet on stream A stalls all other streams. QUIC multiplexes thousands of independent streams over a single UDP port where packet loss in one stream never degrades another.
+              <strong class="text-cyan-300">Why:</strong> Traditional TCP connections suffer from Head-of-Line blocking—a single dropped packet stalls all logical traffic. Multiplexed byte streams allow thousands of concurrent exchanges over a single port where packet loss in one stream never degrades another.
             </p>
           </div>
 
-          <!-- Choice 3: SWIM Gossip -->
+          <!-- Choice 3: Decentralized Discovery -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-emerald-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">03 &bull; Decentralized O(1)</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">03 &bull; Bounded O(1) Load</span>
             </div>
-            <h3 class="font-bold text-base text-white mb-2">SWIM Gossip Membership</h3>
+            <h3 class="font-bold text-base text-white mb-2">Decentralized Peer Discovery</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
-              <strong class="text-slate-300">The Choice:</strong> Decentralized probabilistic gossip with direct & indirect probing (ping-req) and incarnation counters.
+              <strong class="text-slate-300">The Choice:</strong> Probabilistic gossip membership with direct & indirect probing and monotonic incarnation numbers.
             </p>
             <p class="text-xs text-slate-400 leading-relaxed">
-              <strong class="text-cyan-300">Why:</strong> Centralized coordinators become single points of failure. SWIM scales with bounded $O(1)$ network load per node. Indirect probes eliminate false-positive evictions from temporary packet drops, while incarnation numbers allow self-healing.
+              <strong class="text-cyan-300">Why:</strong> Centralized discovery registries become cluster-wide bottlenecks. Decentralized gossip keeps network overhead strictly $O(1)$ per node regardless of cluster size, while indirect probes prevent false-positive node evictions on transient network hiccups.
             </p>
           </div>
 
-          <!-- Choice 4: Embedded Fjall LSM -->
+          <!-- Choice 4: Log-Structured Disk Persistence -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-amber-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">04 &bull; Disk-backed LSM</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">04 &bull; Sub-Millisecond Disk</span>
             </div>
-            <h3 class="font-bold text-base text-white mb-2">Embedded Fjall LSM Storage</h3>
+            <h3 class="font-bold text-base text-white mb-2">Log-Structured Disk Persistence</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
-              <strong class="text-slate-300">The Choice:</strong> Integrated disk persistence with Write-Ahead Log (WAL) and logical keyspace isolation.
+              <strong class="text-slate-300">The Choice:</strong> Integrated embedded LSM storage with Write-Ahead Logging (WAL) and partition keyspaces.
             </p>
             <p class="text-xs text-slate-400 leading-relaxed">
-              <strong class="text-cyan-300">Why:</strong> Accessing state over an external network hop introduces milliseconds of latency. Fjall provides ~6 microsecond write latencies and sub-millisecond point lookups directly within the node process space without external database dependencies.
+              <strong class="text-cyan-300">Why:</strong> Storing state in external databases forces every state transition across a network hop. Embedded LSM storage delivers microsecond write latencies and sub-millisecond point lookups directly within the node process space without managing external databases.
             </p>
           </div>
 
-          <!-- Choice 5: FlatBuffers RPC -->
+          <!-- Choice 5: Zero-Copy Schema Framing -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">05 &bull; Zero-Copy RPC</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">05 &bull; Zero Heap Copies</span>
             </div>
-            <h3 class="font-bold text-base text-white mb-2">FlatBuffers Schemas</h3>
+            <h3 class="font-bold text-base text-white mb-2">Zero-Copy Schema Framing</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
-              <strong class="text-slate-300">The Choice:</strong> Build-time schema generation via <code>aaron-build</code> and memory-mapped offsets.
+              <strong class="text-slate-300">The Choice:</strong> Strict compile-time binary schemas with memory-mapped byte buffer offsets.
             </p>
             <p class="text-xs text-slate-400 leading-relaxed">
-              <strong class="text-cyan-300">Why:</strong> JSON parsing and Protobuf deserialization burn CPU cycles and trigger heap allocations. FlatBuffers allows reading fields directly from the QUIC network buffer via offset pointers in $O(1)$ time with zero heap copies.
+              <strong class="text-cyan-300">Why:</strong> Text formats like JSON and heavy binary deserializers burn CPU cycles allocating memory on the heap. Zero-copy framing enables reading incoming fields directly from raw network buffers via offset pointers in $O(1)$ time with zero heap allocations.
             </p>
           </div>
 
-          <!-- Choice 6: OpenRaft In-Process -->
+          <!-- Choice 6: In-Process Quorum Consensus -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-rose-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-semibold">06 &bull; In-Process Raft</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-semibold">06 &bull; Embedded Consensus</span>
             </div>
-            <h3 class="font-bold text-base text-white mb-2">Embedded OpenRaft</h3>
+            <h3 class="font-bold text-base text-white mb-2">In-Process Quorum Consensus</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
-              <strong class="text-slate-300">The Choice:</strong> Raft consensus integrated directly inside <code>aaron-control-plane</code>.
+              <strong class="text-slate-300">The Choice:</strong> Leader-elected quorum consensus compiled straight into <code>aaron-control-plane</code>.
             </p>
             <p class="text-xs text-slate-400 leading-relaxed">
-              <strong class="text-cyan-300">Why:</strong> While gossip handles eventual consistency for 99% of node topology, linearizable consensus is required for shard assignment. Embedding OpenRaft lets consensus run as an Aaron service without managing external Raft daemons.
+              <strong class="text-cyan-300">Why:</strong> While gossip handles eventual consistency for node health, linearizable coordination is required for shard rebalancing and cluster-wide metadata. In-process consensus provides strong consistency without running independent Raft server fleets.
             </p>
           </div>
 
@@ -749,23 +537,13 @@
       </section>
 
       <!-- ======================================================== -->
-      <!-- SECTION 4: WHAT YOU CAN BUILD (USE CASES & PARALLAX)    -->
+      <!-- SECTION 4: WHAT YOU CAN BUILD WITH AARON                 -->
       <!-- ======================================================== -->
       <section id="build" class="mt-36 scroll-mt-24 relative">
         
-        <!-- Parallax Background Glows & Floating Technical Chips -->
-        <div class="parallax-item absolute -top-16 -left-24 w-80 h-80 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" data-parallax-speed="0.12"></div>
-        <div class="parallax-item absolute top-1/2 -right-24 w-80 h-80 bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none" data-parallax-speed="-0.15"></div>
-        
-        <!-- Floating decorative parallax chips with high-contrast borders -->
-        <div class="parallax-item hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-mono bg-slate-900/90 border border-cyan-500/30 text-cyan-300 absolute -top-8 right-12 backdrop-blur-md shadow-xl pointer-events-none" data-parallax-speed="0.2">
-          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-          <span>QUIC Multi-Stream &bull; Zero HoL Blocking</span>
-        </div>
-        <div class="parallax-item hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-mono bg-slate-900/90 border border-brand-500/30 text-brand-300 absolute bottom-12 -left-8 backdrop-blur-md shadow-xl pointer-events-none" data-parallax-speed="-0.18">
-          <span class="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span>
-          <span>Fjall LSM &bull; Microsecond WAL</span>
-        </div>
+        <!-- Ambient Background Glows -->
+        <div class="absolute -top-16 -left-24 w-80 h-80 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+        <div class="absolute top-1/2 -right-24 w-80 h-80 bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none"></div>
 
         <!-- Section Header -->
         <div class="text-center max-w-3xl mx-auto mb-16 relative z-10">
@@ -778,7 +556,7 @@
           </p>
         </div>
 
-        <!-- 2x2 Grid of Use Cases with 3D Parallax Tilt -->
+        <!-- 2x2 Grid of Use Cases -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
           
           <!-- Use Case 1: Distributed Key-Value & Cache Engines -->
@@ -797,7 +575,7 @@
             </h3>
 
             <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6 font-normal">
-              Build a resilient in-memory and disk-persisted key-value cluster without deploying Redis or Memcached. Nodes store localized state in an embedded Fjall LSM tree with Write-Ahead Logging (WAL) and form a self-balancing partition ring.
+              Build a resilient in-memory and disk-persisted key-value cluster without deploying Redis or Memcached. Nodes store localized state in an embedded LSM tree with Write-Ahead Logging (WAL) and form a self-balancing partition ring.
             </p>
 
             <div class="p-4 rounded-xl bg-slate-950/80 border border-white/5 space-y-2 mb-6 text-xs text-slate-400 font-mono">
@@ -806,14 +584,14 @@
                 <span>How Aaron Powers It:</span>
               </div>
               <p class="font-sans text-xs text-slate-400 leading-relaxed">
-                Partition ranges are assigned via in-process OpenRaft consensus. Read and write commands travel over multiplexed QUIC byte streams using zero-copy FlatBuffers without heap allocations.
+                Partition ranges are assigned via in-process consensus. Read and write commands travel over multiplexed byte streams using zero-copy binary serialization without heap allocations.
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2 text-[11px] font-mono">
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Fjall LSM</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">aaron-shard</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">OpenRaft</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Key-Value Engine</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Disk-Backed LSM</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Partition Sharding</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy RPC</span>
             </div>
           </div>
@@ -843,14 +621,14 @@
                 <span>How Aaron Powers It:</span>
               </div>
               <p class="font-sans text-xs text-slate-400 leading-relaxed">
-                QUIC over UDP eliminates TCP Head-of-Line stalls on spotty edge networks. When uplink connectivity drops, incoming packets spool safely onto the local LSM disk tables, automatically draining when connections resume.
+                Multiplexed transport eliminates TCP Head-of-Line stalls on spotty edge networks. When uplink connectivity drops, incoming packets spool safely onto local disk tables, automatically draining when connections resume.
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2 text-[11px] font-mono">
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Quinn UDP</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Lossy Network Transport</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Local Disk Spooling</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">CancellationToken</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Graceful Shutdown</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Single Binary</span>
             </div>
           </div>
@@ -880,15 +658,15 @@
                 <span>How Aaron Powers It:</span>
               </div>
               <p class="font-sans text-xs text-slate-400 leading-relaxed">
-                Nodes monitor cluster health through SWIM gossip. If a worker process fails, indirect ping-req confirms the outage within milliseconds and triggers task rescheduling, while surviving nodes refute transient hiccups via incarnation counters.
+                Nodes monitor cluster health through decentralized gossip. If a worker process fails, indirect probes confirm the outage within milliseconds and trigger task rescheduling, while surviving nodes refute transient hiccups automatically.
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2 text-[11px] font-mono">
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">SWIM Gossip</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Decentralized Discovery</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Service Supervisor</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Incarnation Refutation</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Type-safe EventHub</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Autonomous Failover</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Type-Safe Event Hub</span>
             </div>
           </div>
 
@@ -917,13 +695,13 @@
                 <span>How Aaron Powers It:</span>
               </div>
               <p class="font-sans text-xs text-slate-400 leading-relaxed">
-                Independent QUIC streams transmit position packets concurrently without stalling player channels. FlatBuffers schemas read coordinates directly from network buffers in O(1) time without garbage collection or heap allocation.
+                Independent byte streams transmit position packets concurrently without stalling player channels. Binary schemas read coordinates directly from network buffers in O(1) time without garbage collection or heap allocation.
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2 text-[11px] font-mono">
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Multi-Stream QUIC</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy FlatBuffers</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Concurrent Streams</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy Codec</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Sub-ms Tick Loop</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Dynamic Tracing</span>
             </div>
@@ -954,15 +732,15 @@
                 <span>How Aaron Powers It:</span>
               </div>
               <p class="font-sans text-xs text-slate-400 leading-relaxed">
-                Money movements replicate across quorum nodes via in-process OpenRaft consensus before committing synchronously to Fjall's disk-backed WAL. The node's internal EventHub publishes immediate compliance and fraud alerts, while QUIC mTLS 1.3 protects all inter-node wire transfers.
+                Money movements replicate across quorum nodes via in-process consensus before committing synchronously to disk-backed write-ahead logs. The node's internal EventHub publishes immediate compliance and fraud alerts, while authenticated TLS protects all inter-node wire transfers.
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2 text-[11px] font-mono">
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">OpenRaft Consensus</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Synchronous WAL</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Linearizable State</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">mTLS 1.3 Transport</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Synchronous WAL</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Quorum Consensus</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Encrypted Transport</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero Data Loss</span>
             </div>
           </div>
@@ -992,14 +770,14 @@
                 <span>How Aaron Powers It:</span>
               </div>
               <p class="font-sans text-xs text-slate-400 leading-relaxed">
-                Quinn QUIC multiplexes thousands of media streams independently over UDP. FlatBuffers schemas read binary frames in O(1) time directly from network buffers without memory allocations, buffering directly into partitioned Fjall LSM keyspaces.
+                Multiplexes thousands of media streams independently over UDP. Schemas read binary frames in O(1) time directly from network buffers without memory allocations, buffering directly into partitioned disk storage.
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2 text-[11px] font-mono">
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Quinn QUIC Streams</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy FlatBuffers</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Partition Keyspaces</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Wire-Speed Streaming</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy Buffers</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Partitioned Keyspaces</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Sub-40MB Footprint</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Line-Rate Ingestion</span>
             </div>
@@ -1026,32 +804,32 @@
             </h3>
 
             <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6 font-normal max-w-4xl">
-              Aaron is not a rigid all-or-nothing framework. It is an unopinionated, modular suite of distributed primitives designed to be mixed and matched however your architecture demands. Need in-process consensus without external Raft daemons? Combine <code class="text-cyan-300">aaron-control-plane</code> with your storage layer. Need peer-to-peer discovery without full cluster orchestration? Plug in <code class="text-cyan-300">aaron-membership</code>. Need extreme local persistence? Embed <code class="text-cyan-300">aaron-core</code>'s Fjall LSM engine. Combine Aaron's building blocks to construct whatever distributed system you can imagine.
+              Aaron is not a rigid all-or-nothing framework. It is an unopinionated, modular suite of distributed primitives designed to be mixed and matched however your architecture demands. Need in-process consensus without external coordination daemons? Combine control plane consensus with your storage layer. Need peer-to-peer discovery without full cluster orchestration? Plug in decentralized membership. Need extreme local persistence? Embed the disk storage engine. Combine Aaron's building blocks to construct whatever distributed system you can imagine.
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div class="p-4 rounded-xl bg-slate-950/70 border border-white/5">
                 <div class="font-mono text-xs font-bold text-amber-400 mb-1">Decentralized P2P Mesh</div>
-                <div class="text-xs text-slate-400 leading-relaxed">Pair SWIM gossip + intra-node EventHub to coordinate peer swarms without central coordination servers.</div>
+                <div class="text-xs text-slate-400 leading-relaxed">Pair decentralized gossip + intra-node EventHub to coordinate peer swarms without central coordination servers.</div>
               </div>
               <div class="p-4 rounded-xl bg-slate-950/70 border border-white/5">
                 <div class="font-mono text-xs font-bold text-cyan-400 mb-1">Stateful Data Engine</div>
-                <div class="text-xs text-slate-400 leading-relaxed">Combine Fjall LSM + Shard Router + OpenRaft to build custom geo-replicated, partition-aware databases.</div>
+                <div class="text-xs text-slate-400 leading-relaxed">Combine disk-backed LSM + Shard Router + Quorum Consensus to build custom geo-replicated, partition-aware databases.</div>
               </div>
               <div class="p-4 rounded-xl bg-slate-950/70 border border-white/5">
                 <div class="font-mono text-xs font-bold text-brand-400 mb-1">Microsecond Telemetry</div>
-                <div class="text-xs text-slate-400 leading-relaxed">Multiplex UDP QUIC streams + zero-copy FlatBuffers to ingest and persist millions of events/sec.</div>
+                <div class="text-xs text-slate-400 leading-relaxed">Multiplex low-overhead UDP streams + zero-copy serialization to ingest and persist millions of events/sec.</div>
               </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400 pt-3 border-t border-white/5">
               <span class="text-slate-300 font-semibold text-[11px]">Primitives at your disposal:</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">SWIM Gossip</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Quinn QUIC</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Fjall LSM</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">OpenRaft</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">FlatBuffers</span>
-              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Supervision Tree</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Decentralized Discovery</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Multiplexed Transport</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Disk-Backed LSM</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Quorum Consensus</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Zero-Copy Serialization</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Supervision Trees</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Dynamic Tracing</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Embedded Web UI</span>
             </div>
@@ -1087,7 +865,7 @@
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300">Initialization</span>
               </div>
               <p class="text-slate-400 font-sans text-xs leading-relaxed">
-                The node allocates its QUIC port, initializes local Fjall LSM storage, and assigns its unique <code>Uuid</code>. If seed addresses are configured, it performs handshake probes against the seed; otherwise, it operates as the initial seed for subsequent peers.
+                The node allocates its network transport port, initializes local disk storage, and assigns its unique <code>Uuid</code>. If seed addresses are configured, it performs handshake probes against the seed; otherwise, it operates as the initial seed for subsequent peers.
               </p>
             </div>
           </div>
@@ -1099,11 +877,11 @@
             </div>
             <div class="space-y-1">
               <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-                <span>SWIM Gossip Convergence</span>
+                <span>Decentralized Peer Convergence</span>
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300">O(log N) Dissemination</span>
               </div>
               <p class="text-slate-400 font-sans text-xs leading-relaxed">
-                The gossip engine propagates the new node across the mesh in bounded random steps. Each node maintains an ordered local membership table and disseminates updates probabilistically via QUIC datagrams.
+                The gossip engine propagates the new node across the mesh in bounded random steps. Each node maintains an ordered local membership table and disseminates updates probabilistically via network datagrams.
               </p>
             </div>
           </div>
@@ -1131,11 +909,11 @@
             </div>
             <div class="space-y-1">
               <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-                <span>Dead Declaration or Incarnation Self-Healing</span>
+                <span>Incarnation Counter & Self-Refutation</span>
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-300">Self-Healing</span>
               </div>
               <p class="text-slate-400 font-sans text-xs leading-relaxed">
-                If the suspicion timer expires without refutation, the node is declared <code>Dead</code> and evicted from active routing. However, if the node was temporarily delayed or crashed and restarted, it refutes the suspicion by incrementing its <code>incarnation</code> counter, immediately restoring <code>Alive</code> status without cluster restarts.
+                If a node receives a <code>Suspect</code> rumor regarding itself while healthy, it increments its monotonic incarnation number and broadcasts an overriding <code>Alive</code> notification, neutralizing false-positive gossip immediately.
               </p>
             </div>
           </div>
@@ -1151,7 +929,7 @@
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Graceful Drain</span>
               </div>
               <p class="text-slate-400 font-sans text-xs leading-relaxed">
-                During planned termination (SIGTERM / CancellationToken), async services drain in-flight requests, Fjall LSM tables flush pending commits to disk, and the node dispatches departure notifications to peers to prevent false suspect alarms.
+                During planned termination (SIGTERM / CancellationToken), async services drain in-flight requests, local LSM tables flush pending commits to disk, and the node dispatches departure notifications to peers to prevent false suspect alarms.
               </p>
             </div>
           </div>
@@ -1669,34 +1447,6 @@
       updateStats();
     }
 
-    // Parallax Scroll Effect for floating background glows & chips
-    function initParallax() {
-      const parallaxItems = document.querySelectorAll('[data-parallax-speed]');
-      if (!parallaxItems.length) return;
-
-      let ticking = false;
-      window.addEventListener('scroll', () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            parallaxItems.forEach(el => {
-              const speed = parseFloat(el.getAttribute('data-parallax-speed')) || 0;
-              const parentSection = el.closest('section') || el.parentElement;
-              const rect = parentSection.getBoundingClientRect();
-              
-              if (rect.top < window.innerHeight + 300 && rect.bottom > -300) {
-                const sectionMiddle = rect.top + rect.height / 2;
-                const windowMiddle = window.innerHeight / 2;
-                const diff = (sectionMiddle - windowMiddle) * speed;
-                el.style.transform = `translate3d(0, ${diff.toFixed(1)}px, 0)`;
-              }
-            });
-            ticking = false;
-          });
-          ticking = true;
-        }
-      }, { passive: true });
-    }
-
     // Interactive 3D Tilt & Specular Glare for Use Case Cards
     function initCardTilt() {
       const cards = document.querySelectorAll('.tilt-card');
@@ -1729,7 +1479,6 @@
       });
     }
 
-    initParallax();
     initCardTilt();
     updateStats();
     setInterval(updateStats, 5000);
