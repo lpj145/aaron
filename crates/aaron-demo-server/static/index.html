@@ -50,6 +50,14 @@
     details summary::-webkit-details-marker {
       display: none;
     }
+    .tilt-card {
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
+    }
+    .parallax-item {
+      will-change: transform;
+    }
   </style>
 </head>
 <body class="bg-[#070a10] text-slate-100 font-sans selection:bg-brand-500 selection:text-white min-h-screen relative overflow-x-hidden">
@@ -89,9 +97,10 @@
           </span>
         </div>
 
-        <nav class="hidden md:flex items-center gap-7 text-xs font-mono uppercase tracking-wider text-slate-300">
+        <nav class="hidden md:flex items-center gap-6 text-xs font-mono uppercase tracking-wider text-slate-300">
           <a href="#code" class="hover:text-cyan-400 transition font-medium">Code Models</a>
           <a href="#opinionated" class="hover:text-cyan-400 transition font-medium">Why Aaron</a>
+          <a href="#build" class="hover:text-cyan-400 transition font-medium">Use Cases</a>
           <a href="#lifecycle" class="hover:text-cyan-400 transition font-medium">Lifecycle</a>
           <a href="#sandbox" class="hover:text-white transition flex items-center gap-1.5 text-cyan-400 font-medium">
             <span>Live Sandbox</span>
@@ -433,7 +442,191 @@
       </section>
 
       <!-- ======================================================== -->
-      <!-- SECTION 4: NODE LIFECYCLE                                -->
+      <!-- SECTION 4: WHAT YOU CAN BUILD (USE CASES & PARALLAX)    -->
+      <!-- ======================================================== -->
+      <section id="build" class="mt-36 scroll-mt-24 relative">
+        
+        <!-- Parallax Background Glows & Floating Technical Chips -->
+        <div class="parallax-item absolute -top-16 -left-24 w-80 h-80 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" data-parallax-speed="0.12"></div>
+        <div class="parallax-item absolute top-1/2 -right-24 w-80 h-80 bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none" data-parallax-speed="-0.15"></div>
+        
+        <!-- Floating decorative parallax chips with high-contrast borders -->
+        <div class="parallax-item hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-mono bg-slate-900/90 border border-cyan-500/30 text-cyan-300 absolute -top-8 right-12 backdrop-blur-md shadow-xl pointer-events-none" data-parallax-speed="0.2">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+          <span>QUIC Multi-Stream &bull; Zero HoL Blocking</span>
+        </div>
+        <div class="parallax-item hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-mono bg-slate-900/90 border border-brand-500/30 text-brand-300 absolute bottom-12 -left-8 backdrop-blur-md shadow-xl pointer-events-none" data-parallax-speed="-0.18">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span>
+          <span>Fjall LSM &bull; Microsecond WAL</span>
+        </div>
+
+        <!-- Section Header -->
+        <div class="text-center max-w-3xl mx-auto mb-16 relative z-10">
+          <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Architectural Capabilities</div>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
+            What You Can Build with Aaron
+          </h2>
+          <p class="text-slate-400 text-sm sm:text-base">
+            From low-latency stateful engines to edge telemetry gateways, Aaron provides the unified primitives required to build high-concurrency distributed systems without operational bloat.
+          </p>
+        </div>
+
+        <!-- 2x2 Grid of Use Cases with 3D Parallax Tilt -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+          
+          <!-- Use Case 1: Distributed Key-Value & Cache Engines -->
+          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-cyan-500/50 shadow-xl relative overflow-hidden group">
+            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-4 mb-5">
+              <span class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">
+                Distributed Storage &bull; Microsecond Reads
+              </span>
+              <span class="font-mono text-xs text-slate-500">01</span>
+            </div>
+
+            <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors">
+              Distributed Key-Value & Cache Engines
+            </h3>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6 font-normal">
+              Build a resilient in-memory and disk-persisted key-value cluster without deploying Redis or Memcached. Nodes store localized state in an embedded Fjall LSM tree with Write-Ahead Logging (WAL) and form a self-balancing partition ring.
+            </p>
+
+            <div class="p-4 rounded-xl bg-slate-950/80 border border-white/5 space-y-2 mb-6 text-xs text-slate-400 font-mono">
+              <div class="text-slate-300 font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                <span>How Aaron Powers It:</span>
+              </div>
+              <p class="font-sans text-xs text-slate-400 leading-relaxed">
+                Partition ranges are assigned via in-process OpenRaft consensus. Read and write commands travel over multiplexed QUIC byte streams using zero-copy FlatBuffers without heap allocations.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 text-[11px] font-mono">
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Fjall LSM</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">aaron-shard</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">OpenRaft</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy RPC</span>
+            </div>
+          </div>
+
+          <!-- Use Case 2: Edge IoT & Telemetry Gateways -->
+          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-brand-500/50 shadow-xl relative overflow-hidden group">
+            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-4 mb-5">
+              <span class="text-xs font-mono px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">
+                Edge Ingestion &bull; Lossy Networks
+              </span>
+              <span class="font-mono text-xs text-slate-500">02</span>
+            </div>
+
+            <h3 class="text-xl font-bold text-white mb-3 group-hover:text-brand-300 transition-colors">
+              Edge IoT & Telemetry Gateways
+            </h3>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6 font-normal">
+              Ingest, buffer, and federate telemetry streams from thousands of IoT devices and edge sensors across unreliable cellular connections with sub-40 MB memory overhead.
+            </p>
+
+            <div class="p-4 rounded-xl bg-slate-950/80 border border-white/5 space-y-2 mb-6 text-xs text-slate-400 font-mono">
+              <div class="text-slate-300 font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
+                <span>How Aaron Powers It:</span>
+              </div>
+              <p class="font-sans text-xs text-slate-400 leading-relaxed">
+                QUIC over UDP eliminates TCP Head-of-Line stalls on spotty edge networks. When uplink connectivity drops, incoming packets spool safely onto the local LSM disk tables, automatically draining when connections resume.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 text-[11px] font-mono">
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Quinn UDP</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Local Disk Spooling</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">CancellationToken</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Single Binary</span>
+            </div>
+          </div>
+
+          <!-- Use Case 3: Resilient Worker Meshes & Cron Fleets -->
+          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-emerald-500/50 shadow-xl relative overflow-hidden group">
+            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-4 mb-5">
+              <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
+                Autonomous Mesh &bull; Self-Healing Fleets
+              </span>
+              <span class="font-mono text-xs text-slate-500">03</span>
+            </div>
+
+            <h3 class="text-xl font-bold text-white mb-3 group-hover:text-emerald-300 transition-colors">
+              Resilient Worker Meshes & Cron Fleets
+            </h3>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6 font-normal">
+              Execute asynchronous background jobs, distributed video rendering, and scheduled task queues across a swarm of worker machines without a single orchestrator bottleneck.
+            </p>
+
+            <div class="p-4 rounded-xl bg-slate-950/80 border border-white/5 space-y-2 mb-6 text-xs text-slate-400 font-mono">
+              <div class="text-slate-300 font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span>How Aaron Powers It:</span>
+              </div>
+              <p class="font-sans text-xs text-slate-400 leading-relaxed">
+                Nodes monitor cluster health through SWIM gossip. If a worker process fails, indirect ping-req confirms the outage within milliseconds and triggers task rescheduling, while surviving nodes refute transient hiccups via incarnation counters.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 text-[11px] font-mono">
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">SWIM Gossip</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Service Supervisor</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Incarnation Refutation</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Type-safe EventHub</span>
+            </div>
+          </div>
+
+          <!-- Use Case 4: Multiplayer Game & Real-Time State Servers -->
+          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-indigo-500/50 shadow-xl relative overflow-hidden group">
+            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+            
+            <div class="flex items-center justify-between gap-4 mb-5">
+              <span class="text-xs font-mono px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">
+                Real-Time &bull; Deterministic Latency
+              </span>
+              <span class="font-mono text-xs text-slate-500">04</span>
+            </div>
+
+            <h3 class="text-xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">
+              Multiplayer Game & Collaborative State Servers
+            </h3>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6 font-normal">
+              Host high-frequency multiplayer session loops, interactive canvases, and financial order-matching engines requiring deterministic sub-millisecond execution loops.
+            </p>
+
+            <div class="p-4 rounded-xl bg-slate-950/80 border border-white/5 space-y-2 mb-6 text-xs text-slate-400 font-mono">
+              <div class="text-slate-300 font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                <span>How Aaron Powers It:</span>
+              </div>
+              <p class="font-sans text-xs text-slate-400 leading-relaxed">
+                Independent QUIC streams transmit position packets concurrently without stalling player channels. FlatBuffers schemas read coordinates directly from network buffers in O(1) time without garbage collection or heap allocation.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 text-[11px] font-mono">
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Multi-Stream QUIC</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy FlatBuffers</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Sub-ms Tick Loop</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Dynamic Tracing</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 5: NODE LIFECYCLE                                -->
       <!-- ======================================================== -->
       <section id="lifecycle" class="mt-32 scroll-mt-24">
         <div class="text-center max-w-3xl mx-auto mb-16">
@@ -532,7 +725,7 @@
       </section>
 
       <!-- ======================================================== -->
-      <!-- SECTION 5: INTERACTIVE LIVE SANDBOX                      -->
+      <!-- SECTION 6: INTERACTIVE LIVE SANDBOX                      -->
       <!-- ======================================================== -->
       <section id="sandbox" class="mt-32 scroll-mt-24">
         <div class="p-8 sm:p-10 rounded-2xl bg-slate-900/80 border border-white/10 shadow-2xl relative overflow-hidden">
@@ -712,7 +905,7 @@
       </section>
 
       <!-- ======================================================== -->
-      <!-- SECTION 6: COLLAPSIBLE OFFICIAL CRATES                   -->
+      <!-- SECTION 7: COLLAPSIBLE OFFICIAL CRATES                   -->
       <!-- ======================================================== -->
       <section id="crates" class="mt-32">
         <details class="group rounded-2xl border border-white/10 bg-slate-900/60 overflow-hidden">
@@ -1041,6 +1234,68 @@
       updateStats();
     }
 
+    // Parallax Scroll Effect for floating background glows & chips
+    function initParallax() {
+      const parallaxItems = document.querySelectorAll('[data-parallax-speed]');
+      if (!parallaxItems.length) return;
+
+      let ticking = false;
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            parallaxItems.forEach(el => {
+              const speed = parseFloat(el.getAttribute('data-parallax-speed')) || 0;
+              const parentSection = el.closest('section') || el.parentElement;
+              const rect = parentSection.getBoundingClientRect();
+              
+              if (rect.top < window.innerHeight + 300 && rect.bottom > -300) {
+                const sectionMiddle = rect.top + rect.height / 2;
+                const windowMiddle = window.innerHeight / 2;
+                const diff = (sectionMiddle - windowMiddle) * speed;
+                el.style.transform = `translate3d(0, ${diff.toFixed(1)}px, 0)`;
+              }
+            });
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+    }
+
+    // Interactive 3D Tilt & Specular Glare for Use Case Cards
+    function initCardTilt() {
+      const cards = document.querySelectorAll('.tilt-card');
+      cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          
+          const rotateX = ((y - centerY) / centerY) * -4.5;
+          const rotateY = ((x - centerX) / centerX) * 4.5;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
+          card.style.boxShadow = '0 20px 40px -15px rgba(6, 182, 212, 0.15), 0 0 25px rgba(99, 102, 241, 0.1)';
+
+          const glare = card.querySelector('.glare-effect');
+          if (glare) {
+            glare.style.opacity = '1';
+            glare.style.background = `radial-gradient(circle 350px at ${x}px ${y}px, rgba(255, 255, 255, 0.08), transparent 70%)`;
+          }
+        });
+
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+          card.style.boxShadow = '';
+          const glare = card.querySelector('.glare-effect');
+          if (glare) glare.style.opacity = '0';
+        });
+      });
+    }
+
+    initParallax();
+    initCardTilt();
     updateStats();
     setInterval(updateStats, 5000);
   </script>
