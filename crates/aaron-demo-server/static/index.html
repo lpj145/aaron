@@ -50,17 +50,46 @@
     details summary::-webkit-details-marker {
       display: none;
     }
-    .tilt-card {
-      transform-style: preserve-3d;
-      will-change: transform;
-      transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
-    }
     @keyframes scanline {
       0% { transform: translateY(-100%); }
       100% { transform: translateY(450%); }
     }
     .animate-scan {
       animation: scanline 4s ease-in-out infinite;
+    }
+    @keyframes flowLine {
+      from { stroke-dashoffset: 24; }
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes orbitSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes hubPulse {
+      0%, 100% { transform: scale(1); opacity: 0.95; }
+      50% { transform: scale(1.025); opacity: 1; }
+    }
+    .flow-line {
+      stroke-dasharray: 6 6;
+      animation: flowLine 1.5s linear infinite;
+    }
+    .orbit-ring {
+      transform-origin: 600px 240px;
+      animation: orbitSpin 40s linear infinite;
+    }
+    .orbit-ring-reverse {
+      transform-origin: 600px 240px;
+      animation: orbitSpin 50s linear infinite reverse;
+    }
+    .hub-core {
+      transform-origin: 600px 240px;
+      animation: hubPulse 4s ease-in-out infinite;
+    }
+    .svg-node-card {
+      transition: filter 0.2s ease, transform 0.2s ease;
+    }
+    .svg-node-card:hover {
+      filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.35));
     }
   </style>
 </head>
@@ -129,17 +158,9 @@
     <!-- Hero Content: Compact Copy + Widescreen Centralizer Concept Illustration -->
     <div class="relative z-10 max-w-6xl mx-auto px-6 pt-6 pb-4 w-full flex flex-col items-center text-center my-auto">
       
-      <!-- Compact Eyebrow Tag -->
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono bg-amber-500/15 border border-amber-500/30 text-amber-300 mb-2.5 font-semibold">
-        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-        <span>ALPHA v0.1.0</span>
-        <span class="text-slate-600">&bull;</span>
-        <span class="text-amber-200">Distributed Cluster Runtime</span>
-      </div>
-
-      <!-- Compact Title -->
-      <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
-        The Opinionated Distributed Cluster Runtime for Rust
+      <!-- Title -->
+      <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-3">
+        Build Distributed Clusters with Rust
       </h1>
 
       <!-- Compact Description focused on connecting solutions & functionality -->
@@ -157,13 +178,311 @@
         </a>
       </div>
 
-      <!-- Widescreen Centralizer Concept Illustration (Fluent Bit Style) -->
-      <div class="w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(6,182,212,0.12)] bg-[#070a10]">
-        <img 
-          src="/cluster-concept.webp" 
-          alt="Aaron Runtime Hub: Connecting Distributed Services, Event Pipelines, Stateful Storage, and Cluster Nodes" 
-          class="w-full h-auto object-cover"
-        />
+      <!-- Widescreen Centralizer Concept Illustration (Native Vector SVG, Fluent Bit Style) -->
+      <div class="w-full max-w-6xl mx-auto my-2 select-none relative">
+        <svg viewBox="0 0 1200 480" class="w-full h-auto overflow-visible" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Glow Filters -->
+            <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glow-hub" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="12" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+
+            <!-- Gradients -->
+            <radialGradient id="hub-ambient-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.25" />
+              <stop offset="60%" stop-color="#6366f1" stop-opacity="0.10" />
+              <stop offset="100%" stop-color="#070a10" stop-opacity="0" />
+            </radialGradient>
+
+            <radialGradient id="hub-core-grad" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#1e1b4b" />
+              <stop offset="60%" stop-color="#0f172a" />
+              <stop offset="100%" stop-color="#090d16" />
+            </radialGradient>
+
+            <linearGradient id="hub-border-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8" />
+              <stop offset="50%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#c084fc" />
+            </linearGradient>
+
+            <linearGradient id="card-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0f172a" stop-opacity="0.85" />
+              <stop offset="100%" stop-color="#0b0f19" stop-opacity="0.95" />
+            </linearGradient>
+
+            <!-- Conduit Stream Gradients -->
+            <linearGradient id="stream-cyan-indigo" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#06b6d4" />
+              <stop offset="100%" stop-color="#818cf8" />
+            </linearGradient>
+
+            <linearGradient id="stream-violet-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#38bdf8" />
+            </linearGradient>
+
+            <linearGradient id="stream-indigo-amber" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#f59e0b" />
+            </linearGradient>
+
+            <linearGradient id="stream-indigo-emerald" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#10b981" />
+            </linearGradient>
+
+            <linearGradient id="stream-indigo-rose" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#ec4899" />
+            </linearGradient>
+          </defs>
+
+          <!-- Top Section Category Labels -->
+          <g opacity="0.85">
+            <text x="170" y="32" text-anchor="middle" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" letter-spacing="1.5">INPUTS &amp; APPLICATION WORKLOADS</text>
+            <text x="600" y="55" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" letter-spacing="2">CENTRALIZED RUNTIME HUB</text>
+            <text x="1030" y="32" text-anchor="middle" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" letter-spacing="1.5">DISTRIBUTED FABRIC &amp; PERSISTENCE</text>
+          </g>
+
+          <!-- Ambient Halo behind Central Hub -->
+          <circle cx="600" cy="240" r="180" fill="url(#hub-ambient-glow)" pointer-events="none" />
+
+          <!-- ======================================================== -->
+          <!-- CONDUIT DATA PIPELINES                                   -->
+          <!-- ======================================================== -->
+
+          <!-- 1. Top Left -> Hub (Domain Services) -->
+          <path d="M 300 94 C 420 94, 460 190, 520 190" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" />
+          <path id="path-input-1" d="M 300 94 C 420 94, 460 190, 520 190" fill="none" stroke="url(#stream-cyan-indigo)" stroke-width="2" class="flow-line" />
+
+          <!-- 2. Mid Left -> Hub (EventHub Pipelines) -->
+          <path d="M 300 240 L 512 240" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" />
+          <path id="path-input-2" d="M 300 240 L 512 240" fill="none" stroke="url(#stream-violet-cyan)" stroke-width="2" class="flow-line" />
+
+          <!-- 3. Bottom Left -> Hub (Ingress & APIs) -->
+          <path d="M 300 386 C 420 386, 460 290, 520 290" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" />
+          <path id="path-input-3" d="M 300 386 C 420 386, 460 290, 520 290" fill="none" stroke="url(#stream-cyan-indigo)" stroke-width="2" class="flow-line" />
+
+          <!-- 4. Hub -> Top Right (Peer-to-Peer Mesh) -->
+          <path d="M 680 190 C 740 190, 780 94, 900 94" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" />
+          <path id="path-output-1" d="M 680 190 C 740 190, 780 94, 900 94" fill="none" stroke="url(#stream-indigo-amber)" stroke-width="2" class="flow-line" />
+
+          <!-- 5. Hub -> Mid Right (Stateful Storage) -->
+          <path d="M 688 240 L 900 240" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" />
+          <path id="path-output-2" d="M 688 240 L 900 240" fill="none" stroke="url(#stream-indigo-emerald)" stroke-width="2" class="flow-line" />
+
+          <!-- 6. Hub -> Bottom Right (Consensus Quorum) -->
+          <path d="M 680 290 C 740 290, 780 386, 900 386" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" />
+          <path id="path-output-3" d="M 680 290 C 740 290, 780 386, 900 386" fill="none" stroke="url(#stream-indigo-rose)" stroke-width="2" class="flow-line" />
+
+          <!-- ======================================================== -->
+          <!-- ANIMATED NEON PACKETS (Native SVG animateMotion)          -->
+          <!-- ======================================================== -->
+          <!-- Ingress Packets (Left -> Center) -->
+          <circle r="4.5" fill="#38bdf8" filter="url(#glow-cyan)">
+            <animateMotion dur="2.4s" repeatCount="indefinite" path="M 300 94 C 420 94, 460 190, 520 190" />
+          </circle>
+          <circle r="3.5" fill="#67e8f9" filter="url(#glow-cyan)">
+            <animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite" path="M 300 94 C 420 94, 460 190, 520 190" />
+          </circle>
+
+          <circle r="4.5" fill="#818cf8" filter="url(#glow-cyan)">
+            <animateMotion dur="1.8s" repeatCount="indefinite" path="M 300 240 L 512 240" />
+          </circle>
+          <circle r="3.5" fill="#a5b4fc" filter="url(#glow-cyan)">
+            <animateMotion dur="1.8s" begin="0.9s" repeatCount="indefinite" path="M 300 240 L 512 240" />
+          </circle>
+
+          <circle r="4.5" fill="#06b6d4" filter="url(#glow-cyan)">
+            <animateMotion dur="2.6s" repeatCount="indefinite" path="M 300 386 C 420 386, 460 290, 520 290" />
+          </circle>
+          <circle r="3.5" fill="#22d3ee" filter="url(#glow-cyan)">
+            <animateMotion dur="2.6s" begin="1.3s" repeatCount="indefinite" path="M 300 386 C 420 386, 460 290, 520 290" />
+          </circle>
+
+          <!-- Egress Packets (Center -> Right) -->
+          <circle r="4.5" fill="#f59e0b" filter="url(#glow-amber)">
+            <animateMotion dur="2.5s" repeatCount="indefinite" path="M 680 190 C 740 190, 780 94, 900 94" />
+          </circle>
+          <circle r="3.5" fill="#fbbf24" filter="url(#glow-amber)">
+            <animateMotion dur="2.5s" begin="1.25s" repeatCount="indefinite" path="M 680 190 C 740 190, 780 94, 900 94" />
+          </circle>
+
+          <circle r="4.5" fill="#10b981" filter="url(#glow-cyan)">
+            <animateMotion dur="1.9s" repeatCount="indefinite" path="M 688 240 L 900 240" />
+          </circle>
+          <circle r="3.5" fill="#34d399" filter="url(#glow-cyan)">
+            <animateMotion dur="1.9s" begin="0.95s" repeatCount="indefinite" path="M 688 240 L 900 240" />
+          </circle>
+
+          <circle r="4.5" fill="#ec4899" filter="url(#glow-amber)">
+            <animateMotion dur="2.7s" repeatCount="indefinite" path="M 680 290 C 740 290, 780 386, 900 386" />
+          </circle>
+          <circle r="3.5" fill="#f472b6" filter="url(#glow-amber)">
+            <animateMotion dur="2.7s" begin="1.35s" repeatCount="indefinite" path="M 680 290 C 740 290, 780 386, 900 386" />
+          </circle>
+
+          <!-- ======================================================== -->
+          <!-- LEFT CARDS: INPUTS & WORKLOADS                           -->
+          <!-- ======================================================== -->
+
+          <!-- Card 1: Domain Services -->
+          <g class="svg-node-card cursor-pointer">
+            <rect x="40" y="55" width="260" height="78" rx="12" fill="url(#card-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+            <rect x="40" y="55" width="4" height="78" rx="2" fill="#38bdf8" />
+            <!-- Icon Box -->
+            <rect x="56" y="72" width="44" height="44" rx="10" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+            <path d="M 78 83 L 90 90 L 90 102 L 78 109 L 66 102 L 66 90 Z M 78 83 L 78 109 M 66 90 L 78 96 L 90 90" fill="none" stroke="#38bdf8" stroke-width="1.6" stroke-linejoin="round" />
+            <!-- Text Content -->
+            <text x="112" y="87" fill="#ffffff" font-family="'Inter', sans-serif" font-size="13" font-weight="700">Domain Services</text>
+            <text x="112" y="103" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">Actors &amp; Supervised Tasks</text>
+            <!-- Badge Pill -->
+            <rect x="112" y="110" width="70" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
+            <text x="147" y="121" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600">ASYNC ACTOR</text>
+            <!-- Port Dot -->
+            <circle cx="300" cy="94" r="4.5" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
+          </g>
+
+          <!-- Card 2: EventHub Pipelines -->
+          <g class="svg-node-card cursor-pointer">
+            <rect x="40" y="201" width="260" height="78" rx="12" fill="url(#card-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+            <rect x="40" y="201" width="4" height="78" rx="2" fill="#818cf8" />
+            <!-- Icon Box -->
+            <rect x="56" y="218" width="44" height="44" rx="10" fill="rgba(129, 140, 248, 0.12)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1" />
+            <path d="M 70 234 L 78 240 L 70 246 M 78 234 L 86 240 L 78 246" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- Text Content -->
+            <text x="112" y="233" fill="#ffffff" font-family="'Inter', sans-serif" font-size="13" font-weight="700">EventHub Pipelines</text>
+            <text x="112" y="249" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">Lockless Zero-Copy Bus</text>
+            <!-- Badge Pill -->
+            <rect x="112" y="256" width="76" height="15" rx="7.5" fill="rgba(129, 140, 248, 0.12)" stroke="rgba(129, 140, 248, 0.25)" stroke-width="1" />
+            <text x="150" y="267" text-anchor="middle" fill="#a5b4fc" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600">BROADCAST PUB/SUB</text>
+            <!-- Port Dot -->
+            <circle cx="300" cy="240" r="4.5" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
+          </g>
+
+          <!-- Card 3: Ingress & Shard APIs -->
+          <g class="svg-node-card cursor-pointer">
+            <rect x="40" y="347" width="260" height="78" rx="12" fill="url(#card-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+            <rect x="40" y="347" width="4" height="78" rx="2" fill="#06b6d4" />
+            <!-- Icon Box -->
+            <rect x="56" y="364" width="44" height="44" rx="10" fill="rgba(6, 182, 212, 0.12)" stroke="rgba(6, 182, 212, 0.3)" stroke-width="1" />
+            <path d="M 73 379 L 67 386 L 73 393 M 83 379 L 89 386 L 83 393 M 79 376 L 77 396" fill="none" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- Text Content -->
+            <text x="112" y="379" fill="#ffffff" font-family="'Inter', sans-serif" font-size="13" font-weight="700">Ingress &amp; Shard APIs</text>
+            <text x="112" y="395" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">HTTP, FlatBuffers &amp; Routing</text>
+            <!-- Badge Pill -->
+            <rect x="112" y="402" width="72" height="15" rx="7.5" fill="rgba(6, 182, 212, 0.12)" stroke="rgba(6, 182, 212, 0.25)" stroke-width="1" />
+            <text x="148" y="413" text-anchor="middle" fill="#22d3ee" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600">LOW-LATENCY</text>
+            <!-- Port Dot -->
+            <circle cx="300" cy="386" r="4.5" fill="#06b6d4" stroke="#070a10" stroke-width="1.5" />
+          </g>
+
+          <!-- ======================================================== -->
+          <!-- CENTER: AARON RUNTIME HUB                                -->
+          <!-- ======================================================== -->
+          <g>
+            <!-- Outer dashed orbital ring -->
+            <circle cx="600" cy="240" r="118" fill="none" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1.5" stroke-dasharray="8 8" class="orbit-ring" />
+            
+            <!-- Counter-rotating orbit ring -->
+            <circle cx="600" cy="240" r="98" fill="none" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1.2" stroke-dasharray="5 5" class="orbit-ring-reverse" />
+            
+            <!-- Solid Core Hub -->
+            <circle cx="600" cy="240" r="76" fill="url(#hub-core-grad)" stroke="url(#hub-border-grad)" stroke-width="2.5" class="hub-core" />
+            
+            <!-- Subtle inner gradient glow -->
+            <circle cx="600" cy="240" r="70" fill="none" stroke="rgba(56, 189, 248, 0.18)" stroke-width="1" />
+
+            <!-- Greek Lambda Symbol -->
+            <text x="600" y="222" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="34" font-weight="800" fill="#38bdf8" filter="url(#glow-cyan)">λ</text>
+            
+            <!-- Hub Center Labels -->
+            <text x="600" y="254" text-anchor="middle" font-family="'Inter', sans-serif" font-size="12" font-weight="800" fill="#ffffff" letter-spacing="1.5">AARON RUNTIME</text>
+            <text x="600" y="270" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#38bdf8" letter-spacing="1">AUTONOMOUS CORE</text>
+            <text x="600" y="284" text-anchor="middle" font-family="'Inter', sans-serif" font-size="8" fill="#94a3b8">Supervision &bull; Zero-Copy</text>
+
+            <!-- Ingress Hub Ports (Left side) -->
+            <circle cx="520" cy="190" r="4.5" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" filter="url(#glow-cyan)" />
+            <circle cx="512" cy="240" r="4.5" fill="#818cf8" stroke="#070a10" stroke-width="1.5" filter="url(#glow-cyan)" />
+            <circle cx="520" cy="290" r="4.5" fill="#06b6d4" stroke="#070a10" stroke-width="1.5" filter="url(#glow-cyan)" />
+
+            <!-- Egress Hub Ports (Right side) -->
+            <circle cx="680" cy="190" r="4.5" fill="#f59e0b" stroke="#070a10" stroke-width="1.5" filter="url(#glow-amber)" />
+            <circle cx="688" cy="240" r="4.5" fill="#10b981" stroke="#070a10" stroke-width="1.5" filter="url(#glow-cyan)" />
+            <circle cx="680" cy="290" r="4.5" fill="#ec4899" stroke="#070a10" stroke-width="1.5" filter="url(#glow-amber)" />
+          </g>
+
+          <!-- ======================================================== -->
+          <!-- RIGHT CARDS: DISTRIBUTED FABRIC & PERSISTENCE            -->
+          <!-- ======================================================== -->
+
+          <!-- Card 4: Peer-to-Peer Mesh -->
+          <g class="svg-node-card cursor-pointer">
+            <rect x="900" y="55" width="260" height="78" rx="12" fill="url(#card-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+            <rect x="1156" y="55" width="4" height="78" rx="2" fill="#f59e0b" />
+            <!-- Port Dot -->
+            <circle cx="900" cy="94" r="4.5" fill="#f59e0b" stroke="#070a10" stroke-width="1.5" />
+            <!-- Icon Box -->
+            <rect x="916" y="72" width="44" height="44" rx="10" fill="rgba(245, 158, 11, 0.12)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="1" />
+            <circle cx="938" cy="88" r="3.5" fill="#f59e0b" />
+            <circle cx="928" cy="103" r="3" fill="#f59e0b" />
+            <circle cx="948" cy="103" r="3" fill="#f59e0b" />
+            <line x1="938" y1="88" x2="928" y2="103" stroke="#f59e0b" stroke-width="1.4" />
+            <line x1="938" y1="88" x2="948" y2="103" stroke="#f59e0b" stroke-width="1.4" />
+            <line x1="928" y1="103" x2="948" y2="103" stroke="#f59e0b" stroke-width="1.4" />
+            <!-- Text Content -->
+            <text x="972" y="87" fill="#ffffff" font-family="'Inter', sans-serif" font-size="13" font-weight="700">Peer-to-Peer Mesh</text>
+            <text x="972" y="103" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">QUIC Streams &bull; SWIM Gossip</text>
+            <!-- Badge Pill -->
+            <rect x="972" y="110" width="76" height="15" rx="7.5" fill="rgba(245, 158, 11, 0.12)" stroke="rgba(245, 158, 11, 0.25)" stroke-width="1" />
+            <text x="1010" y="121" text-anchor="middle" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600">DECENTRALIZED</text>
+          </g>
+
+          <!-- Card 5: Stateful Storage -->
+          <g class="svg-node-card cursor-pointer">
+            <rect x="900" y="201" width="260" height="78" rx="12" fill="url(#card-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+            <rect x="1156" y="201" width="4" height="78" rx="2" fill="#10b981" />
+            <!-- Port Dot -->
+            <circle cx="900" cy="240" r="4.5" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
+            <!-- Icon Box -->
+            <rect x="916" y="218" width="44" height="44" rx="10" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
+            <ellipse cx="938" cy="232" rx="10" ry="4" fill="none" stroke="#10b981" stroke-width="1.6" />
+            <path d="M 928 232 L 928 248 C 928 252, 948 252, 948 248 L 948 232 M 928 240 C 928 244, 948 244, 948 240" fill="none" stroke="#10b981" stroke-width="1.6" />
+            <!-- Text Content -->
+            <text x="972" y="233" fill="#ffffff" font-family="'Inter', sans-serif" font-size="13" font-weight="700">Stateful Storage</text>
+            <text x="972" y="249" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">Embedded Fjall LSM Engine</text>
+            <!-- Badge Pill -->
+            <rect x="972" y="256" width="68" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
+            <text x="1006" y="267" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600">ACID KV LOG</text>
+          </g>
+
+          <!-- Card 6: Consensus Quorum -->
+          <g class="svg-node-card cursor-pointer">
+            <rect x="900" y="347" width="260" height="78" rx="12" fill="url(#card-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+            <rect x="1156" y="347" width="4" height="78" rx="2" fill="#ec4899" />
+            <!-- Port Dot -->
+            <circle cx="900" cy="386" r="4.5" fill="#ec4899" stroke="#070a10" stroke-width="1.5" />
+            <!-- Icon Box -->
+            <rect x="916" y="364" width="44" height="44" rx="10" fill="rgba(236, 72, 153, 0.12)" stroke="rgba(236, 72, 153, 0.3)" stroke-width="1" />
+            <path d="M 938 376 L 948 381 L 948 393 C 948 400, 938 404, 938 404 C 938 404, 928 400, 928 393 L 928 381 Z" fill="none" stroke="#ec4899" stroke-width="1.6" stroke-linejoin="round" />
+            <!-- Text Content -->
+            <text x="972" y="379" fill="#ffffff" font-family="'Inter', sans-serif" font-size="13" font-weight="700">Consensus Quorum</text>
+            <text x="972" y="395" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">In-Process OpenRaft Rings</text>
+            <!-- Badge Pill -->
+            <rect x="972" y="402" width="76" height="15" rx="7.5" fill="rgba(236, 72, 153, 0.12)" stroke="rgba(236, 72, 153, 0.25)" stroke-width="1" />
+            <text x="1010" y="413" text-anchor="middle" fill="#f472b6" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600">LINEARIZABLE</text>
+          </g>
+        </svg>
       </div>
 
     </div>
@@ -204,227 +523,292 @@
           <!-- Tabs Header: 5 Options -->
           <div class="flex flex-wrap items-center gap-2 p-3 bg-slate-950 border-b border-white/10 font-mono text-xs">
             <button onclick="setTab(1)" id="tab-btn-1" class="px-4 py-2 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold transition">
-              1. Control Plane Node
+              1. Coordinator Node (orders)
             </button>
             <button onclick="setTab(2)" id="tab-btn-2" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-              2. Worker Node
+              2. Worker Node (inventory)
             </button>
             <button onclick="setTab(3)" id="tab-btn-3" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
               3. Standalone Supervisor
             </button>
             <button onclick="setTab(4)" id="tab-btn-4" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-              4. EventHub & Supervised Service
-            </button>
-            <button onclick="setTab(5)" id="tab-btn-5" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-              5. Binary CLI & Cluster Join
+              4. EventHub Pub/Sub
             </button>
           </div>
 
           <div class="p-6 font-mono text-xs overflow-x-auto text-slate-300 bg-[#070a10]">
             
-            <!-- Tab 1: Control Plane Node (Official Default Ports) -->
-            <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-slate-500">// 1. Control Plane Node: In-process OpenRaft orchestrator on documented default ports</span>
+            <!-- Tab 1: Primary Coordinator & Admin Node (Official Ports) -->
+            <div id="code-snippet-1" class="space-y-4">
+              <pre class="leading-relaxed"><code><span class="text-slate-500">// 1. Primary Coordinator: OpenRaft Consensus, Shard Orchestrator &amp; Admin Console</span>
 <span class="text-brand-400">use</span> aaron::{
     admin::AdminService,
     control_plane::ControlPlaneService,
+    membership::MembershipService,
+    shard::ShardService,
     tracing::TracingService,
     Node,
 };
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// Creates standard ControlPlaneService (OpenRaft consensus listening on 0.0.0.0:18946 via QUIC)</span>
-    <span class="text-brand-400">let</span> (control_plane, cp_handle) = ControlPlaneService::pair();
+    <span class="text-slate-500">// Initialize cluster subsystems on documented default ports</span>
+    <span class="text-brand-400">let</span> (membership_svc, membership_handle) = MembershipService::pair();
+    <span class="text-brand-400">let</span> (control_svc, control_handle) = ControlPlaneService::pair();
+    <span class="text-brand-400">let</span> (shard_svc, shard_handle) = ShardService::coordinator(control_handle.clone());
 
-    <span class="text-slate-500">// Compose node with Dynamic Tracing, Raft Control Plane, and Admin Dashboard UI</span>
-    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"control-plane-01"</span>)
-        .with(TracingService::new())                                    <span class="text-slate-500">// Dynamic log filter reload</span>
-        .with(control_plane)                                           <span class="text-slate-500">// OpenRaft consensus RPC on port 18946</span>
-        .with(AdminService::new().with_control_plane_handle(cp_handle));<span class="text-slate-500">// Admin Web UI on port 8080</span>
+    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"orders-coordinator"</span>)
+        .with(membership_svc)                                              <span class="text-slate-500">// SWIM Gossip on default port 7946</span>
+        .with(TracingService::new())                                       <span class="text-slate-500">// Dynamic log filter reload</span>
+        .with(control_svc)                                                 <span class="text-slate-500">// OpenRaft consensus RPC on port 18946</span>
+        .with(shard_svc)                                                   <span class="text-slate-500">// Shard placement coordinator</span>
+        .with(
+            AdminService::new()                                            <span class="text-slate-500">// Embedded Admin Web UI on port 8080</span>
+                .with_membership_handle(membership_handle)
+                .with_control_plane_handle(control_handle)
+                .with_shard_handle(shard_handle),
+        );
 
-    println!(<span class="text-amber-300">"Control Plane node online. Admin console available at http://127.0.0.1:8080"</span>);
+    println!(<span class="text-amber-300">"Orders coordinator online. Admin console available at http://127.0.0.1:8080"</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
-            <!-- Tab 2: Worker Node (Official Default Ports) -->
-            <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-slate-500">// 2. Worker Node: Joins the cluster mesh on official Serf/SWIM port 7946</span>
+              <!-- Terminal Execution & Verification Card -->
+              <div class="p-4 rounded-xl bg-slate-950/90 border border-white/10 space-y-3 font-mono">
+                <div class="text-xs font-bold text-emerald-400 flex items-center justify-between border-b border-white/5 pb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>TERMINAL: HOW TO RUN &amp; VERIFY COORDINATOR</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 font-normal">Official Default Ports: 7946 (SWIM) &bull; 18946 (Raft QUIC) &bull; 8080 (Admin)</span>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">1. Run coordinator with default configuration:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-emerald-300 border border-white/5 select-all">
+                    cargo run --bin coordinator
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">2. Or customize socket bindings via documented environment variables:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-cyan-300 border border-white/5 select-all">
+                    MEMBERSHIP_BIND_ADDR="0.0.0.0:7946" \<br>
+                    CONTROL_PLANE_BIND_ADDR="0.0.0.0:18946" \<br>
+                    ADMIN_BIND_ADDR="127.0.0.1:8080" \<br>
+                    cargo run --bin coordinator
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">3. Verify node health &amp; open admin dashboard:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-amber-300 border border-white/5 select-all">
+                    curl -s http://127.0.0.1:8080/api/node | jq .<br>
+                    # Open browser dashboard: http://127.0.0.1:8080
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Application Worker Node (Official Ports) -->
+            <div id="code-snippet-2" class="hidden space-y-4">
+              <pre class="leading-relaxed"><code><span class="text-slate-500">// 2. Application Worker: Discovers cluster via SWIM gossip &amp; runs supervised domain tasks</span>
 <span class="text-brand-400">use</span> aaron::{
     membership::{MembershipConfig, MembershipService},
-    service_fn, Context, Node,
+    service_fn, shard::ShardService,
+    tracing::TracingService,
+    Context, Node,
 };
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// MembershipConfig::lan() defaults to "0.0.0.0:7946" (MEMBERSHIP_BIND_ADDR)</span>
+    <span class="text-slate-500">// Connect to coordinator seed on standard Serf/SWIM port 7946</span>
+    <span class="text-slate-500">// (On local test machines, bind port 7947 to avoid socket collision with coordinator)</span>
     <span class="text-brand-400">let</span> config = MembershipConfig::lan()
-        .bind_addr(<span class="text-amber-300">"0.0.0.0:7946"</span>)
-        .add_seed(<span class="text-amber-300">"192.168.1.10:7946"</span>); <span class="text-slate-500">// Contacts seed node on standard port 7946</span>
+        .bind_addr(<span class="text-amber-300">"0.0.0.0:7947"</span>)
+        .add_seed(<span class="text-amber-300">"127.0.0.1:7946"</span>);
 
-    <span class="text-brand-400">let</span> (membership, _handle) = MembershipService::pair_with_config(config);
+    <span class="text-brand-400">let</span> (membership_svc, _membership_handle) = MembershipService::pair_with_config(config);
+    <span class="text-brand-400">let</span> (shard_svc, shard_handle) = ShardService::worker();
 
-    <span class="text-slate-500">// Node executes supervised business tasks alongside gossip failure detection</span>
-    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"worker-01"</span>)
-        .with(membership)
-        .with(service_fn(<span class="text-amber-300">"worker-job"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
-            <span class="text-brand-400">let</span> store = ctx.store.keyspace(<span class="text-amber-300">"workloads"</span>)?;
-            store.insert(<span class="text-amber-300">"job:001"</span>, <span class="text-amber-300">b"completed"</span>)?;
-            ctx.store.persist()?;
-            Ok(())
+    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"inventory-worker"</span>)
+        .with(membership_svc)                                              <span class="text-slate-500">// Joins SWIM gossip mesh</span>
+        .with(TracingService::new())                                       <span class="text-slate-500">// Dynamic log levels</span>
+        .with(shard_svc)                                                   <span class="text-slate-500">// Receives partition assignments</span>
+        .with(service_fn(<span class="text-amber-300">"inventory-storage"</span>, <span class="text-brand-400">move</span> |ctx: Context| {
+            <span class="text-brand-400">let</span> _shards = shard_handle.clone();
+            <span class="text-brand-400">async move</span> {
+                <span class="text-brand-400">let</span> store = ctx.store.keyspace(<span class="text-amber-300">"inventory"</span>)?;
+                store.insert(<span class="text-amber-300">"sku:402"</span>, <span class="text-amber-300">b"{\"qty\": 1250, \"status\": \"in_stock\"}"</span>)?;
+                ctx.store.persist()?;
+                println!(<span class="text-amber-300">"Worker persisted inventory partition to embedded Fjall LSM tree."</span>);
+                Ok(())
+            }
         }));
 
-    println!(<span class="text-amber-300">"Worker node online on port 7946. Exchanging SWIM gossip with cluster."</span>);
+    println!(<span class="text-amber-300">"Inventory worker online. Exchanging SWIM gossip with seed 127.0.0.1:7946"</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
-            <!-- Tab 3: Standalone Supervisor Only -->
-            <pre id="code-snippet-3" class="hidden leading-relaxed"><code><span class="text-slate-500">// 3. Standalone Supervisor: Local actor/service supervision without cluster networking</span>
+              <!-- Terminal Execution & Verification Card -->
+              <div class="p-4 rounded-xl bg-slate-950/90 border border-white/10 space-y-3 font-mono">
+                <div class="text-xs font-bold text-cyan-400 flex items-center justify-between border-b border-white/5 pb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>TERMINAL: HOW TO RUN WORKER JOINING THE CLUSTER</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 font-normal">Gossip Port: 7946 &bull; Cluster Authorization: UUID Token</span>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">1. Start worker connecting to coordinator seed:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-cyan-300 border border-white/5 select-all">
+                    cargo run --bin worker
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">2. Pass seed address and cluster UUID token via documented environment variables:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-emerald-300 border border-white/5 select-all">
+                    MEMBERSHIP_BIND_ADDR="0.0.0.0:7947" \<br>
+                    MEMBERSHIP_SEEDS="127.0.0.1:7946" \<br>
+                    MEMBERSHIP_CLUSTER_ID="550e8400-e29b-41d4-a716-446655440000" \<br>
+                    cargo run --bin worker
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">3. Expected cluster handshake output:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-slate-400 border border-white/5">
+                    <span class="text-emerald-400">INFO</span> aaron_membership::stage::ingress: Inbound handshake verified for cluster 550e8400...<br>
+                    <span class="text-cyan-400">INFO</span> aaron_membership::table: Node inventory-worker marked Alive (incarnation 1)<br>
+                    <span class="text-indigo-400">INFO</span> aaron_shard::worker: Shard worker registered, listening for partition commands
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Standalone Local Supervisor (Official Core) -->
+            <div id="code-snippet-3" class="hidden space-y-4">
+              <pre class="leading-relaxed"><code><span class="text-slate-500">// 3. Standalone Supervisor: Local actor lifecycle &amp; embedded LSM storage (No network required)</span>
 <span class="text-brand-400">use</span> aaron::{service_fn, Context, Node};
 <span class="text-brand-400">use</span> std::time::Duration;
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// Supervise local async services with graceful shutdown & embedded storage</span>
+    <span class="text-slate-500">// Supervise local services with isolated LSM storage and graceful drain on SIGINT</span>
     <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"local-runner"</span>)
         .with(service_fn(<span class="text-amber-300">"metrics-collector"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
-            <span class="text-brand-400">let</span> stats = ctx.store.keyspace(<span class="text-amber-300">"metrics"</span>)?;
-            <span class="text-brand-400">let mut</span> ticks: u64 = 0;
+            <span class="text-brand-400">let</span> stats = ctx.store.keyspace(<span class="text-amber-300">"telemetry"</span>)?;
+            <span class="text-brand-400">let mut</span> seq: u64 = 0;
 
-            <span class="text-slate-500">// Loops until the supervisor signals graceful shutdown via CancellationToken</span>
+            <span class="text-slate-500">// Service loop drains cleanly when supervisor receives SIGINT/SIGTERM</span>
             <span class="text-brand-400">while</span> !ctx.cancellation_token.is_cancelled() {
-                tokio::time::sleep(Duration::from_secs(1)).<span class="text-brand-400">await</span>;
-                ticks += 1;
-                stats.insert(<span class="text-amber-300">"ticks"</span>, ticks.to_le_bytes())?;
-                println!(<span class="text-amber-300">"Supervised heartbeat tick: {ticks}"</span>);
+                tokio::time::sleep(Duration::from_millis(500)).<span class="text-brand-400">await</span>;
+                seq += 1;
+                stats.insert(<span class="text-amber-300">"heartbeat:ticks"</span>, seq.to_le_bytes())?;
+                println!(<span class="text-amber-300">"Supervised collector heartbeat [seq={seq}]"</span>);
             }
             Ok(())
         }));
 
-    println!(<span class="text-amber-300">"Supervisor active. Press Ctrl+C for graceful drain."</span>);
+    println!(<span class="text-amber-300">"Standalone supervisor running. Press Ctrl+C for graceful drain."</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
-            <!-- Tab 4: EventHub with Supervised Service -->
-            <pre id="code-snippet-4" class="hidden leading-relaxed"><code><span class="text-slate-500">// 4. EventHub: Decoupled in-memory async pub/sub between supervised services</span>
+              <!-- Terminal Execution & Verification Card -->
+              <div class="p-4 rounded-xl bg-slate-950/90 border border-white/10 space-y-3 font-mono">
+                <div class="text-xs font-bold text-indigo-400 flex items-center justify-between border-b border-white/5 pb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                    <span>TERMINAL: HOW TO RUN STANDALONE SUPERVISOR</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 font-normal">Zero Network Ports &bull; Local Actor Supervision &bull; Embedded Fjall</span>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">1. Run standalone daemon (no ports needed, zero cluster overhead):</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-indigo-300 border border-white/5 select-all">
+                    cargo run --bin local-runner
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">2. Terminal execution output and graceful drain:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-slate-400 border border-white/5">
+                    <span class="text-cyan-400">INFO</span> aaron_core::node: Initializing embedded LSM store at .aaron-data/local-runner<br>
+                    Supervised collector heartbeat [seq=1]<br>
+                    Supervised collector heartbeat [seq=2]<br>
+                    <span class="text-amber-400">^C (Ctrl+C pressed)</span><br>
+                    <span class="text-emerald-400">INFO</span> aaron_core::node: Received SIGINT, initiating graceful shutdown...<br>
+                    <span class="text-emerald-400">INFO</span> aaron_core::node: Flushed all keyspaces to disk. Node exited cleanly.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 4: EventHub Pub/Sub Pipeline -->
+            <div id="code-snippet-4" class="hidden space-y-4">
+              <pre class="leading-relaxed"><code><span class="text-slate-500">// 4. EventHub: Decoupled in-memory async pub/sub between supervised services</span>
 <span class="text-brand-400">use</span> aaron::{service_fn, Context, Node};
 
 <span class="text-cyan-400">#[derive(Clone, Debug)]</span>
-<span class="text-brand-400">struct</span> <span class="text-emerald-400">OrderCreated</span> {
-    id: u64,
+<span class="text-brand-400">struct</span> <span class="text-emerald-400">OrderEvent</span> {
+    order_id: &'static str,
     amount_cents: u64,
 }
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
     <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"event-driven-node"</span>)
-        <span class="text-slate-500">// Service A: Asynchronous Subscriber reacting to OrderCreated</span>
+        <span class="text-slate-500">// Service 1: Asynchronous subscriber reacting to OrderEvent broadcast</span>
         .with(service_fn(<span class="text-amber-300">"billing-worker"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
-            <span class="text-brand-400">let mut</span> sub = ctx.event_hub.subscribe::&lt;OrderCreated&gt;().<span class="text-brand-400">await</span>;
+            <span class="text-brand-400">let mut</span> stream = ctx.event_hub.subscribe::&lt;OrderEvent&gt;().<span class="text-brand-400">await</span>;
             tokio::spawn(<span class="text-brand-400">async move</span> {
-                <span class="text-brand-400">while let</span> Ok(event) = sub.recv().<span class="text-brand-400">await</span> {
-                    println!(<span class="text-amber-300">"Billing processed order #{} for ${:.2}"</span>, event.id, event.amount_cents <span class="text-brand-400">as</span> f64 / 100.0);
+                <span class="text-brand-400">while let</span> Ok(ev) = stream.recv().<span class="text-brand-400">await</span> {
+                    println!(<span class="text-amber-300">"Billing processed order {} for ${:.2}"</span>, ev.order_id, ev.amount_cents <span class="text-brand-400">as</span> f64 / 100.0);
                 }
             });
             Ok(())
         }))
-        <span class="text-slate-500">// Service B: Event Publisher dispatching strongly-typed messages</span>
+        <span class="text-slate-500">// Service 2: Publisher emitting strongly-typed domain events</span>
         .with(service_fn(<span class="text-amber-300">"order-gateway"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
             <span class="text-brand-400">let</span> hub = ctx.event_hub.clone();
-            hub.publish(OrderCreated { id: 1001, amount_cents: 9950 }).<span class="text-brand-400">await</span>;
+            hub.publish(OrderEvent { order_id: <span class="text-amber-300">"ORD-9901"</span>, amount_cents: 9950 }).<span class="text-brand-400">await</span>;
             Ok(())
         }));
 
+    println!(<span class="text-amber-300">"EventHub node online. Services communicating over lockless bus."</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
-            <!-- Tab 5: Binary CLI Execution & Cluster Join -->
-            <div id="code-snippet-5" class="hidden space-y-6">
-              <pre class="leading-relaxed"><code><span class="text-slate-500">// 5. Binary CLI: Production daemon accepting --bind, --join, --cluster-ip, and --cluster-id</span>
-<span class="text-brand-400">use</span> aaron::{
-    membership::{MembershipConfig, MembershipService},
-    tracing::TracingService,
-    Node, Uuid,
-};
-<span class="text-brand-400">use</span> clap::Parser;
-
-<span class="text-cyan-400">#[derive(Parser, Debug)]</span>
-<span class="text-cyan-400">#[command(name = "aaron-node", about = "Aaron cluster node daemon")]</span>
-<span class="text-brand-400">struct</span> <span class="text-emerald-400">Args</span> {
-    <span class="text-slate-500">/// Local address/port to bind for SWIM gossip (documented default: 0.0.0.0:7946)</span>
-    <span class="text-cyan-400">#[arg(long, default_value = "0.0.0.0:7946", env = "MEMBERSHIP_BIND_ADDR")]</span>
-    bind: String,
-
-    <span class="text-slate-500">/// Seed node address to join (e.g. 192.168.1.10:7946)</span>
-    <span class="text-cyan-400">#[arg(long, env = "MEMBERSHIP_SEEDS")]</span>
-    join: Option&lt;String&gt;,
-
-    <span class="text-slate-500">/// Node IP or hostname advertised across the cluster network</span>
-    <span class="text-cyan-400">#[arg(long, env = "CLUSTER_IP")]</span>
-    cluster_ip: Option&lt;String&gt;,
-
-    <span class="text-slate-500">/// Cluster UUID token required when joining an established mesh</span>
-    <span class="text-cyan-400">#[arg(long, env = "MEMBERSHIP_CLUSTER_ID")]</span>
-    cluster_id: Option&lt;Uuid&gt;,
-}
-
-<span class="text-cyan-400">#[tokio::main]</span>
-<span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-brand-400">let</span> args = Args::parse();
-
-    <span class="text-slate-500">// Build MembershipConfig from CLI args, falling back to Aaron's documented env vars</span>
-    <span class="text-brand-400">let mut</span> config = MembershipConfig::lan().bind_addr(args.bind);
-    <span class="text-brand-400">if let</span> Some(seed) = args.join {
-        config = config.add_seed(seed);
-    }
-    <span class="text-brand-400">if let</span> Some(cid) = args.cluster_id {
-        config = config.cluster_id(cid);
-    }
-
-    <span class="text-brand-400">let</span> (membership, _handle) = MembershipService::pair_with_config(config);
-
-    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"aaron-worker"</span>)
-        .with(TracingService::new())
-        .with(membership);
-
-    node.run().<span class="text-brand-400">await</span>?;
-    Ok(())
-}</code></pre>
-
-              <!-- Terminal Execution Examples -->
-              <div class="p-4 rounded-xl bg-slate-950 border border-white/10 space-y-4">
-                <div class="text-xs font-mono font-bold text-amber-400 flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                  <span>HOW TO RUN THE COMPILED BINARY (TERMINAL EXAMPLES)</span>
+              <!-- Terminal Execution & Verification Card -->
+              <div class="p-4 rounded-xl bg-slate-950/90 border border-white/10 space-y-3 font-mono">
+                <div class="text-xs font-bold text-violet-400 flex items-center justify-between border-b border-white/5 pb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+                    <span>TERMINAL: HOW TO RUN EVENT-DRIVEN PIPELINE</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 font-normal">Lockless Broadcast Bus &bull; Strongly-Typed Pub/Sub</span>
                 </div>
 
-                <div class="space-y-2">
-                  <div class="text-[11px] text-slate-400 font-sans">1. Start the first Seed Node (bootstrap mode on default port 7946):</div>
-                  <div class="p-3 rounded-lg bg-black/60 font-mono text-[11px] text-emerald-400 border border-white/5 select-all">
-                    ./aaron-node --bind 0.0.0.0:7946
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">1. Run event pipeline application:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-violet-300 border border-white/5 select-all">
+                    cargo run --bin event-node
                   </div>
                 </div>
 
-                <div class="space-y-2">
-                  <div class="text-[11px] text-slate-400 font-sans">2. Run subsequent Worker Node passing join address, cluster IP, and cluster UUID:</div>
-                  <div class="p-3 rounded-lg bg-black/60 font-mono text-[11px] text-cyan-300 border border-white/5 select-all">
-                    ./aaron-node \<br>
-                    &nbsp;&nbsp;--bind 0.0.0.0:7946 \<br>
-                    &nbsp;&nbsp;--cluster-ip 192.168.1.11 \<br>
-                    &nbsp;&nbsp;--join 192.168.1.10:7946 \<br>
-                    &nbsp;&nbsp;--cluster-id 550e8400-e29b-41d4-a716-446655440000
-                  </div>
-                </div>
-
-                <div class="space-y-2">
-                  <div class="text-[11px] text-slate-400 font-sans">3. Or execute via Aaron's documented environment variables (e.g. systemd / containers):</div>
-                  <div class="p-3 rounded-lg bg-black/60 font-mono text-[11px] text-amber-300 border border-white/5 select-all">
-                    MEMBERSHIP_BIND_ADDR="0.0.0.0:7946" \<br>
-                    MEMBERSHIP_SEEDS="192.168.1.10:7946" \<br>
-                    MEMBERSHIP_CLUSTER_ID="550e8400-e29b-41d4-a716-446655440000" \<br>
-                    ./aaron-node
+                <div class="space-y-1">
+                  <div class="text-[11px] text-slate-400 font-sans">2. Expected asynchronous bus output:</div>
+                  <div class="p-2.5 rounded-lg bg-black/70 font-mono text-[11px] text-slate-400 border border-white/5">
+                    <span class="text-cyan-400">INFO</span> aaron_core::event_hub: Broadcast channel allocated for OrderEvent<br>
+                    <span class="text-emerald-400">[order-gateway]</span> Published OrderEvent ORD-9901<br>
+                    <span class="text-violet-400">[billing-worker]</span> Billing processed order ORD-9901 for $99.50
                   </div>
                 </div>
               </div>
@@ -560,8 +944,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
           
           <!-- Use Case 1: Distributed Key-Value & Cache Engines -->
-          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-cyan-500/50 shadow-xl relative overflow-hidden group">
-            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+          <div class="p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-cyan-500/50 transition-colors duration-200 shadow-xl relative overflow-hidden group">
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">
@@ -597,8 +980,7 @@
           </div>
 
           <!-- Use Case 2: Edge IoT & Telemetry Gateways -->
-          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-brand-500/50 shadow-xl relative overflow-hidden group">
-            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+          <div class="p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-brand-500/50 transition-colors duration-200 shadow-xl relative overflow-hidden group">
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">
@@ -634,8 +1016,7 @@
           </div>
 
           <!-- Use Case 3: Resilient Worker Meshes & Cron Fleets -->
-          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-emerald-500/50 shadow-xl relative overflow-hidden group">
-            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+          <div class="p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-emerald-500/50 transition-colors duration-200 shadow-xl relative overflow-hidden group">
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
@@ -671,8 +1052,7 @@
           </div>
 
           <!-- Use Case 4: Multiplayer Game & Real-Time State Servers -->
-          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-indigo-500/50 shadow-xl relative overflow-hidden group">
-            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+          <div class="p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-indigo-500/50 transition-colors duration-200 shadow-xl relative overflow-hidden group">
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">
@@ -708,8 +1088,7 @@
           </div>
 
           <!-- Use Case 5: Core Banking, Financial Ledgers & Settlement -->
-          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-emerald-400/50 shadow-xl relative overflow-hidden group">
-            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+          <div class="p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-emerald-400/50 transition-colors duration-200 shadow-xl relative overflow-hidden group">
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
@@ -746,8 +1125,7 @@
           </div>
 
           <!-- Use Case 6: Distributed Event & Media Streaming Pipelines -->
-          <div class="tilt-card p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-purple-500/50 shadow-xl relative overflow-hidden group">
-            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+          <div class="p-8 rounded-3xl bg-slate-900/80 border border-white/10 hover:border-purple-500/50 transition-colors duration-200 shadow-xl relative overflow-hidden group">
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-semibold">
@@ -784,8 +1162,8 @@
           </div>
 
           <!-- Use Case 7 / Banner: Use Your Imagination -->
-          <div class="lg:col-span-2 tilt-card p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-brand-950/40 border border-white/10 hover:border-amber-400/50 shadow-2xl relative overflow-hidden group">
-            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+          <div class="lg:col-span-2 p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-brand-950/40 border border-white/10 hover:border-amber-400/50 transition-colors duration-200 shadow-2xl relative overflow-hidden group">
+
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div class="flex items-center gap-2">
@@ -946,10 +1324,6 @@
           <!-- Header & Quota Controls -->
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
             <div>
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 mb-2">
-                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                <span>Interactive Live Sandbox</span>
-              </div>
               <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                 Launch a Genuine 3-Node Cluster
               </h2>
@@ -965,7 +1339,7 @@
                 <div class="text-[11px] text-slate-500">15 min session TTL</div>
               </div>
 
-              <button id="btn-launch-sandbox" onclick="launchDemoCluster()" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white shadow-lg shadow-brand-500/20 transition flex items-center gap-2 disabled:opacity-50">
+              <button id="btn-launch-sandbox" onclick="launchDemoCluster()" class="px-5 py-2.5 rounded-lg font-semibold text-sm bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span id="btn-launch-text">Spawn 3-Node Cluster</span>
                 <svg id="btn-launch-spinner" class="hidden animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
               </button>
@@ -1225,7 +1599,7 @@
     let pollInterval = null;
 
     function setTab(num) {
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 4; i++) {
         const snippet = document.getElementById(`code-snippet-${i}`);
         const btn = document.getElementById(`tab-btn-${i}`);
         if (snippet) snippet.classList.add('hidden');
@@ -1447,39 +1821,6 @@
       updateStats();
     }
 
-    // Interactive 3D Tilt & Specular Glare for Use Case Cards
-    function initCardTilt() {
-      const cards = document.querySelectorAll('.tilt-card');
-      cards.forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-          const rect = card.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          const centerX = rect.width / 2;
-          const centerY = rect.height / 2;
-          
-          const rotateX = ((y - centerY) / centerY) * -4.5;
-          const rotateY = ((x - centerX) / centerX) * 4.5;
-          card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
-          card.style.boxShadow = '0 20px 40px -15px rgba(6, 182, 212, 0.15), 0 0 25px rgba(99, 102, 241, 0.1)';
-
-          const glare = card.querySelector('.glare-effect');
-          if (glare) {
-            glare.style.opacity = '1';
-            glare.style.background = `radial-gradient(circle 350px at ${x}px ${y}px, rgba(255, 255, 255, 0.08), transparent 70%)`;
-          }
-        });
-
-        card.addEventListener('mouseleave', () => {
-          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
-          card.style.boxShadow = '';
-          const glare = card.querySelector('.glare-effect');
-          if (glare) glare.style.opacity = '0';
-        });
-      });
-    }
-
-    initCardTilt();
     updateStats();
     setInterval(updateStats, 5000);
   </script>
