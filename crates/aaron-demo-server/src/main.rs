@@ -35,6 +35,7 @@ struct Args {
 
 static LANDING_HTML: &str = include_str!("../static/index.html");
 static CONCEPT_WEBP: &[u8] = include_bytes!("../static/cluster-concept.webp");
+static CLUSTER_TOPOLOGY_SVG: &str = include_str!("../static/cluster-topology.svg");
 
 async fn serve_landing() -> Html<&'static str> {
     Html(LANDING_HTML)
@@ -42,6 +43,10 @@ async fn serve_landing() -> Html<&'static str> {
 
 async fn serve_concept_image() -> impl axum::response::IntoResponse {
     ([(axum::http::header::CONTENT_TYPE, "image/webp")], CONCEPT_WEBP)
+}
+
+async fn serve_topology_svg() -> impl axum::response::IntoResponse {
+    ([(axum::http::header::CONTENT_TYPE, "image/svg+xml")], CLUSTER_TOPOLOGY_SVG)
 }
 
 #[tokio::main]
@@ -91,6 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(serve_landing))
         .route("/cluster-concept.webp", get(serve_concept_image))
         .route("/hero-mascot.webp", get(serve_concept_image))
+        .route("/cluster-topology.svg", get(serve_topology_svg))
         .nest("/api/demo", demo_api)
         // All other routes (demo subroutes, static assets, internal REST APIs) handled by proxy
         .fallback(proxy::handle_proxy_admin)
