@@ -180,7 +180,7 @@
 
       <!-- Widescreen Distributed Cluster Architecture Schematic (Node -> Supervisor -> Services -> Cluster Interconnect) -->
       <div class="w-full max-w-6xl mx-auto my-2 select-none relative">
-        <svg viewBox="0 0 1200 520" class="w-full h-auto overflow-visible" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 1440 520" class="w-full h-auto overflow-visible" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <!-- Glow Filters -->
             <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
@@ -188,10 +188,6 @@
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
             <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="3.5" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
@@ -217,6 +213,12 @@
             </linearGradient>
 
             <!-- Conduit Stream Gradients -->
+            <linearGradient id="grad-user-direct" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38bdf8" />
+              <stop offset="50%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#34d399" />
+            </linearGradient>
+
             <linearGradient id="grad-raft-rpc" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#818cf8" />
               <stop offset="50%" stop-color="#6366f1" />
@@ -232,69 +234,178 @@
 
           <!-- Top Section Category Labels -->
           <g opacity="0.9">
-            <text x="210" y="24" text-anchor="middle" fill="#818cf8" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="700" letter-spacing="1.5">CONTROL-PLANE COORDINATOR</text>
-            <text x="600" y="24" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="700" letter-spacing="2">DISTRIBUTED CLUSTER INTERCONNECT</text>
-            <text x="990" y="24" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="700" letter-spacing="1.5">AUTONOMOUS WORKER NODES</text>
+            <text x="145" y="24" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="700" letter-spacing="1.2">USER / CLIENT</text>
+            <text x="560" y="24" text-anchor="middle" fill="#818cf8" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="700" letter-spacing="1.2">CONTROL-PLANE COORDINATOR</text>
+            <text x="885" y="24" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="700" letter-spacing="1.5">CLUSTER INTERCONNECT</text>
+            <text x="1210" y="24" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="700" letter-spacing="1.2">AUTONOMOUS WORKER NODES</text>
           </g>
 
           <!-- ======================================================== -->
-          <!-- CENTER CLUSTER CONDUITS & INTERCONNECT FABRIC            -->
+          <!-- CONDUITS & ROUTING FABRIC                                -->
           <!-- ======================================================== -->
 
-          <!-- Raft Placement & Consensus RPC Conduits -->
-          <path id="path-raft-w1" d="M 390 161 C 560 161, 640 145, 810 145" fill="none" stroke="url(#grad-raft-rpc)" stroke-width="2" opacity="0.8" />
-          <path id="path-raft-w2" d="M 390 161 C 560 161, 640 383, 810 383" fill="none" stroke="url(#grad-raft-rpc)" stroke-width="2" opacity="0.8" />
+          <!-- 1. User to Control Plane Connection (Route Discovery & Schema) -->
+          <path id="path-user-cp" d="M 260 258 L 390 258" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-dasharray="5 3" class="flow-line" opacity="0.85" />
 
-          <!-- SWIM Gossip Mesh Conduits (Bi-directional failure detection) -->
-          <path id="path-swim-w1" d="M 390 225 C 560 225, 640 209, 810 209" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2.2" stroke-dasharray="6 4" class="flow-line" opacity="0.75" />
-          <path id="path-swim-w2" d="M 390 225 C 560 225, 640 447, 810 447" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2.2" stroke-dasharray="6 4" class="flow-line" opacity="0.75" />
+          <!-- 2. User to Worker 01 Direct Shard I/O (Upper Arch) -->
+          <path id="path-user-w1" d="M 230 48 C 340 10, 850 10, 1040 60" fill="none" stroke="url(#grad-user-direct)" stroke-width="2.4" opacity="0.85" />
 
-          <!-- Direct Worker-to-Worker Peer Shard Sync Bridge -->
-          <path id="path-worker-sync" d="M 1170 145 C 1215 145, 1215 383, 1170 383" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="4 4" opacity="0.75" />
+          <!-- 3. User to Worker 02 Direct Shard I/O (Lower Arch) -->
+          <path id="path-user-w2" d="M 230 490 C 340 522, 850 522, 1040 480" fill="none" stroke="url(#grad-user-direct)" stroke-width="2.4" opacity="0.85" />
 
-          <!-- Animated SVG Traffic Particles -->
+          <!-- 4. Control Plane Shard Placement & Command RPC Conduits -->
+          <path id="path-raft-w1" d="M 730 161 C 870 161, 920 145, 1040 145" fill="none" stroke="url(#grad-raft-rpc)" stroke-width="2.2" opacity="0.85" />
+          <path id="path-raft-w2" d="M 730 161 C 870 161, 920 383, 1040 383" fill="none" stroke="url(#grad-raft-rpc)" stroke-width="2.2" opacity="0.85" />
+
+          <!-- 5. SWIM Gossip Mesh Conduits (Bi-directional failure detection) -->
+          <path id="path-swim-w1" d="M 730 225 C 870 225, 920 209, 1040 209" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" opacity="0.8" />
+          <path id="path-swim-w2" d="M 730 225 C 870 225, 920 447, 1040 447" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" opacity="0.8" />
+
+          <!-- 6. Direct Worker-to-Worker Peer Shard Sync Bridge -->
+          <path id="path-worker-sync" d="M 1380 145 C 1420 145, 1420 383, 1380 383" fill="none" stroke="#10b981" stroke-width="1.8" stroke-dasharray="4 4" opacity="0.8" />
+
+          <!-- ======================================================== -->
+          <!-- ANIMATED SVG TRAFFIC PARTICLES                           -->
+          <!-- ======================================================== -->
+          <!-- User to CP Particle -->
+          <circle r="3" fill="#38bdf8" filter="url(#glow-cyan)">
+            <animateMotion dur="1.8s" repeatCount="indefinite" path="M 260 258 L 390 258" />
+          </circle>
+
+          <!-- User to Worker 1 Direct I/O Particle -->
+          <circle r="3.4" fill="#34d399" filter="url(#glow-emerald)">
+            <animateMotion dur="2.4s" repeatCount="indefinite" path="M 230 48 C 340 10, 850 10, 1040 60" />
+          </circle>
+
+          <!-- User to Worker 2 Direct I/O Particle -->
+          <circle r="3.4" fill="#34d399" filter="url(#glow-emerald)">
+            <animateMotion dur="2.6s" repeatCount="indefinite" path="M 230 490 C 340 522, 850 522, 1040 480" />
+          </circle>
+
+          <!-- CP to Worker RPC Particles -->
           <circle r="3.5" fill="#38bdf8" filter="url(#glow-cyan)">
-            <animateMotion dur="2.4s" repeatCount="indefinite" path="M 390 161 C 560 161, 640 145, 810 145" />
+            <animateMotion dur="2.2s" repeatCount="indefinite" path="M 730 161 C 870 161, 920 145, 1040 145" />
           </circle>
           <circle r="3.5" fill="#818cf8" filter="url(#glow-brand)">
-            <animateMotion dur="2.8s" repeatCount="indefinite" path="M 390 161 C 560 161, 640 383, 810 383" />
+            <animateMotion dur="2.6s" repeatCount="indefinite" path="M 730 161 C 870 161, 920 383, 1040 383" />
           </circle>
           <circle r="3" fill="#10b981" filter="url(#glow-emerald)">
-            <animateMotion dur="3.2s" repeatCount="indefinite" path="M 390 225 C 560 225, 640 209, 810 209" />
+            <animateMotion dur="2.8s" repeatCount="indefinite" path="M 730 225 C 870 225, 920 209, 1040 209" />
           </circle>
           <circle r="3" fill="#34d399" filter="url(#glow-emerald)">
-            <animateMotion dur="3.6s" repeatCount="indefinite" path="M 810 447 C 640 447, 560 225, 390 225" />
+            <animateMotion dur="3.2s" repeatCount="indefinite" path="M 1040 447 C 920 447, 870 225, 730 225" />
           </circle>
-          <circle r="2.8" fill="#f59e0b" filter="url(#glow-amber)">
-            <animateMotion dur="2.5s" repeatCount="indefinite" path="M 1170 145 C 1215 145, 1215 383, 1170 383" />
+          <circle r="2.8" fill="#10b981" filter="url(#glow-emerald)">
+            <animateMotion dur="2.4s" repeatCount="indefinite" path="M 1380 145 C 1420 145, 1420 383, 1380 383" />
           </circle>
 
-          <!-- Center Conduit Labels -->
-          <g transform="translate(600, 125)">
-            <rect x="-95" y="-12" width="190" height="24" rx="12" fill="rgba(15, 23, 42, 0.92)" stroke="rgba(99, 102, 241, 0.45)" stroke-width="1.2" />
-            <circle cx="-75" cy="0" r="3" fill="#818cf8" />
-            <text x="-64" y="3.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#c7d2fe">OpenRaft RPC • 18946</text>
+          <!-- ======================================================== -->
+          <!-- CONDUIT FLOATING BADGES                                  -->
+          <!-- ======================================================== -->
+          <!-- User to CP Query Badge -->
+          <g transform="translate(325, 238)">
+            <rect x="-65" y="-10" width="130" height="20" rx="10" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(56, 189, 248, 0.45)" stroke-width="1" />
+            <circle cx="-52" cy="0" r="2.8" fill="#38bdf8" />
+            <text x="-42" y="3.5" font-family="'JetBrains Mono', monospace" font-size="7.8" font-weight="700" fill="#bae6fd">1. Query Route &amp; Meta</text>
           </g>
 
-          <g transform="translate(600, 236)">
+          <!-- User to Worker 1 Direct I/O Badge -->
+          <g transform="translate(635, 15)">
+            <rect x="-100" y="-10" width="200" height="20" rx="10" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(56, 189, 248, 0.45)" stroke-width="1" />
+            <circle cx="-84" cy="0" r="3" fill="#34d399" />
+            <text x="-74" y="3.5" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#a7f3d0">2. Direct Shard I/O • Read/Write</text>
+          </g>
+
+          <!-- User to Worker 2 Direct I/O Badge -->
+          <g transform="translate(635, 505)">
+            <rect x="-100" y="-10" width="200" height="20" rx="10" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(16, 185, 129, 0.45)" stroke-width="1" />
+            <circle cx="-84" cy="0" r="3" fill="#34d399" />
+            <text x="-74" y="3.5" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#a7f3d0">2. Direct Shard I/O • Read/Write</text>
+          </g>
+
+          <!-- Control-Plane RPC Badge -->
+          <g transform="translate(885, 125)">
+            <rect x="-95" y="-12" width="190" height="24" rx="12" fill="rgba(15, 23, 42, 0.92)" stroke="rgba(99, 102, 241, 0.45)" stroke-width="1.2" />
+            <circle cx="-75" cy="0" r="3" fill="#818cf8" />
+            <text x="-64" y="3.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#c7d2fe">Control-Plane RPC • 18946</text>
+          </g>
+
+          <!-- SWIM Gossip Badge -->
+          <g transform="translate(885, 236)">
             <rect x="-105" y="-12" width="210" height="24" rx="12" fill="rgba(15, 23, 42, 0.92)" stroke="rgba(16, 185, 129, 0.45)" stroke-width="1.2" />
             <circle cx="-85" cy="0" r="3" fill="#10b981" />
             <text x="-74" y="3.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#a7f3d0">SWIM Gossip Mesh • 7946</text>
           </g>
 
           <!-- Inter-Worker Sync Pill (Right edge) -->
-          <g transform="translate(1210, 264)">
-            <rect x="-36" y="-11" width="72" height="22" rx="6" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(245, 158, 11, 0.45)" stroke-width="1" />
-            <text x="0" y="3.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#fbbf24">P2P SYNC</text>
+          <g transform="translate(1420, 264)">
+            <rect x="-36" y="-11" width="72" height="22" rx="6" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(16, 185, 129, 0.45)" stroke-width="1" />
+            <text x="0" y="3.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#34d399">P2P SYNC</text>
           </g>
 
-          <!-- Center Cluster Overview Card -->
-          <g transform="translate(600, 356)">
-            <rect x="-140" y="-40" width="280" height="80" rx="14" fill="rgba(11, 15, 25, 0.92)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1" />
-            <circle cx="-116" cy="-19" r="4.5" fill="#38bdf8" filter="url(#glow-cyan)" />
-            <text x="-102" y="-15" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11.5" font-weight="700">Decentralized Cluster Topology</text>
-            <text x="-116" y="5" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="9">• In-Process Actor Supervision</text>
-            <text x="-116" y="22" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="9">• Zero-Copy Multiplexed Streams</text>
+          <!-- ======================================================== -->
+          <!-- NODE 0: USER / CLIENT APP                                -->
+          <!-- ======================================================== -->
+          <g class="svg-node-card">
+            <!-- Node Process Boundary -->
+            <rect x="30" y="48" width="230" height="442" rx="16" fill="url(#node-bg-grad)" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1.4" />
+            <rect x="30" y="48" width="4" height="442" rx="2" fill="#38bdf8" />
+            
+            <!-- Node Header -->
+            <circle cx="52" cy="72" r="4.5" fill="#38bdf8" filter="url(#glow-cyan)" />
+            <text x="66" y="71" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">Node: "user-app"</text>
+            <rect x="176" y="60" width="74" height="20" rx="10" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1" />
+            <text x="213" y="73.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#7dd3fc">CLIENT</text>
+            <text x="66" y="86" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">aaron-client SDK • End-User App</text>
+
+            <!-- Supervisor Tree Container -->
+            <rect x="44" y="100" width="202" height="376" rx="12" fill="url(#supervisor-bg-grad)" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1.2" stroke-dasharray="5 4" />
+            
+            <!-- Supervisor Header -->
+            <text x="56" y="120" fill="#bae6fd" font-family="'Inter', sans-serif" font-size="10" font-weight="700">SUPERVISOR TREE</text>
+            <text x="234" y="119" text-anchor="end" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="8">Tasks</text>
+            <text x="56" y="134" fill="#64748b" font-family="'Inter', sans-serif" font-size="8.5">Client runtime &amp; driver services</text>
+
+            <!-- Service 1: Aaron SDK & Route Cache -->
+            <rect x="50" y="146" width="190" height="68" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <rect x="58" y="156" width="28" height="28" rx="6" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+            <circle cx="72" cy="170" r="6" fill="none" stroke="#38bdf8" stroke-width="1.4" />
+            <text x="94" y="165" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="700">Aaron SDK Cache</text>
+            <text x="94" y="179" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="8">Cached Shard Route Map</text>
+            <rect x="176" y="153" width="56" height="14" rx="7" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
+            <text x="204" y="163" text-anchor="middle" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="7" font-weight="600">Local Map</text>
+
+            <!-- Service 2: Route Discovery Client -->
+            <rect x="50" y="224" width="190" height="68" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="260" cy="258" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
+            <rect x="58" y="234" width="28" height="28" rx="6" fill="rgba(129, 140, 248, 0.15)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1" />
+            <path d="M 66 248 L 78 248 M 74 244 L 78 248 L 74 252" fill="none" stroke="#818cf8" stroke-width="1.3" />
+            <text x="94" y="243" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="700">Route Resolver</text>
+            <text x="94" y="257" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="8">Queries Control-Plane</text>
+            <rect x="176" y="231" width="56" height="14" rx="7" fill="rgba(129, 140, 248, 0.12)" stroke="rgba(129, 140, 248, 0.25)" stroke-width="1" />
+            <text x="204" y="241" text-anchor="middle" fill="#a5b4fc" font-family="'JetBrains Mono', monospace" font-size="7" font-weight="600">RPC :18946</text>
+
+            <!-- Service 3: Direct Shard QUIC Client -->
+            <rect x="50" y="302" width="190" height="68" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <rect x="58" y="312" width="28" height="28" rx="6" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
+            <path d="M 72 318 L 68 326 L 72 326 L 70 334 L 76 324 L 72 324 Z" fill="#10b981" />
+            <text x="94" y="321" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="700">QUIC Data Client</text>
+            <text x="94" y="335" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="8">Fast Read/Write Streams</text>
+            <rect x="176" y="309" width="56" height="14" rx="7" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
+            <text x="204" y="319" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7" font-weight="600">QUIC I/O</text>
+
+            <!-- Service 4: Write Buffer & Telemetry -->
+            <rect x="50" y="380" width="190" height="68" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <rect x="58" y="390" width="28" height="28" rx="6" fill="rgba(148, 163, 184, 0.15)" stroke="rgba(148, 163, 184, 0.3)" stroke-width="1" />
+            <rect x="66" y="400" width="12" height="8" rx="1" fill="none" stroke="#94a3b8" stroke-width="1.2" />
+            <text x="94" y="399" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="700">Client Buffer</text>
+            <text x="94" y="413" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="8">Async Batching &amp; Stats</text>
+            <rect x="176" y="387" width="56" height="14" rx="7" fill="rgba(148, 163, 184, 0.12)" stroke="rgba(148, 163, 184, 0.25)" stroke-width="1" />
+            <text x="204" y="397" text-anchor="middle" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="7" font-weight="600">Batching</text>
+
+            <!-- Outbound Port Dots -->
+            <circle cx="230" cy="48" r="3.8" fill="#34d399" stroke="#070a10" stroke-width="1.2" />
+            <circle cx="230" cy="490" r="3.8" fill="#34d399" stroke="#070a10" stroke-width="1.2" />
           </g>
 
           <!-- ======================================================== -->
@@ -302,170 +413,179 @@
           <!-- ======================================================== -->
           <g class="svg-node-card">
             <!-- Node Process Boundary -->
-            <rect x="30" y="38" width="360" height="462" rx="16" fill="url(#node-bg-grad)" stroke="rgba(129, 140, 248, 0.28)" stroke-width="1.4" />
-            <rect x="30" y="38" width="4" height="462" rx="2" fill="#818cf8" />
+            <rect x="390" y="38" width="340" height="462" rx="16" fill="url(#node-bg-grad)" stroke="rgba(129, 140, 248, 0.28)" stroke-width="1.4" />
+            <rect x="390" y="38" width="4" height="462" rx="2" fill="#818cf8" />
             
             <!-- Node Header -->
-            <circle cx="52" cy="62" r="4.5" fill="#10b981" filter="url(#glow-emerald)" />
-            <text x="66" y="61" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">Node: "orders-coordinator"</text>
-            <rect x="262" y="50" width="114" height="20" rx="10" fill="rgba(99, 102, 241, 0.2)" stroke="rgba(99, 102, 241, 0.4)" stroke-width="1" />
-            <text x="319" y="63.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#a5b4fc">CONTROL-PLANE</text>
-            <text x="66" y="75" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9.5">aaron::Node Process Container • Quorum Leader</text>
+            <circle cx="412" cy="62" r="4.5" fill="#10b981" filter="url(#glow-emerald)" />
+            <text x="426" y="61" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">Node: "orders-coordinator"</text>
+            <rect x="602" y="50" width="118" height="20" rx="10" fill="rgba(99, 102, 241, 0.2)" stroke="rgba(99, 102, 241, 0.4)" stroke-width="1" />
+            <text x="661" y="63.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#a5b4fc">CONTROL-PLANE</text>
+            <text x="426" y="75" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9.5">aaron::Node Process Container • Quorum Leader</text>
+
+            <!-- Inbound Port Dot from User Query -->
+            <circle cx="390" cy="258" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
 
             <!-- Supervisor Tree Container -->
-            <rect x="44" y="88" width="332" height="398" rx="12" fill="url(#supervisor-bg-grad)" stroke="rgba(99, 102, 241, 0.35)" stroke-width="1.2" stroke-dasharray="5 4" />
+            <rect x="404" y="88" width="312" height="398" rx="12" fill="url(#supervisor-bg-grad)" stroke="rgba(99, 102, 241, 0.35)" stroke-width="1.2" stroke-dasharray="5 4" />
             
             <!-- Supervisor Header -->
-            <path d="M 58 103 L 64 100 L 70 103 L 70 109 C 70 114, 64 117, 64 117 C 64 117, 58 114, 58 109 Z" fill="none" stroke="#818cf8" stroke-width="1.4" stroke-linejoin="round" />
-            <text x="76" y="109" fill="#e0e7ff" font-family="'Inter', sans-serif" font-size="10.5" font-weight="700" letter-spacing="0.5">SUPERVISOR TREE</text>
-            <text x="362" y="108" text-anchor="end" fill="#818cf8" font-family="'JetBrains Mono', monospace" font-size="8.5">Restart: OneForOne</text>
-            <text x="58" y="123" fill="#64748b" font-family="'Inter', sans-serif" font-size="9">Autonomous lifecycle, health supervision &amp; cancellation</text>
+            <path d="M 418 103 L 424 100 L 430 103 L 430 109 C 430 114, 424 117, 424 117 C 424 117, 418 114, 418 109 Z" fill="none" stroke="#818cf8" stroke-width="1.4" stroke-linejoin="round" />
+            <text x="436" y="109" fill="#e0e7ff" font-family="'Inter', sans-serif" font-size="10.5" font-weight="700" letter-spacing="0.5">SUPERVISOR TREE</text>
+            <text x="706" y="108" text-anchor="end" fill="#818cf8" font-family="'JetBrains Mono', monospace" font-size="8.5">Restart: OneForOne</text>
+            <text x="418" y="123" fill="#64748b" font-family="'Inter', sans-serif" font-size="9">Autonomous lifecycle, health supervision &amp; cancellation</text>
 
-            <!-- Service 1: ControlPlaneService -->
-            <rect x="52" y="132" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <circle cx="390" cy="161" r="4" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
-            <rect x="62" y="142" width="32" height="32" rx="6" fill="rgba(129, 140, 248, 0.15)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1" />
-            <path d="M 78 147 L 72 158 L 78 158 L 77 169 L 85 156 L 79 156 Z" fill="#818cf8" />
-            <text x="102" y="153" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ControlPlaneService (OpenRaft)</text>
-            <text x="102" y="167" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Leader Election • Quorum State Machine</text>
-            <rect x="306" y="140" width="54" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-            <text x="333" y="150.5" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:18946</text>
+            <!-- Service 1: ControlPlaneService (Consensus Engine) -->
+            <rect x="412" y="132" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="730" cy="161" r="4" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
+            <rect x="422" y="142" width="32" height="32" rx="6" fill="rgba(129, 140, 248, 0.15)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1" />
+            <path d="M 438 147 L 432 158 L 438 158 L 437 169 L 445 156 L 439 156 Z" fill="#818cf8" />
+            <text x="462" y="153" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ControlPlaneService (Consensus Engine)</text>
+            <text x="462" y="167" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Leader Election • Quorum State Machine</text>
+            <rect x="646" y="140" width="54" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
+            <text x="673" y="150.5" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:18946</text>
 
             <!-- Service 2: MembershipService -->
-            <rect x="52" y="196" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <circle cx="390" cy="225" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
-            <rect x="62" y="206" width="32" height="32" rx="6" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
-            <circle cx="78" cy="222" r="6" fill="none" stroke="#10b981" stroke-width="1.4" />
-            <circle cx="74" cy="218" r="2" fill="#10b981" />
-            <circle cx="82" cy="226" r="2" fill="#10b981" />
-            <text x="102" y="217" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">MembershipService (SWIM)</text>
-            <text x="102" y="231" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">SWIM Gossip • Decentralized Failure Detector</text>
-            <rect x="312" y="204" width="48" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
-            <text x="336" y="214.5" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:7946</text>
+            <rect x="412" y="196" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="730" cy="225" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
+            <rect x="422" y="206" width="32" height="32" rx="6" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
+            <circle cx="438" cy="222" r="6" fill="none" stroke="#10b981" stroke-width="1.4" />
+            <circle cx="434" cy="218" r="2" fill="#10b981" />
+            <circle cx="442" cy="226" r="2" fill="#10b981" />
+            <text x="462" y="217" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">MembershipService (SWIM)</text>
+            <text x="462" y="231" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">SWIM Gossip • Decentralized Failure Detector</text>
+            <rect x="652" y="204" width="48" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
+            <text x="676" y="214.5" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:7946</text>
 
             <!-- Service 3: ShardCoordinator -->
-            <rect x="52" y="260" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <rect x="62" y="270" width="32" height="32" rx="6" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="1" />
-            <circle cx="78" cy="286" r="7" fill="none" stroke="#f59e0b" stroke-width="1.4" stroke-dasharray="3 2" />
-            <circle cx="78" cy="286" r="2.5" fill="#f59e0b" />
-            <text x="102" y="281" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ShardCoordinator</text>
-            <text x="102" y="295" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Consistent Hash Ring • Shard Placement</text>
-            <rect x="300" y="268" width="60" height="15" rx="7.5" fill="rgba(245, 158, 11, 0.12)" stroke="rgba(245, 158, 11, 0.25)" stroke-width="1" />
-            <text x="330" y="278.5" text-anchor="middle" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">Topology</text>
+            <rect x="412" y="260" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <rect x="422" y="270" width="32" height="32" rx="6" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+            <circle cx="438" cy="286" r="7" fill="none" stroke="#38bdf8" stroke-width="1.4" stroke-dasharray="3 2" />
+            <circle cx="438" cy="286" r="2.5" fill="#38bdf8" />
+            <text x="462" y="281" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ShardCoordinator</text>
+            <text x="462" y="295" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Consistent Hash Ring • Shard Placement</text>
+            <rect x="640" y="268" width="60" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
+            <text x="670" y="278.5" text-anchor="middle" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">Topology</text>
 
             <!-- Service 4: AdminService -->
-            <rect x="52" y="324" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <rect x="62" y="334" width="32" height="32" rx="6" fill="rgba(244, 114, 182, 0.15)" stroke="rgba(244, 114, 182, 0.3)" stroke-width="1" />
-            <rect x="71" y="343" width="14" height="14" rx="2" fill="none" stroke="#f472b6" stroke-width="1.3" />
-            <line x1="71" y1="348" x2="85" y2="348" stroke="#f472b6" stroke-width="1.3" />
-            <text x="102" y="345" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">AdminService &amp; Web UI</text>
-            <text x="102" y="359" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Embedded Web Console &amp; Real-Time SSE Stream</text>
-            <rect x="312" y="332" width="48" height="15" rx="7.5" fill="rgba(244, 114, 182, 0.12)" stroke="rgba(244, 114, 182, 0.25)" stroke-width="1" />
-            <text x="336" y="342.5" text-anchor="middle" fill="#f472b6" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:8080</text>
+            <rect x="412" y="324" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <rect x="422" y="334" width="32" height="32" rx="6" fill="rgba(244, 114, 182, 0.15)" stroke="rgba(244, 114, 182, 0.3)" stroke-width="1" />
+            <rect x="431" y="343" width="14" height="14" rx="2" fill="none" stroke="#f472b6" stroke-width="1.3" />
+            <line x1="431" y1="348" x2="445" y2="348" stroke="#f472b6" stroke-width="1.3" />
+            <text x="462" y="345" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">AdminService &amp; Web UI</text>
+            <text x="462" y="359" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Embedded Web Console &amp; Real-Time SSE Stream</text>
+            <rect x="652" y="332" width="48" height="15" rx="7.5" fill="rgba(244, 114, 182, 0.12)" stroke="rgba(244, 114, 182, 0.25)" stroke-width="1" />
+            <text x="676" y="342.5" text-anchor="middle" fill="#f472b6" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:8080</text>
 
             <!-- Service 5: EventHub -->
-            <rect x="52" y="388" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <rect x="62" y="398" width="32" height="32" rx="6" fill="rgba(148, 163, 184, 0.15)" stroke="rgba(148, 163, 184, 0.3)" stroke-width="1" />
-            <path d="M 73 417 C 75 410, 81 410, 83 417" fill="none" stroke="#94a3b8" stroke-width="1.3" />
-            <circle cx="78" cy="412" r="2" fill="#94a3b8" />
-            <text x="102" y="409" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">EventHub</text>
-            <text x="102" y="423" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Zero-Allocation Intra-Node Actor Messaging</text>
-            <rect x="296" y="396" width="64" height="15" rx="7.5" fill="rgba(148, 163, 184, 0.12)" stroke="rgba(148, 163, 184, 0.25)" stroke-width="1" />
-            <text x="328" y="406.5" text-anchor="middle" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">In-Process</text>
+            <rect x="412" y="388" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <rect x="422" y="398" width="32" height="32" rx="6" fill="rgba(148, 163, 184, 0.15)" stroke="rgba(148, 163, 184, 0.3)" stroke-width="1" />
+            <path d="M 433 417 C 435 410, 441 410, 443 417" fill="none" stroke="#94a3b8" stroke-width="1.3" />
+            <circle cx="438" cy="412" r="2" fill="#94a3b8" />
+            <text x="462" y="409" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">EventHub</text>
+            <text x="462" y="423" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Zero-Allocation Intra-Node Actor Messaging</text>
+            <rect x="636" y="396" width="64" height="15" rx="7.5" fill="rgba(148, 163, 184, 0.12)" stroke="rgba(148, 163, 184, 0.25)" stroke-width="1" />
+            <text x="668" y="406.5" text-anchor="middle" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">In-Process</text>
           </g>
 
           <!-- ======================================================== -->
-          <!-- NODE 2: WORKER SHARD 01                                  -->
+          <!-- NODE 2: WORKER SHARD 01 (UNIFIED EMERALD COLOR)          -->
           <!-- ======================================================== -->
           <g class="svg-node-card">
             <!-- Node Process Boundary -->
-            <rect x="810" y="38" width="360" height="224" rx="16" fill="url(#node-bg-grad)" stroke="rgba(16, 185, 129, 0.28)" stroke-width="1.4" />
-            <rect x="810" y="38" width="4" height="224" rx="2" fill="#10b981" />
+            <rect x="1040" y="38" width="340" height="224" rx="16" fill="url(#node-bg-grad)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1.4" />
+            <rect x="1040" y="38" width="4" height="224" rx="2" fill="#10b981" />
 
             <!-- Node Header -->
-            <circle cx="832" cy="62" r="4.5" fill="#10b981" filter="url(#glow-emerald)" />
-            <text x="846" y="61" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">Node: "worker-shard-01"</text>
-            <rect x="1054" y="50" width="102" height="20" rx="10" fill="rgba(16, 185, 129, 0.2)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1" />
-            <text x="1105" y="63.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#6ee7b7">WORKER SHARD</text>
-            <text x="846" y="75" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9.5">aaron::Node Process Container • Storage Host</text>
+            <circle cx="1062" cy="62" r="4.5" fill="#10b981" filter="url(#glow-emerald)" />
+            <text x="1076" y="61" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">Node: "worker-shard-01"</text>
+            <rect x="1264" y="50" width="104" height="20" rx="10" fill="rgba(16, 185, 129, 0.2)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1" />
+            <text x="1316" y="63.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#6ee7b7">WORKER SHARD</text>
+            <text x="1076" y="75" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9.5">aaron::Node Process Container • Storage Host</text>
 
             <!-- Supervisor Tree Container -->
-            <rect x="824" y="88" width="332" height="162" rx="12" fill="url(#supervisor-bg-grad)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1.2" stroke-dasharray="5 4" />
+            <rect x="1054" y="88" width="312" height="162" rx="12" fill="url(#supervisor-bg-grad)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1.2" stroke-dasharray="5 4" />
             
             <!-- Supervisor Header -->
-            <text x="838" y="106" fill="#a7f3d0" font-family="'Inter', sans-serif" font-size="10" font-weight="700">SUPERVISOR TREE</text>
-            <text x="1144" y="105" text-anchor="end" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="8.5">Tasks • LSM Store</text>
+            <text x="1068" y="106" fill="#a7f3d0" font-family="'Inter', sans-serif" font-size="10" font-weight="700">SUPERVISOR TREE</text>
+            <text x="1354" y="105" text-anchor="end" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="8.5">Tasks • LSM Store</text>
 
             <!-- Service 1: ShardService & LSM Storage -->
-            <rect x="832" y="116" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <circle cx="810" cy="145" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
-            <circle cx="1170" cy="145" r="4" fill="#f59e0b" stroke="#070a10" stroke-width="1.5" />
-            <rect x="842" y="126" width="32" height="32" rx="6" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
-            <rect x="850" y="133" width="16" height="12" rx="2" fill="none" stroke="#10b981" stroke-width="1.3" />
-            <line x1="850" y1="139" x2="866" y2="139" stroke="#10b981" stroke-width="1.3" />
-            <text x="882" y="137" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ShardService &amp; LSM Store</text>
-            <text x="882" y="151" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Disk WAL • Fast MemTable • Zero-Copy RPC</text>
-            <rect x="1070" y="124" width="70" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
-            <text x="1105" y="134.5" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">[0000..4095]</text>
+            <rect x="1062" y="116" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="1040" cy="145" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
+            <circle cx="1380" cy="145" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
+            <rect x="1072" y="126" width="32" height="32" rx="6" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
+            <rect x="1080" y="133" width="16" height="12" rx="2" fill="none" stroke="#10b981" stroke-width="1.3" />
+            <line x1="1080" y1="139" x2="1096" y2="139" stroke="#10b981" stroke-width="1.3" />
+            <text x="1112" y="137" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ShardService &amp; LSM Store</text>
+            <text x="1112" y="151" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Disk WAL • Fast MemTable • Zero-Copy RPC</text>
+            <rect x="1280" y="124" width="70" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
+            <text x="1315" y="134.5" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">[0000..4095]</text>
 
             <!-- Service 2: MembershipService (SWIM) -->
-            <rect x="832" y="180" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <circle cx="810" cy="209" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
-            <rect x="842" y="190" width="32" height="32" rx="6" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
-            <circle cx="858" cy="206" r="6" fill="none" stroke="#38bdf8" stroke-width="1.4" />
-            <circle cx="854" cy="202" r="2" fill="#38bdf8" />
-            <circle cx="862" cy="210" r="2" fill="#38bdf8" />
-            <text x="882" y="201" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">MembershipService (SWIM)</text>
-            <text x="882" y="215" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">SWIM Gossip • P2P Cluster Discovery</text>
-            <rect x="1092" y="188" width="48" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-            <text x="1116" y="198.5" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:7946</text>
+            <rect x="1062" y="180" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="1040" cy="209" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
+            <rect x="1072" y="190" width="32" height="32" rx="6" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+            <circle cx="1088" cy="206" r="6" fill="none" stroke="#38bdf8" stroke-width="1.4" />
+            <circle cx="1084" cy="202" r="2" fill="#38bdf8" />
+            <circle cx="1092" cy="210" r="2" fill="#38bdf8" />
+            <text x="1112" y="201" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">MembershipService (SWIM)</text>
+            <text x="1112" y="215" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">SWIM Gossip • P2P Cluster Discovery</text>
+            <rect x="1302" y="188" width="48" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
+            <text x="1326" y="198.5" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:7946</text>
+
+            <!-- Direct I/O Port Dot from User -->
+            <circle cx="1040" cy="60" r="3.8" fill="#34d399" stroke="#070a10" stroke-width="1.2" />
           </g>
 
           <!-- ======================================================== -->
-          <!-- NODE 3: WORKER SHARD 02                                  -->
+          <!-- NODE 3: WORKER SHARD 02 (UNIFIED EMERALD COLOR)          -->
           <!-- ======================================================== -->
           <g class="svg-node-card">
             <!-- Node Process Boundary -->
-            <rect x="810" y="276" width="360" height="224" rx="16" fill="url(#node-bg-grad)" stroke="rgba(245, 158, 11, 0.28)" stroke-width="1.4" />
-            <rect x="810" y="276" width="4" height="224" rx="2" fill="#f59e0b" />
+            <rect x="1040" y="276" width="340" height="224" rx="16" fill="url(#node-bg-grad)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1.4" />
+            <rect x="1040" y="276" width="4" height="224" rx="2" fill="#10b981" />
 
             <!-- Node Header -->
-            <circle cx="832" cy="300" r="4.5" fill="#10b981" filter="url(#glow-emerald)" />
-            <text x="846" y="299" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">Node: "worker-shard-02"</text>
-            <rect x="1054" y="288" width="102" height="20" rx="10" fill="rgba(245, 158, 11, 0.2)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1" />
-            <text x="1105" y="301.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#fcd34d">WORKER SHARD</text>
-            <text x="846" y="313" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9.5">aaron::Node Process Container • Storage Host</text>
+            <circle cx="1062" cy="300" r="4.5" fill="#10b981" filter="url(#glow-emerald)" />
+            <text x="1076" y="299" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700">Node: "worker-shard-02"</text>
+            <rect x="1264" y="288" width="104" height="20" rx="10" fill="rgba(16, 185, 129, 0.2)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1" />
+            <text x="1316" y="301.5" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700" fill="#6ee7b7">WORKER SHARD</text>
+            <text x="1076" y="313" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9.5">aaron::Node Process Container • Storage Host</text>
 
             <!-- Supervisor Tree Container -->
-            <rect x="824" y="326" width="332" height="162" rx="12" fill="url(#supervisor-bg-grad)" stroke="rgba(245, 158, 11, 0.35)" stroke-width="1.2" stroke-dasharray="5 4" />
+            <rect x="1054" y="326" width="312" height="162" rx="12" fill="url(#supervisor-bg-grad)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1.2" stroke-dasharray="5 4" />
             
             <!-- Supervisor Header -->
-            <text x="838" y="344" fill="#fde68a" font-family="'Inter', sans-serif" font-size="10" font-weight="700">SUPERVISOR TREE</text>
-            <text x="1144" y="343" text-anchor="end" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="8.5">Tasks • LSM Store</text>
+            <text x="1068" y="344" fill="#a7f3d0" font-family="'Inter', sans-serif" font-size="10" font-weight="700">SUPERVISOR TREE</text>
+            <text x="1354" y="343" text-anchor="end" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="8.5">Tasks • LSM Store</text>
 
             <!-- Service 1: ShardService & LSM Storage -->
-            <rect x="832" y="354" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <circle cx="810" cy="383" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
-            <circle cx="1170" cy="383" r="4" fill="#f59e0b" stroke="#070a10" stroke-width="1.5" />
-            <rect x="842" y="364" width="32" height="32" rx="6" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="1" />
-            <rect x="850" y="371" width="16" height="12" rx="2" fill="none" stroke="#f59e0b" stroke-width="1.3" />
-            <line x1="850" y1="377" x2="866" y2="377" stroke="#f59e0b" stroke-width="1.3" />
-            <text x="882" y="375" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ShardService &amp; LSM Store</text>
-            <text x="882" y="389" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Disk WAL • Fast MemTable • Zero-Copy RPC</text>
-            <rect x="1070" y="362" width="70" height="15" rx="7.5" fill="rgba(245, 158, 11, 0.12)" stroke="rgba(245, 158, 11, 0.25)" stroke-width="1" />
-            <text x="1105" y="372.5" text-anchor="middle" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">[4096..8191]</text>
+            <rect x="1062" y="354" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="1040" cy="383" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
+            <circle cx="1380" cy="383" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
+            <rect x="1072" y="364" width="32" height="32" rx="6" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
+            <rect x="1080" y="371" width="16" height="12" rx="2" fill="none" stroke="#10b981" stroke-width="1.3" />
+            <line x1="1080" y1="377" x2="1096" y2="377" stroke="#10b981" stroke-width="1.3" />
+            <text x="1112" y="375" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">ShardService &amp; LSM Store</text>
+            <text x="1112" y="389" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">Disk WAL • Fast MemTable • Zero-Copy RPC</text>
+            <rect x="1280" y="362" width="70" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
+            <text x="1315" y="372.5" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">[4096..8191]</text>
 
             <!-- Service 2: MembershipService (SWIM) -->
-            <rect x="832" y="418" width="316" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <circle cx="810" cy="447" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
-            <rect x="842" y="428" width="32" height="32" rx="6" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
-            <circle cx="858" cy="444" r="6" fill="none" stroke="#38bdf8" stroke-width="1.4" />
-            <circle cx="854" cy="440" r="2" fill="#38bdf8" />
-            <circle cx="862" cy="448" r="2" fill="#38bdf8" />
-            <text x="882" y="439" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">MembershipService (SWIM)</text>
-            <text x="882" y="453" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">SWIM Gossip • P2P Cluster Discovery</text>
-            <rect x="1092" y="426" width="48" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-            <text x="1116" y="436.5" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:7946</text>
+            <rect x="1062" y="418" width="296" height="58" rx="8" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="1040" cy="447" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
+            <rect x="1072" y="428" width="32" height="32" rx="6" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+            <circle cx="1088" cy="444" r="6" fill="none" stroke="#38bdf8" stroke-width="1.4" />
+            <circle cx="1084" cy="440" r="2" fill="#38bdf8" />
+            <circle cx="1092" cy="448" r="2" fill="#38bdf8" />
+            <text x="1112" y="439" fill="#ffffff" font-family="'Inter', sans-serif" font-size="11" font-weight="700">MembershipService (SWIM)</text>
+            <text x="1112" y="453" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="9">SWIM Gossip • P2P Cluster Discovery</text>
+            <rect x="1302" y="426" width="48" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
+            <text x="1326" y="436.5" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="600">:7946</text>
+
+            <!-- Direct I/O Port Dot from User -->
+            <circle cx="1040" cy="480" r="3.8" fill="#34d399" stroke="#070a10" stroke-width="1.2" />
           </g>
         </svg>
       </div>
