@@ -25,6 +25,8 @@ A supervised HTTP management service for the Aaron distributed runtime that embe
 - **Dynamic Log Filter Reloading**: Apply new `EnvFilter` tracing directives dynamically on-the-fly (via `EventHub`), with real-time log and event streaming over Server-Sent Events (SSE).
 - **Supervised Services Introspection**: Inspect registered services, declared configuration schemas (`ServiceConfig`), expected types, defaults, and currently resolved environment variables.
 - **Environment & Secret Detection**: Inspect active environment variables with automated masking of sensitive secrets (tokens, keys, passwords).
+- **Distributed Shards Partitioning & WyHash Routing**: Manage multi-service partition rings (up to 65,536 shards), trigger 1-click bootstrap across data workers, and inspect deterministic key-to-shard mapping governed by WyHash 64-bit (`wyhash_64(key, 0) % total_shards`).
+- **Cluster Join & Gossip Handshake**: Interactive cluster join dialog orchestrating SWIM UDP discovery, Raft consensus topology detection, and QUIC data-plane telemetry integration.
 
 ---
 
@@ -63,6 +65,14 @@ Declared configuration variables validated before startup:
 | `POST` | `/api/control-plane/remove-node` | Expurgate a node replica completely from Raft (`{ "uuid": "..." }`) |
 | `POST` | `/api/control-plane/state` | Execute linearizable write on Raft leader (`{ "key": "...", "value": "..." }`) |
 | `DELETE` | `/api/control-plane/state` | Execute linearizable delete on Raft leader (`{ "key": "..." }`) |
+
+### Distributed Shards & Partition Routing
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/shards` | Shards overview, active assignments, and service partition counts |
+| `POST` | `/api/shards/bootstrap` | Bootstrap partition ring (`{ "service": "...", "shards": 1024, "replicas": 3, "nodes": [...] }`) |
+| `POST` | `/api/shards/rebalance` | Rebalance partition assignments across active workers (`{ "service": "..." }`) |
+| `POST` | `/api/shards/assign` | Manually assign primary/replica placement for a specific shard |
 
 ### LSM Store Explorer & Benchmarks
 | Method | Endpoint | Description |
