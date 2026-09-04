@@ -133,13 +133,12 @@ async fn test_stage1_round_robin_and_manual_assignment() -> Result<(), Box<dyn s
         .expect("Should receive ShardEvent on EventHub")
         .expect("Event receive failed");
     match event {
-        ShardEvent::Assigned { shard_id, role, primary, replicas, epoch: _ } => {
+        ShardEvent::Join { shard_id, members, role } => {
             assert_eq!(shard_id, 0);
-            assert_eq!(role, ShardRole::Primary);
-            assert_eq!(primary, uuid_a);
-            assert_eq!(replicas, vec![uuid_b, uuid_c]);
+            assert_eq!(role, shard_service::MemberRole::Leader);
+            assert_eq!(members, vec![uuid_a, uuid_b, uuid_c]);
         }
-        _ => panic!("Expected ShardEvent::Assigned"),
+        _ => panic!("Expected ShardEvent::Join"),
     }
 
     // 6. Validação dos Métodos de Consulta do Data-Plane (ShardHandle)

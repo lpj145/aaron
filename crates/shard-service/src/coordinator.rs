@@ -1,7 +1,7 @@
 use crate::config::ShardConfig;
 use crate::error::ShardError;
 use crate::handle::ShardHandle;
-use crate::types::{ShardEvent, ShardId, ShardPlacement, ShardStatus};
+use crate::types::{ShardId, ShardPlacement};
 use control_plane_service::ControlPlaneHandle;
 use node::{Context, Uuid};
 use std::collections::BTreeSet;
@@ -13,6 +13,7 @@ pub struct ShardCoordinator {
     config: ShardConfig,
     control_plane: ControlPlaneHandle,
     handle: ShardHandle,
+    service_name: String,
 }
 
 impl ShardCoordinator {
@@ -21,10 +22,20 @@ impl ShardCoordinator {
         control_plane: ControlPlaneHandle,
         handle: ShardHandle,
     ) -> Self {
+        Self::with_service("default", config, control_plane, handle)
+    }
+
+    pub fn with_service(
+        service_name: impl Into<String>,
+        config: ShardConfig,
+        control_plane: ControlPlaneHandle,
+        handle: ShardHandle,
+    ) -> Self {
         Self {
             config,
             control_plane,
             handle,
+            service_name: service_name.into(),
         }
     }
 
@@ -59,20 +70,41 @@ impl ShardCoordinator {
         }
     }
 
-    /// Sincroniza as partições existentes no Raft para a memória local.
+    /// Sincroniza as partições existentes no Raft para a memória local do handle.
     pub async fn sync_from_raft(&self, _ctx: &Context) {
-        let all_data = self.control_plane.all_data().await;
-        if all_data.contains_key("shards/system/bootstrapped") {
-            self.handle.set_bootstrapped(true).await;
-        }
-        for (k, v) in all_data {
-            if let Some(shard_id_str) = k.strip_prefix("shards/") {
-                if let Ok(_shard_id) = shard_id_str.parse::<ShardId>() {
-                    if let Ok(placement) = serde_json::from_str::<ShardPlacement>(&v) {
-                        self.handle.update_placement(placement).await;
-                    }
-                }
+        let shard_data = self.control_plane.prefix_data("shards/").await;
+
+        for (k, v_bytes) in shard_data {
+            let Some(suffix) = k.strip_prefix("shards/") else {
+                continue;
+            };
+
+            // Caso 1: Flags de bootstrap global ou por serviço
+            if suffix == "system/bootstrapped" {
+                self.handle.set_bootstrapped(true).await;
+                continue;
             }
+            if let Some(service) = suffix.strip_suffix("/system/bootstrapped") {
+                self.handle.set_service_bootstrapped(service, true).await;
+                continue;
+            }
+
+            // Caso 2: Partições de serviço estruturadas (ex: "shards/treasurer/0")
+            let parts: Vec<&str> = suffix.split('/').collect();
+            if parts.len() == 2 && parts[1].parse::<ShardId>().is_ok()
+                && let Ok(mut placement) = ShardPlacement::from_bytes(&v_bytes) {
+                    if placement.service_name == "default" || placement.service_name.is_empty() {
+                        placement.service_name = parts[0].to_string();
+                    }
+                    self.handle.update_placement(placement).await;
+                    continue;
+                }
+
+            // Caso 3: Partições legadas planas (ex: "shards/0")
+            if suffix.parse::<ShardId>().is_ok()
+                && let Ok(placement) = ShardPlacement::from_bytes(&v_bytes) {
+                    self.handle.update_placement(placement).await;
+                }
         }
     }
 
@@ -85,6 +117,30 @@ impl ShardCoordinator {
         Ok(())
     }
 
+    /// Filtra nós elegíveis para o serviço a partir da tabela de membros SWIM,
+    /// excluindo estritamente nós com a tag de Control Plane.
+    pub fn filter_service_nodes(
+        &self,
+        service_name: &str,
+        members: &[membership_service::Member],
+    ) -> Vec<Uuid> {
+        members
+            .iter()
+            .filter(|m| {
+                m.status == membership_service::MemberStatus::Alive
+                    && !m
+                        .tags
+                        .iter()
+                        .any(|t| t == "role:control-plane" || t.starts_with("role:control-plane"))
+                    && (service_name == "default"
+                        || m.tags
+                            .iter()
+                            .any(|t| t == service_name || t == &format!("service:{service_name}")))
+            })
+            .map(|m| m.node_id.id())
+            .collect()
+    }
+
     // =========================================================================
     // ESTÁGIO 1: MODO 1 - ROUND-ROBIN (Bootstrap Inicial de Todas as Partições)
     // =========================================================================
@@ -93,11 +149,27 @@ impl ShardCoordinator {
         nodes: &[Uuid],
         ctx: Option<&Context>,
     ) -> Result<usize, ShardError> {
+        self.bootstrap_service_round_robin(&self.service_name, nodes, ctx).await
+    }
+
+    /// Executa o bootstrap Round-Robin isolado para um grupo de serviço específico.
+    pub async fn bootstrap_service_round_robin(
+        &self,
+        service_name: &str,
+        nodes: &[Uuid],
+        _ctx: Option<&Context>,
+    ) -> Result<usize, ShardError> {
         self.check_control_plane_health()?;
 
-        // Validação: Bootstrap só pode ocorrer UMA ÚNICA VEZ para evitar rebalance acidental
-        if self.handle.is_bootstrapped().await
-            || self.control_plane.get("shards/system/bootstrapped").await.is_some()
+        let bootstrap_key = if service_name == "default" {
+            "shards/system/bootstrapped".to_string()
+        } else {
+            format!("shards/{service_name}/system/bootstrapped")
+        };
+
+        // Validação: Bootstrap só pode ocorrer UMA ÚNICA VEZ por grupo de serviço
+        if self.handle.is_service_bootstrapped(service_name).await
+            || self.control_plane.get(&bootstrap_key).await.is_some()
         {
             return Err(ShardError::AlreadyBootstrapped);
         }
@@ -113,8 +185,10 @@ impl ShardCoordinator {
             .as_millis() as u64;
 
         let total_shards = self.config.total_shards;
+        self.handle.set_total_shards(total_shards).await;
         let rf = self.config.replication_factor.min(nodes.len()).max(3);
         let mut assigned = 0;
+        let mut batch_entries = Vec::with_capacity(total_shards as usize * 2 + 2);
 
         for shard_id in 0..total_shards {
             let primary_idx = (shard_id as usize) % nodes.len();
@@ -126,39 +200,44 @@ impl ShardCoordinator {
                 replicas.push(nodes[rep_idx]);
             }
 
-            let placement = ShardPlacement {
+            let placement = ShardPlacement::with_service(
+                service_name,
                 shard_id,
                 primary,
                 replicas,
-                status: ShardStatus::Healthy,
                 epoch,
-            };
+            );
 
-            let key = format!("shards/{shard_id}");
-            let val = serde_json::to_string(&placement)
-                .map_err(|source| ShardError::Serialization { source })?;
-
-            self.control_plane
-                .set(key, val)
-                .await
-                .map_err(|e| ShardError::Raft {
-                    message: format!("{e}"),
-                })?;
-
+            let bytes = placement.to_bytes();
+            if service_name == "default" {
+                batch_entries.push((format!("shards/{shard_id:05}"), bytes.clone()));
+            }
+            batch_entries.push((format!("shards/{service_name}/{shard_id:05}"), bytes));
             self.handle.update_placement(placement).await;
             assigned += 1;
         }
 
-        // Grava no consenso do Control Plane que o bootstrap inicial foi concluído
-        let _ = self
-            .control_plane
-            .set("shards/system/bootstrapped", "true")
-            .await;
-        self.handle.set_bootstrapped(true).await;
+        // Grava no consenso do Control Plane todas as atribuições e o flag de bootstrap
+        batch_entries.push((bootstrap_key, b"true".to_vec()));
+        if service_name == "default" {
+            batch_entries.push(("shards/system/bootstrapped".to_string(), b"true".to_vec()));
+        }
+
+        self.control_plane
+            .set_batch(batch_entries)
+            .await
+            .map_err(|e| ShardError::Raft {
+                message: format!("{e}"),
+            })?;
+
+        self.handle.set_service_bootstrapped(service_name, true).await;
+        if service_name == "default" {
+            self.handle.set_bootstrapped(true).await;
+        }
 
         // Dispara os comandos de partição via canal do Control Plane para os nós Primary e Réplicas
         for shard_id in 0..total_shards {
-            if let Some(p) = self.handle.get_placement(shard_id).await {
+            if let Some(p) = self.handle.get_service_placement(service_name, shard_id).await {
                 let _ = self
                     .control_plane
                     .dispatch_shard_command(p.primary, shard_id, 0, p.primary, &p.replicas, epoch)
@@ -174,19 +253,12 @@ impl ShardCoordinator {
 
         info!(
             target: "shard_coordinator",
+            service_name,
             total_assigned = assigned,
             total_nodes = nodes.len(),
             epoch,
             "Round-Robin Shard Bootstrap completed successfully via Raft and dispatched to nodes"
         );
-
-        if let Some(c) = ctx {
-            let _ = c.event_hub.publish(ShardEvent::BootstrapCompleted {
-                total_shards,
-                assigned_count: assigned,
-                epoch,
-            }).await;
-        }
 
         Ok(assigned)
     }
@@ -196,6 +268,18 @@ impl ShardCoordinator {
     // =========================================================================
     pub async fn assign_manual(
         &self,
+        shard_id: ShardId,
+        primary: Uuid,
+        replicas: Vec<Uuid>,
+        ctx: Option<&Context>,
+    ) -> Result<ShardPlacement, ShardError> {
+        self.assign_service_manual(&self.service_name, shard_id, primary, replicas, ctx).await
+    }
+
+    /// Executa a designação manual para um grupo de serviço específico.
+    pub async fn assign_service_manual(
+        &self,
+        service_name: &str,
         shard_id: ShardId,
         primary: Uuid,
         replicas: Vec<Uuid>,
@@ -236,20 +320,23 @@ impl ShardCoordinator {
             .unwrap_or_default()
             .as_millis() as u64;
 
-        let placement = ShardPlacement {
+        let placement = ShardPlacement::with_service(
+            service_name,
             shard_id,
             primary,
-            replicas: replicas.clone(),
-            status: ShardStatus::Healthy,
+            replicas.clone(),
             epoch,
+        );
+
+        let bytes = placement.to_bytes();
+        let key = if service_name == "default" {
+            format!("shards/{shard_id:05}")
+        } else {
+            format!("shards/{service_name}/{shard_id:05}")
         };
 
-        let key = format!("shards/{shard_id}");
-        let val = serde_json::to_string(&placement)
-            .map_err(|source| ShardError::Serialization { source })?;
-
         self.control_plane
-            .set(key, val)
+            .set(key, bytes)
             .await
             .map_err(|e| ShardError::Raft {
                 message: format!("{e}"),
@@ -273,6 +360,7 @@ impl ShardCoordinator {
 
         info!(
             target: "shard_coordinator",
+            service_name,
             shard_id,
             %primary,
             replicas_count = replicas.len(),
