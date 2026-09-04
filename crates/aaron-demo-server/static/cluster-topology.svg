@@ -144,7 +144,7 @@
     <path id="path-req-cp" d="M 425 450 L 610 450" />
     <path id="path-res-cp" d="M 610 525 L 425 525" />
     <path id="path-req-worker" d="M 260 705 L 260 825 Q 260 842 280 842 L 1320 842 Q 1340 842 1340 825 L 1340 730" />
-    <path id="path-res-worker" d="M 1340 245 L 1340 85 Q 1340 68 1320 68 L 280 68 Q 260 68 260 85 L 260 265" />
+    <path id="path-res-worker" d="M 1340 245 L 1340 115 Q 1340 100 1320 100 L 280 100 Q 260 100 260 115 L 260 265" />
     <path id="path-gossip-right" d="M 990 455 L 1155 455" />
     <path id="path-gossip-left" d="M 1155 525 L 990 525" />
   </defs>
@@ -181,18 +181,18 @@
   <!-- TOP HIGHWAY: Worker to User Query Response Return Path -->
   <g>
     <!-- Background circuit trace -->
-    <path d="M 1340 245 L 1340 85 Q 1340 68 1320 68 L 280 68 Q 260 68 260 85 L 260 265" fill="none" stroke="#1e293b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M 1340 245 L 1340 85 Q 1340 68 1320 68 L 280 68 Q 260 68 260 85 L 260 265" fill="none" stroke="rgba(16, 185, 129, 0.35)" stroke-width="2" stroke-linejoin="round" />
-    <path d="M 1340 245 L 1340 85 Q 1340 68 1320 68 L 280 68 Q 260 68 260 85 L 260 265" fill="none" stroke="#34d399" stroke-width="1.8" class="flow-stream" stroke-linejoin="round" opacity="0.85" />
+    <path d="M 1340 245 L 1340 115 Q 1340 100 1320 100 L 280 100 Q 260 100 260 115 L 260 265" fill="none" stroke="#1e293b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 1340 245 L 1340 115 Q 1340 100 1320 100 L 280 100 Q 260 100 260 115 L 260 265" fill="none" stroke="rgba(16, 185, 129, 0.35)" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 1340 245 L 1340 115 Q 1340 100 1320 100 L 280 100 Q 260 100 260 115 L 260 265" fill="none" stroke="#34d399" stroke-width="1.8" class="flow-stream" stroke-linejoin="round" opacity="0.85" />
 
     <!-- Arrow down into User top -->
     <path d="M 260 255 L 260 265" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-emerald-down)" />
 
-    <!-- Top circuit badge (Clear at y = 68, well above all titles) -->
-    <g transform="translate(800, 68)">
+    <!-- Top circuit badge (Clear at y = 100) -->
+    <g transform="translate(800, 100)">
       <rect x="-170" y="-14" width="340" height="28" rx="14" fill="#070d18" stroke="#10b981" stroke-width="1.2" filter="url(#glow-emerald)" />
       <circle cx="-148" cy="0" r="4" fill="#34d399" />
-      <text x="-132" y="4" fill="#ffffff" class="font-mono" font-size="10.5" font-weight="700" letter-spacing="0.5">2. DIRECT QUERY &amp; DATA ACK</text>
+      <text x="-132" y="4" fill="#ffffff" class="font-mono" font-size="10.5" font-weight="700" letter-spacing="0.5">DIRECT QUERY &amp; DATA ACK</text>
       <text x="80" y="4" fill="#a7f3d0" class="font-mono" font-size="9" font-weight="600">ZERO-COPY</text>
     </g>
   </g>
@@ -284,9 +284,6 @@
   <!-- NODE 1: USER / CLIENT NODE (LEFT)                        -->
   <!-- ======================================================== -->
   <g class="svg-node" id="node-user">
-    <!-- Header Title (Now positioned cleanly without any lines overlapping) -->
-    <text x="260" y="145" text-anchor="middle" fill="#94a3b8" class="font-mono" font-size="14.5" font-weight="700" letter-spacing="2">USER/CLIENT NODE</text>
-
     <!-- Outer Glow Chassis -->
     <path d="M 238.4 279.4 Q 260.0 265.0 281.6 279.4 L 403.4 360.6 Q 425.0 375.0 425.0 401.0 L 425.0 569.0 Q 425.0 595.0 403.4 609.4 L 281.6 690.6 Q 260.0 705.0 238.4 690.6 L 116.6 609.4 Q 95.0 595.0 95.0 569.0 L 95.0 401.0 Q 95.0 375.0 116.6 360.6 Z" fill="none" stroke="#0284c7" stroke-width="3" filter="url(#glow-cyan)" opacity="0.85" />
     
@@ -325,9 +322,6 @@
   <!-- NODE 2: CONTROL-PLANE (LEADER) NODE (CENTER)             -->
   <!-- ======================================================== -->
   <g class="svg-node" id="node-control-plane">
-    <!-- Header Title (Now positioned cleanly with clear negative space) -->
-    <text x="800" y="145" text-anchor="middle" fill="#c7d2fe" class="font-mono" font-size="14.5" font-weight="700" letter-spacing="2">CONTROL-PLANE (LEADER) NODE</text>
-
     <!-- Outer Glow Chassis -->
     <path d="M 776.4 250.1 Q 800.0 235.0 823.6 250.1 L 971.4 344.9 Q 995.0 360.0 995.0 388.0 L 995.0 582.0 Q 995.0 610.0 971.4 625.1 L 823.6 719.9 Q 800.0 735.0 776.4 719.9 L 628.6 625.1 Q 605.0 610.0 605.0 582.0 L 605.0 388.0 Q 605.0 360.0 628.6 344.9 Z" fill="none" stroke="#4f46e5" stroke-width="3" filter="url(#glow-indigo)" opacity="0.9" />
 
@@ -404,9 +398,6 @@
   <!-- NODE 3: WORKER NODE & SHARDS (RIGHT)                     -->
   <!-- ======================================================== -->
   <g class="svg-node" id="node-worker">
-    <!-- Header Title (Now positioned cleanly without any lines overlapping) -->
-    <text x="1340" y="145" text-anchor="middle" fill="#a7f3d0" class="font-mono" font-size="14.5" font-weight="700" letter-spacing="2">WORKER NODE &amp; SHARDS</text>
-
     <!-- Outer Glow Chassis -->
     <path d="M 1316.7 255.5 Q 1340.0 240.0 1363.3 255.5 L 1501.7 347.0 Q 1525.0 362.5 1525.0 390.5 L 1525.0 579.5 Q 1525.0 607.5 1501.7 623.0 L 1363.3 714.5 Q 1340.0 730.0 1316.7 714.5 L 1178.3 623.0 Q 1155.0 607.5 1155.0 579.5 L 1155.0 390.5 Q 1155.0 362.5 1178.3 347.0 Z" fill="none" stroke="#059669" stroke-width="3" filter="url(#glow-emerald)" opacity="0.9" />
 
