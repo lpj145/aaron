@@ -264,7 +264,7 @@
 
     <!-- 2. Bottom Satellite: Transport Protocol -->
     <rect x="68" y="306" width="84" height="18" rx="9" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(148, 163, 184, 0.4)" stroke-width="1" />
-    <text x="110" y="318.5" text-anchor="middle" fill="#e2e8f0" font-family="monospace" font-size="7.5" font-weight="700">HTTP &bull; QUIC</text>
+    <text x="110" y="318.5" text-anchor="middle" fill="#e2e8f0" font-family="monospace" font-size="7.5" font-weight="700">HTTP • QUIC</text>
 
     <!-- Connection Port Dots -->
     <circle cx="160" cy="205" r="3.5" fill="#34d399" stroke="#070a10" stroke-width="1.2" />
@@ -331,7 +331,7 @@
       <rect x="-115" y="-12" width="230" height="24" rx="12" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1.2" />
       <circle cx="-98" cy="0" r="3.5" fill="#10b981" filter="url(#glow-emerald)" />
       <text x="-88" y="3.5" fill="#ffffff" font-family="monospace" font-size="10" font-weight="700">Node: "worker-shard-01"</text>
-      <text x="0" y="20" text-anchor="middle" fill="#6ee7b7" font-family="monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER &bull; SHARD HOST</text>
+      <text x="0" y="20" text-anchor="middle" fill="#6ee7b7" font-family="monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER • SHARD HOST</text>
     </g>
 
     <!-- Supervisor Tree Concentric Orbital Ring -->
@@ -341,7 +341,7 @@
     <!-- Central Core Engine: ShardService & LSM Store -->
     <circle cx="1060" cy="145" r="40" fill="url(#core-emerald-grad)" stroke="#10b981" stroke-width="2" class="hub-core" style="transform-origin: 1060px 145px;" />
     <text x="1060" y="136" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="10" font-weight="800">ShardService</text>
-    <text x="1060" y="149" text-anchor="middle" fill="#34d399" font-family="monospace" font-size="8" font-weight="700">LSM &bull; WAL</text>
+    <text x="1060" y="149" text-anchor="middle" fill="#34d399" font-family="monospace" font-size="8" font-weight="700">LSM • WAL</text>
     <text x="1060" y="161" text-anchor="middle" fill="#a7f3d0" font-family="monospace" font-size="7.5">[0000..4095]</text>
 
     <!-- Supervised Service Satellites -->
@@ -373,7 +373,7 @@
       <rect x="-115" y="-12" width="230" height="24" rx="12" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.2" />
       <circle cx="-98" cy="0" r="3.5" fill="#10b981" filter="url(#glow-emerald)" />
       <text x="-88" y="3.5" fill="#ffffff" font-family="monospace" font-size="10" font-weight="700">Node: "worker-shard-02"</text>
-      <text x="0" y="20" text-anchor="middle" fill="#fcd34d" font-family="monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER &bull; SHARD HOST</text>
+      <text x="0" y="20" text-anchor="middle" fill="#fcd34d" font-family="monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER • SHARD HOST</text>
     </g>
 
     <!-- Supervisor Tree Concentric Orbital Ring -->
@@ -383,7 +383,7 @@
     <!-- Central Core Engine: ShardService & LSM Store -->
     <circle cx="1060" cy="375" r="40" fill="url(#core-amber-grad)" stroke="#f59e0b" stroke-width="2" class="hub-core" style="transform-origin: 1060px 375px;" />
     <text x="1060" y="366" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="10" font-weight="800">ShardService</text>
-    <text x="1060" y="379" text-anchor="middle" fill="#fbbf24" font-family="monospace" font-size="8" font-weight="700">LSM &bull; WAL</text>
+    <text x="1060" y="379" text-anchor="middle" fill="#fbbf24" font-family="monospace" font-size="8" font-weight="700">LSM • WAL</text>
     <text x="1060" y="391" text-anchor="middle" fill="#fde68a" font-family="monospace" font-size="7.5">[4096..8191]</text>
 
     <!-- Supervised Service Satellites -->

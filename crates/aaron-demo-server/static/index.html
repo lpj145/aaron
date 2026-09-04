@@ -408,7 +408,7 @@
 
             <!-- 2. Bottom Satellite: Transport Protocol -->
             <rect x="68" y="306" width="84" height="18" rx="9" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(148, 163, 184, 0.4)" stroke-width="1" />
-            <text x="110" y="318.5" text-anchor="middle" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="700">HTTP &bull; QUIC</text>
+            <text x="110" y="318.5" text-anchor="middle" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="700">HTTP • QUIC</text>
 
             <!-- Connection Port Dots -->
             <circle cx="160" cy="205" r="3.5" fill="#34d399" stroke="#070a10" stroke-width="1.2" />
@@ -475,7 +475,7 @@
               <rect x="-115" y="-12" width="230" height="24" rx="12" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1.2" />
               <circle cx="-98" cy="0" r="3.5" fill="#10b981" filter="url(#glow-emerald)" />
               <text x="-88" y="3.5" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700">Node: "worker-shard-01"</text>
-              <text x="0" y="20" text-anchor="middle" fill="#6ee7b7" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER &bull; SHARD HOST</text>
+              <text x="0" y="20" text-anchor="middle" fill="#6ee7b7" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER • SHARD HOST</text>
             </g>
 
             <!-- Supervisor Tree Concentric Orbital Ring -->
@@ -485,7 +485,7 @@
             <!-- Central Core Engine: ShardService & LSM Store -->
             <circle cx="1060" cy="145" r="40" fill="url(#core-emerald-grad)" stroke="#10b981" stroke-width="2" class="hub-core" style="transform-origin: 1060px 145px;" />
             <text x="1060" y="136" text-anchor="middle" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="800">ShardService</text>
-            <text x="1060" y="149" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">LSM &bull; WAL</text>
+            <text x="1060" y="149" text-anchor="middle" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">LSM • WAL</text>
             <text x="1060" y="161" text-anchor="middle" fill="#a7f3d0" font-family="'JetBrains Mono', monospace" font-size="7.5">[0000..4095]</text>
 
             <!-- Supervised Service Satellites -->
@@ -517,7 +517,7 @@
               <rect x="-115" y="-12" width="230" height="24" rx="12" fill="rgba(15, 23, 42, 0.95)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.2" />
               <circle cx="-98" cy="0" r="3.5" fill="#10b981" filter="url(#glow-emerald)" />
               <text x="-88" y="3.5" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700">Node: "worker-shard-02"</text>
-              <text x="0" y="20" text-anchor="middle" fill="#fcd34d" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER &bull; SHARD HOST</text>
+              <text x="0" y="20" text-anchor="middle" fill="#fcd34d" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" letter-spacing="1">WORKER • SHARD HOST</text>
             </g>
 
             <!-- Supervisor Tree Concentric Orbital Ring -->
@@ -527,7 +527,7 @@
             <!-- Central Core Engine: ShardService & LSM Store -->
             <circle cx="1060" cy="375" r="40" fill="url(#core-amber-grad)" stroke="#f59e0b" stroke-width="2" class="hub-core" style="transform-origin: 1060px 375px;" />
             <text x="1060" y="366" text-anchor="middle" fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="800">ShardService</text>
-            <text x="1060" y="379" text-anchor="middle" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">LSM &bull; WAL</text>
+            <text x="1060" y="379" text-anchor="middle" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">LSM • WAL</text>
             <text x="1060" y="391" text-anchor="middle" fill="#fde68a" font-family="'JetBrains Mono', monospace" font-size="7.5">[4096..8191]</text>
 
             <!-- Supervised Service Satellites -->
@@ -644,7 +644,7 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span>TERMINAL: HOW TO RUN &amp; VERIFY COORDINATOR</span>
                   </div>
-                  <span class="text-[10px] text-slate-500 font-normal">Official Default Ports: 7946 (SWIM) &bull; 18946 (Raft QUIC) &bull; 8080 (Admin)</span>
+                  <span class="text-[10px] text-slate-500 font-normal">Official Default Ports: 7946 (SWIM) • 18946 (Raft QUIC) • 8080 (Admin)</span>
                 </div>
 
                 <div class="space-y-1">
@@ -736,7 +736,7 @@
             }
         }));
 
-    println!(<span class="text-amber-300">"Worker running. QUIC listener on :18946 &bull; Telemetry streaming to Control Plane"</span>);
+    println!(<span class="text-amber-300">"Worker running. QUIC listener on :18946 • Telemetry streaming to Control Plane"</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
@@ -748,7 +748,7 @@
                     <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
                     <span>TERMINAL: HOW TO RUN WORKER &amp; VERIFY SHARD ASSIGNMENTS</span>
                   </div>
-                  <span class="text-[10px] text-slate-500 font-normal">Gossip: UDP/TCP 7947 &bull; Shard QUIC: 18946 &bull; Control Plane: 18946</span>
+                  <span class="text-[10px] text-slate-500 font-normal">Gossip: UDP/TCP 7947 • Shard QUIC: 18946 • Control Plane: 18946</span>
                 </div>
 
                 <div class="space-y-1">
@@ -812,7 +812,7 @@
                     <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
                     <span>TERMINAL: HOW TO RUN STANDALONE SUPERVISOR</span>
                   </div>
-                  <span class="text-[10px] text-slate-500 font-normal">Zero Network Ports &bull; Local Actor Supervision &bull; Embedded Fjall</span>
+                  <span class="text-[10px] text-slate-500 font-normal">Zero Network Ports • Local Actor Supervision • Embedded Fjall</span>
                 </div>
 
                 <div class="space-y-1">
@@ -879,7 +879,7 @@
                     <span class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
                     <span>TERMINAL: HOW TO RUN EVENT-DRIVEN PIPELINE</span>
                   </div>
-                  <span class="text-[10px] text-slate-500 font-normal">Lockless Broadcast Bus &bull; Strongly-Typed Pub/Sub</span>
+                  <span class="text-[10px] text-slate-500 font-normal">Lockless Broadcast Bus • Strongly-Typed Pub/Sub</span>
                 </div>
 
                 <div class="space-y-1">
@@ -922,7 +922,7 @@
           <!-- Choice 1: Autonomous Nodes -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-brand-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">01 &bull; Single-Binary Runtime</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">01 • Single-Binary Runtime</span>
             </div>
             <h3 class="font-bold text-base text-white mb-2">Autonomous Node Runtime</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
@@ -936,7 +936,7 @@
           <!-- Choice 2: Multiplexed Transport -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-cyan-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">02 &bull; Zero HoL Blocking</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">02 • Zero HoL Blocking</span>
             </div>
             <h3 class="font-bold text-base text-white mb-2">Multiplexed Stream Transport</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
@@ -950,7 +950,7 @@
           <!-- Choice 3: Decentralized Discovery -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-emerald-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">03 &bull; Bounded O(1) Load</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">03 • Bounded O(1) Load</span>
             </div>
             <h3 class="font-bold text-base text-white mb-2">Decentralized Peer Discovery</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
@@ -964,7 +964,7 @@
           <!-- Choice 4: Log-Structured Disk Persistence -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-amber-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">04 &bull; Sub-Millisecond Disk</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">04 • Sub-Millisecond Disk</span>
             </div>
             <h3 class="font-bold text-base text-white mb-2">Log-Structured Disk Persistence</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
@@ -978,7 +978,7 @@
           <!-- Choice 5: Zero-Copy Schema Framing -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">05 &bull; Zero Heap Copies</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">05 • Zero Heap Copies</span>
             </div>
             <h3 class="font-bold text-base text-white mb-2">Zero-Copy Schema Framing</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
@@ -992,7 +992,7 @@
           <!-- Choice 6: In-Process Quorum Consensus -->
           <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-rose-500/40 transition">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-semibold">06 &bull; Embedded Consensus</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-semibold">06 • Embedded Consensus</span>
             </div>
             <h3 class="font-bold text-base text-white mb-2">In-Process Quorum Consensus</h3>
             <p class="text-xs text-slate-400 leading-relaxed mb-4">
@@ -1034,7 +1034,7 @@
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">
-                Distributed Storage &bull; Microsecond Reads
+                Distributed Storage • Microsecond Reads
               </span>
               <span class="font-mono text-xs text-slate-500">01</span>
             </div>
@@ -1070,7 +1070,7 @@
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">
-                Edge Ingestion &bull; Lossy Networks
+                Edge Ingestion • Lossy Networks
               </span>
               <span class="font-mono text-xs text-slate-500">02</span>
             </div>
@@ -1106,7 +1106,7 @@
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
-                Autonomous Mesh &bull; Self-Healing Fleets
+                Autonomous Mesh • Self-Healing Fleets
               </span>
               <span class="font-mono text-xs text-slate-500">03</span>
             </div>
@@ -1142,7 +1142,7 @@
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">
-                Real-Time &bull; Deterministic Latency
+                Real-Time • Deterministic Latency
               </span>
               <span class="font-mono text-xs text-slate-500">04</span>
             </div>
@@ -1178,7 +1178,7 @@
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
-                FinTech &bull; Strict ACID & Auditable Ledgers
+                FinTech • Strict ACID & Auditable Ledgers
               </span>
               <span class="font-mono text-xs text-slate-500">05</span>
             </div>
@@ -1215,7 +1215,7 @@
             
             <div class="flex items-center justify-between gap-4 mb-5">
               <span class="text-xs font-mono px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-semibold">
-                Streaming &bull; Zero HoL Blocking Pipelines
+                Streaming • Zero HoL Blocking Pipelines
               </span>
               <span class="font-mono text-xs text-slate-500">06</span>
             </div>
@@ -1254,13 +1254,13 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-mono px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
-                  Modular &bull; Unconstrained Composability
+                  Modular • Unconstrained Composability
                 </span>
                 <span class="text-xs font-mono px-3 py-1 rounded-full bg-white/5 text-slate-300 border border-white/10">
                   Infinite Architectures
                 </span>
               </div>
-              <span class="font-mono text-xs text-amber-400 font-bold tracking-wider uppercase">07 &bull; Use Your Imagination</span>
+              <span class="font-mono text-xs text-amber-400 font-bold tracking-wider uppercase">07 • Use Your Imagination</span>
             </div>
 
             <h3 class="text-2xl sm:text-3xl font-bold text-white mb-4 group-hover:text-amber-200 transition-colors">
@@ -1669,7 +1669,7 @@
       <footer class="mt-32 pt-12 pb-16 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
         <div class="flex items-center gap-3">
           <div class="w-6 h-6 rounded bg-brand-600/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold">λ</div>
-          <span>Aaron Distributed Systems Runtime &bull; Licensed under Apache-2.0</span>
+          <span>Aaron Distributed Systems Runtime • Licensed under Apache-2.0</span>
         </div>
         <div>
           <span>Open-source Distributed Systems Engine for Rust</span>
@@ -1864,7 +1864,7 @@
           document.getElementById('bench-ops').innerText = Math.round(data.write_ops_sec).toLocaleString();
           document.getElementById('bench-lat').innerText = data.write_latency_avg_us.toFixed(1);
 
-          addLog(`Benchmark: <span class="text-cyan-400">${data.operations} writes</span> completed &bull; Throughput: <span class="text-emerald-400 font-bold">${Math.round(data.write_ops_sec).toLocaleString()} ops/s</span> &bull; Latency: <span class="text-amber-400">${data.write_latency_avg_us.toFixed(1)} µs/op</span>`);
+          addLog(`Benchmark: <span class="text-cyan-400">${data.operations} writes</span> completed • Throughput: <span class="text-emerald-400 font-bold">${Math.round(data.write_ops_sec).toLocaleString()} ops/s</span> • Latency: <span class="text-amber-400">${data.write_latency_avg_us.toFixed(1)} µs/op</span>`);
         } else {
           addLog(`Benchmark failed: ${data.error || 'Error'}`);
         }
