@@ -5,11 +5,11 @@ use control_plane_service::ControlPlaneHandle;
 use node::{BoxError, Context, Service, ServiceConfig};
 use tracing::info;
 
-/// Serviço responsável pelo ciclo de vida e roteamento de Shards.
+/// Supervised service responsible for shard lifecycle management and routing.
 ///
-/// Possui dois modos de operação:
-/// - `Coordinator`: Executado no Control Plane (com `ControlPlaneHandle`), orquestra e persiste atribuições no Raft.
-/// - `Worker`: Executado no Data Plane (workers como `inventory`), escuta comandos via QUIC e mantém estado local.
+/// Operates in two distinct modes:
+/// - `Coordinator`: Runs on the Control Plane (with `ControlPlaneHandle`), orchestrating and persisting shard assignments in Raft.
+/// - `Worker`: Runs on the Data Plane (worker nodes like `inventory`), listening for QUIC commands and maintaining local partition state.
 pub enum ShardService {
     Coordinator {
         config_override: Option<ShardConfig>,
@@ -23,7 +23,7 @@ pub enum ShardService {
 }
 
 impl ShardService {
-    /// Cria o ShardService em modo Coordenador (para nós do Control Plane).
+    /// Creates a ShardService in Coordinator mode (for Control Plane nodes).
     pub fn coordinator(control_plane: ControlPlaneHandle) -> (Self, ShardHandle) {
         let nil_uuid = node::Uuid::NIL;
         let handle = ShardHandle::new(nil_uuid, 1024);
@@ -37,7 +37,7 @@ impl ShardService {
         )
     }
 
-    /// Cria o ShardService em modo Worker (para nós do Data Plane).
+    /// Creates a ShardService in Worker mode (for Data Plane nodes).
     pub fn worker() -> (Self, ShardHandle) {
         let nil_uuid = node::Uuid::NIL;
         let handle = ShardHandle::new(nil_uuid, 1024);

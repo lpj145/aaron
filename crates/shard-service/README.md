@@ -36,14 +36,14 @@ The Aaron sharding architecture establishes strict, unambiguous boundaries:
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                    Aaron Shard Architecture Roadmap                     │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ 1. Designação (Assignment)      │ Manual & One-Time Raft Bootstrap      │
-│ 2. Liderança (Leadership)       │ Monotonic Epoch Handover & Promotion │
-│ 3. Remoção (Removal/Eviction)   │ Explicit Node Eviction without Chaos  │
-│ 4. Consulta por Ordem (Routing) │ Ring Hashing & [u16 BE] LSM Prefix    │
+│ 1. Assignment                   │ Manual & One-Time Raft Bootstrap      │
+│ 2. Leadership                   │ Monotonic Epoch Handover & Promotion │
+│ 3. Removal & Eviction           │ Explicit Node Eviction without Chaos  │
+│ 4. Deterministic Routing        │ Ring Hashing & [u16 BE] LSM Prefix    │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Stage 1: Designação (Assignment) — *Implemented*
+### Stage 1: Shard Assignment — *Implemented*
 - **Raft Bootstrap (`POST /api/shards/bootstrap`)**: Partition allocation persisted directly to the Raft consensus log per service name (`shards/{service_name}/{shard_id}` and `shards/{service_name}/system/bootstrapped`). Once bootstrapped for a given service, subsequent calls are rejected to preserve cluster consistency.
 - **Manual Assignment (`POST /api/shards/assign`)**: Authoritative assignment of specific shards to designated Primary and Replica nodes.
 - **Topology Rebalancing (`POST /api/shards/rebalance`)**: Calculates target distribution and reallocates shard replicas evenly across available alive worker nodes.
@@ -54,15 +54,15 @@ The Aaron sharding architecture establishes strict, unambiguous boundaries:
 - **On-Disk Persistence**: Partition records are persisted to the node's local LSM store using zero-copy FlatBuffers serialization (`StoredShardPlacement` in `schemas/shard.fbs`).
 - **Periodic Worker Telemetry**: Workers measure dynamic Workload Performance Score (WPS) and error rate, transmitting `RaftMessage::TelemetryHeartbeat` every 3 seconds to the Control Plane over QUIC.
 
-### Stage 2: Liderança (Leadership) — *Upcoming*
+### Stage 2: Leadership Transitions — *Upcoming*
 - Promotion of replicas to authoritative primaries per partition.
 - Monotonic epoch counters ensuring split-brain resistance and sequential role handovers.
 - Local partition lifecycle events (`ShardEvent::RoleChanged`).
 
-### Stage 3: Remoção (Removal / Eviction) — *Upcoming*
+### Stage 3: Shard Removal & Eviction — *Upcoming*
 - Explicit node eviction from shard replica sets without automatic, uncoordinated rebalancing.
 
-### Stage 4: Consulta por Ordem e Prefixos Big-Endian (Routing & Lookups)
+### Stage 4: Deterministic Routing & Big-Endian Prefixing
 - In-memory deterministic WyHash 64-bit hashing (`Router`, `determine_shard`, `wyhash_64`) for key-to-partition mapping with full 64-bit avalanche protection and throughput up to ~38 GiB/s.
 - 2-byte and 4-byte Big-Endian LSM key prefixing (`ShardKey::encode_u16`, `ShardKey::prefix_u16`) for partition isolation and contiguous range scans on disk.
 - High-level route resolution in `ShardHandle::lookup_route` to find target partition, primary leader, and replicas.
@@ -127,7 +127,7 @@ table ShardCommandResponse {
 
 ## Usage Examples
 
-### 1. Control Plane Coordinator Node (`bank`)
+### 1. Control Plane Coordinator Node (`orders`)
 
 ```rust
 use aaron::{
@@ -140,7 +140,7 @@ async fn main() -> Result<(), node::BoxError> {
     let (control_svc, control_handle) = ControlPlaneService::pair();
     let (shard_svc, shard_handle) = ShardService::coordinator(control_handle.clone());
 
-    Node::new("bank")
+    Node::new("orders")
         .with_tag("role:control-plane")
         .with(membership_svc)
         .with(control_svc)
@@ -157,7 +157,7 @@ async fn main() -> Result<(), node::BoxError> {
 }
 ```
 
-### 2. Data Plane Worker Node (`treasurer`)
+### 2. Data Plane Worker Node (`inventory`)
 
 ```rust
 use aaron::{Context, MembershipService, Node, ShardEvent, ShardService, TracingService, service_fn};
@@ -168,7 +168,7 @@ async fn main() -> Result<(), node::BoxError> {
     let (membership_svc, _membership_handle) = MembershipService::pair();
     let (shard_svc, _shard_handle) = ShardService::worker();
 
-    Node::new("treasurer")
+    Node::new("inventory")
         .with_tag("role:worker")
         .with(membership_svc)
         .with(TracingService::new())
@@ -215,11 +215,11 @@ async fn handle_user_write(
     store: &Store,
     account_id: &str,
     payload: &[u8],
-) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error>> {
     let raw_key = account_id.as_bytes();
 
     // 1. Resolve target partition and cluster placement
-    if let Some(placement) = shard_handle.lookup_route("treasurer", raw_key).await {
+    if let Some(placement) = shard_handle.lookup_route("inventory", raw_key).await {
         println!(
             "Account {} mapped to Shard #{} (Primary Node: {:?})",
             account_id, placement.shard_id, placement.primary
@@ -272,26 +272,26 @@ async fn scan_shard_partition(
 
 ## Benchmarks
 
-A suite oficial de micro-benchmarks do roteamento determinístico e prefixação Big-Endian utiliza Criterion:
+The official micro-benchmark suite for deterministic routing and Big-Endian prefixing uses Criterion:
 
 ```bash
 cargo bench -p shard-service
 ```
 
-### Resultados Comparativos de Hashing (FNV-1a vs XXH64 vs WyHash)
+### Comparative Hashing Benchmarks (FNV-1a vs. XXH64 vs. WyHash)
 
-| Tamanho da Chave | FNV-1a (Legacy) | XXH64 | WyHash (Padrão Aaron v2) | Vantagem WyHash |
+| Key Size | FNV-1a (Legacy) | XXH64 | WyHash (Aaron v2 Default) | WyHash Advantage |
 | :--- | :--- | :--- | :--- | :--- |
-| **8 bytes** | ~1.50 ns (4.93 GiB/s) | ~1.46 ns (5.07 GiB/s) | **~1.82 ns** (4.08 GiB/s) | Latência sub-2ns (~550M ops/s) |
-| **32 bytes** | ~8.15 ns (3.65 GiB/s) | ~4.28 ns (6.96 GiB/s) | **~1.82 ns** (**16.30 GiB/s**) | **4.4x mais rápido** (~547M ops/s) |
-| **128 bytes** | ~62.58 ns (1.90 GiB/s) | ~9.03 ns (13.19 GiB/s) | **~4.15 ns** (**28.68 GiB/s**) | **15.0x mais rápido** (~241M ops/s) |
-| **1024 bytes** | ~717.34 ns (1.32 GiB/s) | ~51.74 ns (18.42 GiB/s) | **~24.69 ns** (**38.61 GiB/s**) | **29.0x mais rápido** (~40.5M ops/s) |
+| **8 bytes** | ~1.50 ns (4.93 GiB/s) | ~1.46 ns (5.07 GiB/s) | **~1.82 ns** (4.08 GiB/s) | Sub-2ns latency (~550M ops/s) |
+| **32 bytes** | ~8.15 ns (3.65 GiB/s) | ~4.28 ns (6.96 GiB/s) | **~1.82 ns** (**16.30 GiB/s**) | **4.4x faster** (~547M ops/s) |
+| **128 bytes** | ~62.58 ns (1.90 GiB/s) | ~9.03 ns (13.19 GiB/s) | **~4.15 ns** (**28.68 GiB/s**) | **15.0x faster** (~241M ops/s) |
+| **1024 bytes** | ~717.34 ns (1.32 GiB/s) | ~51.74 ns (18.42 GiB/s) | **~24.69 ns** (**38.61 GiB/s**) | **29.0x faster** (~40.5M ops/s) |
 
-### Resultados de Roteamento e LSM Prefix
+### Routing & LSM Prefixing Benchmarks
 
-| Operação | Escopo / Configuração | Latência Média | Throughput / Vazão |
+| Operation | Scope / Configuration | Mean Latency | Throughput |
 | :--- | :--- | :--- | :--- |
-| `router.route` (WyHash) | Chave de 22 bytes | ~2.1 ns | **~475M rotas/s** por core |
-| `determine_shard` | 8, 64 e 1024 shards | ~2.1 ns (*constante O(1)*) | **~475M rotas/s** por core |
-| `ShardKey::encode_u16` | Prefixo Big-Endian | ~7.94 ns | **~126M ops/s** |
-| `ShardKey::decode_u16` | Extração Zero-Copy | ~1.18 ns | **~844M ops/s** |
+| `router.route` (WyHash) | 22-byte key | ~2.1 ns | **~475M routes/s** per core |
+| `determine_shard` | 8, 64, and 1024 shards | ~2.1 ns (*constant O(1)*) | **~475M routes/s** per core |
+| `ShardKey::encode_u16` | Big-Endian Prefix | ~7.94 ns | **~126M ops/s** |
+| `ShardKey::decode_u16` | Zero-Copy Extraction | ~1.18 ns | **~844M ops/s** |

@@ -79,7 +79,7 @@ impl ShardCoordinator {
                 continue;
             };
 
-            // Caso 1: Flags de bootstrap global ou por serviço
+            // Case 1: Global or per-service bootstrap flags
             if suffix == "system/bootstrapped" {
                 self.handle.set_bootstrapped(true).await;
                 continue;
@@ -89,7 +89,7 @@ impl ShardCoordinator {
                 continue;
             }
 
-            // Caso 2: Partições de serviço estruturadas (ex: "shards/inventory/0")
+            // Case 2: Structured service partitions (e.g. "shards/inventory/0")
             let parts: Vec<&str> = suffix.split('/').collect();
             if parts.len() == 2 && parts[1].parse::<ShardId>().is_ok()
                 && let Ok(mut placement) = ShardPlacement::from_bytes(&v_bytes) {
@@ -100,7 +100,7 @@ impl ShardCoordinator {
                     continue;
                 }
 
-            // Caso 3: Partições legadas planas (ex: "shards/0")
+            // Case 3: Flat legacy partitions (e.g. "shards/0")
             if suffix.parse::<ShardId>().is_ok()
                 && let Ok(placement) = ShardPlacement::from_bytes(&v_bytes) {
                     self.handle.update_placement(placement).await;
@@ -235,7 +235,7 @@ impl ShardCoordinator {
             self.handle.set_bootstrapped(true).await;
         }
 
-        // Dispara os comandos de partição via canal do Control Plane para os nós Primary e Réplicas
+        // Dispatches partition commands via Control Plane channel to Primary and Replica nodes
         for shard_id in 0..total_shards {
             if let Some(p) = self.handle.get_service_placement(service_name, shard_id).await {
                 let _ = self

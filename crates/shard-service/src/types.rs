@@ -16,7 +16,7 @@ fn default_service_name() -> String {
     "default".to_string()
 }
 
-/// Registro de designação de uma partição por serviço (Estágio 1).
+/// Record representing a partition placement assignment per service (Stage 1).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ShardPlacement {
     #[serde(default = "default_service_name")]
@@ -50,7 +50,7 @@ impl ShardPlacement {
         }
     }
 
-    /// Retorna o conjunto de todos os nós participantes (Primary + Réplicas).
+    /// Returns the set of all participating nodes (Primary + Replicas).
     pub fn all_nodes(&self) -> BTreeSet<Uuid> {
         let mut set = BTreeSet::new();
         set.insert(self.primary);
@@ -60,12 +60,12 @@ impl ShardPlacement {
         set
     }
 
-    /// Retorna a contagem total de nós atribuídos a esta partição.
+    /// Returns the total count of nodes assigned to this partition.
     pub fn node_count(&self) -> usize {
         self.all_nodes().len()
     }
 
-    /// Serializa o registro de designação da partição com FlatBuffers zero-copy.
+    /// Serializes the partition placement record into FlatBuffers with zero-copy.
     pub fn to_bytes(&self) -> Vec<u8> {
         use crate::proto::aaron::node as proto_node;
         use crate::proto::aaron::shard as proto_shard;
@@ -157,29 +157,29 @@ pub enum RejectReason {
     Busy,
 }
 
-/// Comandos disparados pelo Control Plane para nós do grupo do Shard (Raft).
+/// Commands dispatched by Control Plane to nodes in a Shard group (Raft).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ShardCommand {
-    /// Bootstrap atômico do Worker com todas as suas partições de uma só vez.
+    /// Atomic worker bootstrap with all assigned partitions at once.
     Bootstrap {
         shards: Vec<ShardGroup>,
     },
-    /// Adição dinâmica de uma partição em runtime.
+    /// Dynamic partition addition at runtime.
     Join {
         shard_id: ShardId,
         members: Vec<Uuid>,
         role: MemberRole,
     },
-    /// Altera o papel do nó no quórum (unifica promoção e despromoção).
+    /// Updates the node's role within the quorum (unifies promotion and demotion).
     SetRole {
         shard_id: ShardId,
         role: MemberRole,
     },
-    /// Remove o nó do quórum do shard (Raft leave/shutdown).
+    /// Removes the node from the shard quorum (Raft leave/shutdown).
     Leave {
         shard_id: ShardId,
     },
-    /// Atribuição de partição legada enviada via canal de controle de frame.
+    /// Legacy partition assignment dispatched via frame control channel.
     Assign {
         service_name: String,
         shard_id: ShardId,
@@ -188,7 +188,7 @@ pub enum ShardCommand {
         replicas: Vec<Uuid>,
         epoch: u64,
     },
-    /// Notificação de rebalanceamento legado para os membros do shard.
+    /// Legacy rebalancing notification to shard members.
     Rebalance {
         service_name: String,
         shard_id: ShardId,
@@ -197,16 +197,16 @@ pub enum ShardCommand {
     },
 }
 
-/// Resposta formal do nó após tentar aplicar um ShardCommand no seu Raft local.
+/// Formal response after a node attempts to apply a ShardCommand to its local Raft.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ShardResponse {
-    /// O comando foi aplicado com sucesso no Raft local.
+    /// Command was applied successfully in local Raft.
     Applied {
         shard_id: ShardId,
         current_role: MemberRole,
         term: u64,
     },
-    /// O nó rejeitou a transição.
+    /// Node rejected the role transition.
     Rejected {
         shard_id: ShardId,
         reason: RejectReason,

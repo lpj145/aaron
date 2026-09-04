@@ -142,7 +142,7 @@ impl ShardHandle {
         );
     }
 
-    /// Define ou atualiza o líder de uma partição (Primary).
+    /// Sets or updates the primary leader for a partition.
     pub async fn set_service_leader(&self, service_name: &str, shard_id: ShardId, leader_id: Uuid) {
         let mut inner = self.inner.write().await;
         let target_key = if inner.placements.contains_key(&(service_name.to_string(), shard_id)) {
@@ -244,7 +244,7 @@ impl ShardHandle {
         result
     }
 
-    /// Retorna o papel do nó local na partição informada (`Primary`, `Replica` ou `None`).
+    /// Returns the local node's role in the specified partition (`Primary`, `Replica`, or `None`).
     pub async fn my_role(&self, shard_id: ShardId) -> Option<crate::types::ShardRole> {
         let inner = self.inner.read().await;
         let local_id = inner.local_node_id;
