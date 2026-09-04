@@ -72,22 +72,17 @@
   <!-- ======================================================== -->
   <!-- 1. FULL-SCREEN WIDE-SCREEN HERO SECTION                  -->
   <!-- ======================================================== -->
-  <section class="relative w-full min-h-screen flex flex-col justify-between overflow-hidden">
+  <!-- ======================================================== -->
+  <!-- 1. HERO SECTION: COMPACT HEADER & WIDESCREEN SCHEMATIC   -->
+  <!-- ======================================================== -->
+  <section class="relative w-full min-h-screen flex flex-col justify-between overflow-hidden bg-[#070a10]">
     
-    <!-- Panoramic Wide-Screen 16:9 Concept Background Image -->
-    <div class="absolute inset-0 z-0">
-      <img 
-        src="/cluster-concept.webp" 
-        alt="Aaron Panoramic Distributed Cluster Mesh" 
-        class="w-full h-full object-cover object-center filter brightness-75 contrast-110"
-      />
-      <!-- Soft directional fade to smoothly transition into code sections below -->
-      <div class="absolute inset-0 bg-gradient-to-b from-[#070a10]/80 via-transparent to-[#070a10]"></div>
-      <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#070a10] via-[#070a10]/80 to-transparent"></div>
-    </div>
+    <!-- Ambient Lighting Glows -->
+    <div class="absolute top-20 left-1/3 w-[500px] h-[300px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="absolute bottom-20 right-1/4 w-[400px] h-[300px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
 
     <!-- Navigation Header -->
-    <header class="relative z-20 w-full backdrop-blur-md bg-[#070a10]/70 border-b border-white/10">
+    <header class="relative z-20 w-full backdrop-blur-md bg-[#070a10]/80 border-b border-white/10">
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-cyan-400 p-[1px] shadow-lg shadow-brand-500/30">
@@ -134,40 +129,261 @@
       </div>
     </header>
 
-    <!-- Hero Content: Wide-Screen Centered Typography Directly Over the Background (No Cards) -->
-    <div class="relative z-10 max-w-5xl mx-auto px-6 py-16 text-center my-auto flex flex-col items-center">
+    <!-- Hero Content: Compact Copy + Widescreen Animated Architectural Vector Schematic -->
+    <div class="relative z-10 max-w-6xl mx-auto px-6 pt-6 pb-4 w-full flex flex-col items-center text-center my-auto">
       
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-mono bg-amber-500/20 border border-amber-500/40 text-amber-300 mb-6 font-semibold shadow-lg backdrop-blur-md">
-        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+      <!-- Compact Eyebrow Tag -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono bg-amber-500/15 border border-amber-500/30 text-amber-300 mb-2.5 font-semibold">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
         <span>ALPHA v0.1.0</span>
-        <span class="text-slate-500">&bull;</span>
-        <span class="text-amber-200">Distributed Cluster Runtime</span>
+        <span class="text-slate-600">&bull;</span>
+        <span class="text-amber-200">Distributed Cluster Runtime for Rust</span>
       </div>
 
-      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] mb-6 drop-shadow-2xl">
+      <!-- Compact Title (Small & Proportional) -->
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
         The Opinionated Distributed Cluster Runtime for Rust
       </h1>
 
-      <p class="max-w-3xl text-base sm:text-lg text-slate-200 font-normal leading-relaxed mb-10 drop-shadow-lg">
-        Aaron is engineered to build resilient, self-healing clusters in a single compiled binary. Autonomous nodes supervise internal services, persist state to embedded disk-backed LSM trees, discover peers through decentralized SWIM gossip, and stream zero-copy data over QUIC without external coordination daemons.
+      <!-- Compact 1-2 sentence description -->
+      <p class="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed mb-4 font-normal">
+        Resilient, self-healing clusters in a single compiled binary. Embedded Fjall LSM storage, decentralized SWIM gossip, and zero-copy QUIC streaming without external coordination daemons.
       </p>
 
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center justify-center gap-4">
-        <a href="#code" class="px-8 py-4 rounded-xl font-bold text-sm bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-90 text-white shadow-2xl shadow-brand-500/40 transition flex items-center gap-2">
+      <!-- Compact Action Buttons -->
+      <div class="flex items-center justify-center gap-3 mb-6">
+        <a href="#code" class="px-5 py-2 rounded-lg font-bold text-xs bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-90 text-white shadow-lg shadow-brand-500/25 transition flex items-center gap-1.5">
           <span>Explore Code Below ↓</span>
         </a>
-        <a href="#sandbox" class="px-8 py-4 rounded-xl font-semibold text-sm bg-slate-900/80 hover:bg-slate-800/80 border border-white/20 text-white backdrop-blur-md transition flex items-center gap-2 shadow-xl">
+        <a href="#sandbox" class="px-5 py-2 rounded-lg font-semibold text-xs bg-slate-900/90 hover:bg-slate-800 border border-white/15 text-white backdrop-blur-md transition flex items-center gap-1.5">
           <span>Test Live Sandbox (3 Nodes)</span>
         </a>
+      </div>
+
+      <!-- Widescreen Fluent Bit-Style Vector Architecture Schematic -->
+      <div class="w-full relative rounded-2xl border border-white/10 bg-[#090d16]/95 p-3 sm:p-5 shadow-2xl backdrop-blur-sm overflow-hidden">
+        
+        <!-- Schematic Top Header Bar -->
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-[11px] font-mono text-slate-400">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-slate-200 font-bold">aaron-cluster // topology</span>
+            <span class="text-slate-600 hidden sm:inline">|</span>
+            <span class="text-cyan-400 hidden sm:inline">3 Autonomous Nodes</span>
+          </div>
+          <div class="flex items-center gap-4 text-[10px]">
+            <span class="flex items-center gap-1.5 text-emerald-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>SWIM :7946</span>
+            </span>
+            <span class="flex items-center gap-1.5 text-purple-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+              <span>QUIC :18946</span>
+            </span>
+            <span class="flex items-center gap-1.5 text-amber-300 hidden md:flex">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span>Fjall LSM</span>
+            </span>
+            <span class="flex items-center gap-1.5 text-cyan-300 hidden md:flex">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span>OpenRaft Quorum</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Inline High-Precision Animated Vector SVG -->
+        <svg viewBox="0 0 1000 310" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="nodeBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#111827" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#0b1120" stop-opacity="0.95"/>
+            </linearGradient>
+            <linearGradient id="cyanLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#06b6d4"/>
+              <stop offset="50%" stop-color="#6366f1"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+            <linearGradient id="amberLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#f59e0b"/>
+              <stop offset="100%" stop-color="#ef4444"/>
+            </linearGradient>
+            <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glowAmber" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- Top Network Line: SWIM Gossip Mesh (Arc across all 3 nodes) -->
+          <path id="swimPath" d="M 180 50 Q 500 0 820 50" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6"/>
+          <text x="500" y="24" fill="#34d399" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">SWIM Gossip Mesh Probes [UDP :7946] • O(1) Failure Detection</text>
+          
+          <!-- Animated Packets on SWIM Line -->
+          <circle r="4" fill="#34d399" filter="url(#glowGreen)">
+            <animateMotion repeatCount="indefinite" dur="3.5s" path="M 180 50 Q 500 0 820 50" />
+          </circle>
+          <circle r="3" fill="#6ee7b7" filter="url(#glowGreen)">
+            <animateMotion repeatCount="indefinite" dur="3.5s" begin="1.75s" path="M 820 50 Q 500 0 180 50" />
+          </circle>
+
+          <!-- Middle Network Line: QUIC Multi-Stream Data Bus -->
+          <line x1="320" y1="135" x2="360" y2="135" stroke="url(#cyanLine)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="640" y1="135" x2="680" y2="135" stroke="url(#cyanLine)" stroke-width="2.5" stroke-linecap="round"/>
+          
+          <!-- Animated Packets on QUIC Interconnects -->
+          <circle cy="135" r="3.5" fill="#38bdf8" filter="url(#glowCyan)">
+            <animate attributeName="cx" values="320;360;320" dur="1.2s" repeatCount="indefinite" />
+          </circle>
+          <circle cy="135" r="3.5" fill="#c084fc">
+            <animate attributeName="cx" values="640;680;640" dur="1.4s" repeatCount="indefinite" />
+          </circle>
+
+          <!-- Bottom Network Line: OpenRaft Quorum Consensus Replication -->
+          <path id="raftPath" d="M 180 255 Q 500 305 820 255" fill="none" stroke="url(#amberLine)" stroke-width="1.5" opacity="0.7"/>
+          <text x="500" y="295" fill="#fbbf24" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">OpenRaft Synchronous Quorum Replication [AppendEntries &amp; Heartbeats]</text>
+          
+          <!-- Animated Packets on Raft Line -->
+          <circle r="4" fill="#fbbf24" filter="url(#glowAmber)">
+            <animateMotion repeatCount="indefinite" dur="2.8s" path="M 180 255 Q 500 305 820 255" />
+          </circle>
+          <circle r="3" fill="#f59e0b">
+            <animateMotion repeatCount="indefinite" dur="2.8s" begin="1.4s" path="M 820 255 Q 500 305 180 255" />
+          </circle>
+
+          <!-- ============================================== -->
+          <!-- NODE 01: SEED / RAFT LEADER (CONTROL PLANE)   -->
+          <!-- ============================================== -->
+          <g transform="translate(40, 50)">
+            <rect width="280" height="205" rx="12" fill="url(#nodeBg)" stroke="#06b6d4" stroke-width="1.5"/>
+            <!-- Node Header -->
+            <rect width="280" height="32" rx="12" fill="#0e1726"/>
+            <circle cx="18" cy="16" r="4" fill="#06b6d4" filter="url(#glowCyan)"/>
+            <text x="30" y="20" fill="#f8fafc" font-size="11" font-family="monospace" font-weight="bold">NODE 01</text>
+            <rect x="85" y="8" width="55" height="16" rx="4" fill="#06b6d4" fill-opacity="0.2"/>
+            <text x="112" y="19" fill="#22d3ee" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">LEADER</text>
+            <text x="265" y="20" fill="#94a3b8" font-size="9" font-family="monospace" text-anchor="end">:18946</text>
+
+            <!-- Internal Component 1: OpenRaft -->
+            <g transform="translate(12, 42)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#38bdf8" font-size="10" font-family="monospace" font-weight="bold">OpenRaft Consensus Engine</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Term: 4 &bull; Quorum: 3/3 Nodes &bull; Leader Lease</text>
+            </g>
+
+            <!-- Internal Component 2: Quinn QUIC Multi-Stream -->
+            <g transform="translate(12, 92)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#c084fc" font-size="10" font-family="monospace" font-weight="bold">Quinn QUIC &bull; Zero-Copy Framing</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">FlatBuffers Read O(1) &bull; Zero HoL Blocking</text>
+            </g>
+
+            <!-- Internal Component 3: Embedded Fjall LSM -->
+            <g transform="translate(12, 142)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Fjall LSM Disk Engine (fsync WAL)</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Disk Path: ./data/node-01 &bull; Zero External DB</text>
+            </g>
+
+            <!-- Bottom Status Footer -->
+            <text x="14" y="197" fill="#10b981" font-size="9" font-family="monospace">&bull; SWIM: 0.0.0.0:7946</text>
+            <text x="265" y="197" fill="#64748b" font-size="9" font-family="monospace" text-anchor="end">HTTP: :8080</text>
+          </g>
+
+          <!-- ============================================== -->
+          <!-- NODE 02: WORKER A (SHARD / STATEFUL ACTOR)    -->
+          <!-- ============================================== -->
+          <g transform="translate(360, 50)">
+            <rect width="280" height="205" rx="12" fill="url(#nodeBg)" stroke="#6366f1" stroke-width="1.5"/>
+            <!-- Node Header -->
+            <rect width="280" height="32" rx="12" fill="#0e1726"/>
+            <circle cx="18" cy="16" r="4" fill="#6366f1"/>
+            <text x="30" y="20" fill="#f8fafc" font-size="11" font-family="monospace" font-weight="bold">NODE 02</text>
+            <rect x="85" y="8" width="55" height="16" rx="4" fill="#6366f1" fill-opacity="0.2"/>
+            <text x="112" y="19" fill="#818cf8" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">WORKER</text>
+            <text x="265" y="20" fill="#94a3b8" font-size="9" font-family="monospace" text-anchor="end">:18946</text>
+
+            <!-- Internal Component 1: Shard Engine -->
+            <g transform="translate(12, 42)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#818cf8" font-size="10" font-family="monospace" font-weight="bold">Shard Ingestion &amp; Key Routing</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Partitions: #0..#31 &bull; Parallel Stream RX</text>
+            </g>
+
+            <!-- Internal Component 2: EventHub & Supervision -->
+            <g transform="translate(12, 92)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#34d399" font-size="10" font-family="monospace" font-weight="bold">EventHub &bull; Supervision Tree</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Actor Restarts: OneForOne &bull; Type-Safe Hub</text>
+            </g>
+
+            <!-- Internal Component 3: Embedded Fjall LSM -->
+            <g transform="translate(12, 142)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Fjall Partitioned LSM Keyspaces</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Disk Path: ./data/node-02 &bull; LSM Compaction</text>
+            </g>
+
+            <!-- Bottom Status Footer -->
+            <text x="14" y="197" fill="#10b981" font-size="9" font-family="monospace">&bull; SWIM: 0.0.0.0:7946</text>
+            <text x="265" y="197" fill="#64748b" font-size="9" font-family="monospace" text-anchor="end">Peer Connected</text>
+          </g>
+
+          <!-- ============================================== -->
+          <!-- NODE 03: WORKER B (SHARD / STATEFUL ACTOR)    -->
+          <!-- ============================================== -->
+          <g transform="translate(680, 50)">
+            <rect width="280" height="205" rx="12" fill="url(#nodeBg)" stroke="#f59e0b" stroke-width="1.5"/>
+            <!-- Node Header -->
+            <rect width="280" height="32" rx="12" fill="#0e1726"/>
+            <circle cx="18" cy="16" r="4" fill="#f59e0b" filter="url(#glowAmber)"/>
+            <text x="30" y="20" fill="#f8fafc" font-size="11" font-family="monospace" font-weight="bold">NODE 03</text>
+            <rect x="85" y="8" width="55" height="16" rx="4" fill="#f59e0b" fill-opacity="0.2"/>
+            <text x="112" y="19" fill="#fbbf24" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">WORKER</text>
+            <text x="265" y="20" fill="#94a3b8" font-size="9" font-family="monospace" text-anchor="end">:18946</text>
+
+            <!-- Internal Component 1: Shard Engine -->
+            <g transform="translate(12, 42)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Shard Ingestion &amp; Key Routing</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Partitions: #32..#63 &bull; Parallel Stream RX</text>
+            </g>
+
+            <!-- Internal Component 2: Dynamic Tracing -->
+            <g transform="translate(12, 92)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#f43f5e" font-size="10" font-family="monospace" font-weight="bold">Dynamic Tracing &amp; Telemetry</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Ring Buffer Spans &bull; Live Event Filtering</text>
+            </g>
+
+            <!-- Internal Component 3: Embedded Fjall LSM -->
+            <g transform="translate(12, 142)">
+              <rect width="256" height="42" rx="6" fill="#070a13" stroke="#1e293b"/>
+              <text x="10" y="18" fill="#fbbf24" font-size="10" font-family="monospace" font-weight="bold">Fjall Partitioned LSM Keyspaces</text>
+              <text x="10" y="32" fill="#64748b" font-size="8.5" font-family="monospace">Disk Path: ./data/node-03 &bull; LSM Compaction</text>
+            </g>
+
+            <!-- Bottom Status Footer -->
+            <text x="14" y="197" fill="#10b981" font-size="9" font-family="monospace">&bull; SWIM: 0.0.0.0:7946</text>
+            <text x="265" y="197" fill="#64748b" font-size="9" font-family="monospace" text-anchor="end">Peer Connected</text>
+          </g>
+
+        </svg>
+
       </div>
 
     </div>
 
     <!-- Scroll Indicator -->
-    <div class="relative z-10 pb-6 flex flex-col items-center justify-center text-slate-300 text-xs font-mono">
-      <span class="mb-1 drop-shadow font-medium">Scroll to explore code</span>
-      <svg class="w-5 h-5 animate-bounce text-cyan-400 drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="relative z-10 pb-4 flex flex-col items-center justify-center text-slate-400 text-xs font-mono">
+      <span class="mb-1 font-medium">Scroll to explore code models</span>
+      <svg class="w-4 h-4 animate-bounce text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
       </svg>
     </div>
