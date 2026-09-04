@@ -7,9 +7,109 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 
 ---
 
-## 1. The Opinionated Philosophy of Aaron
+## 1. Live Cluster Topology & Management Dashboard
 
-Aaron is built upon core architectural principles that dictate how distributed services should be composed, configured, and run:
+<p align="center">
+  <img src="./assets/admin_panel_overview.png" alt="Aaron Admin Dashboard" width="100%" />
+</p>
+
+Aaron ships with an embedded single-page application dashboard (`admin-service`) compiled directly into the binary via `rust-embed`. It requires zero external dependencies, CDNs, or separate web server processes:
+
+- **Interactive 2D Canvas Topology**: Real-time rendering of cluster nodes with camera pan and zoom, force-directed orbital layout, and animated particle streams reflecting SWIM gossip heartbeats and Raft consensus log replication.
+- **Strict Consensus Isolation**: Dedicated upper ring for the Control Plane Raft quorum (Leader, Voters, Learners). The Control Plane manages cluster metadata, state machine transitions, and partition assignment tables without holding or serving application data shards.
+- **WyHash Partition Rings**: Application worker services (e.g., `BANK`, `TREASURER`, `ORDERS`) operate in independent orbital rings below the Control Plane, routed through deterministic 64-bit WyHash partition rings.
+- **Live Node Telemetry**: Real-time tracking of Workload Performance Scores (WPS, 0-1000) calculated via startup hardware micro-benchmarks and sliding window error rate metrics.
+- **Fault Simulation Sandbox**: Interactive testing sandbox to inject artificial node load, trigger partition network anomalies, and observe automated shard failovers.
+- **Embedded LSM Storage Explorer**: Inspect keyspaces, query key-value pairs, and execute live disk read/write throughput benchmarks directly from the browser.
+
+---
+
+## 2. Forming an Aaron Cluster in Rust
+
+Building and forming an Aaron cluster is declarative and composable. Here is how to create a Control Plane seed node with the embedded Admin UI, and spin up an application worker node that joins the cluster:
+
+### Step 1: Control Plane & Admin Seed Node
+
+```rust
+use aaron::{
+    AdminService, ControlPlaneService, MembershipService, Node, ShardService, TracingService,
+};
+
+#[tokio::main]
+async fn main() -> Result<(), aaron::BoxError> {
+    // 1. Initialize services and operational handles
+    let (membership_svc, membership_handle) = MembershipService::pair();
+    let (control_plane_svc, cp_handle) = ControlPlaneService::pair();
+    let (shard_svc, shard_handle) = ShardService::coordinator(cp_handle.clone());
+    let tracing_svc = TracingService::new();
+
+    // 2. Attach operational handles and schemas to the Admin Dashboard
+    let admin_svc = AdminService::new()
+        .with_membership_handle(membership_handle.clone())
+        .with_control_plane_handle(cp_handle.clone())
+        .with_shard_handle(shard_handle.clone())
+        .with_service_schema(&membership_svc)
+        .with_service_schema(&control_plane_svc)
+        .with_service_schema(&tracing_svc);
+
+    // 3. Run the supervised node (Admin Dashboard ready at http://127.0.0.1:8080)
+    Node::new("control-plane-01")
+        .with_tag("role:control-plane")
+        .with(tracing_svc)
+        .with(membership_svc)
+        .with(control_plane_svc)
+        .with(shard_svc)
+        .with(admin_svc)
+        .run()
+        .await
+}
+```
+
+### Step 2: Application Worker Node (Joining the Cluster)
+
+```rust
+use aaron::{MembershipService, Node, ShardService, TracingService};
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<(), aaron::BoxError> {
+    // 1. Initialize membership and shard worker service
+    let (membership_svc, membership_handle) = MembershipService::pair();
+    let shard_svc = ShardService::worker();
+    let tracing_svc = TracingService::new();
+
+    // 2. Connect to the Control Plane seed asynchronously via SWIM gossip
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(150)).await;
+        let seed_addr = "127.0.0.1:7946".parse().unwrap();
+        match membership_handle.join(seed_addr).await {
+            Ok(peers) => println!("Connected to cluster! Discovered {} peer(s)", peers.len()),
+            Err(err) => eprintln!("Failed to join cluster: {err}"),
+        }
+    });
+
+    // 3. Run the worker node tagged with its domain service
+    Node::new("bank-worker-01")
+        .with_tag("service:bank")
+        .with(tracing_svc)
+        .with(membership_svc)
+        .with(shard_svc)
+        .run()
+        .await
+}
+```
+
+---
+
+## 3. Architecture & Core Philosophy
+
+### Comprehensive Multi-Service Runtime Architecture
+
+<p align="center">
+  <img src="./assets/aaron_full_architecture.jpg" alt="Aaron Runtime Architecture" width="100%" />
+</p>
+
+Aaron is built upon 10 core architectural principles that dictate how distributed services should be composed, configured, and run:
 
 1. **Decoupled, Composable Services (`Service` Trait)**:
    Every feature in Aaron (tracing, cluster membership, consensus, discovery, storage, shard routing, web administration) is a first-class, standalone, supervised `Service`. Services declare functional capabilities (`capabilities(&self) -> Vec<&str>`) such as `"control-plane"`, `"shard"`, or `"shard-worker"`, while the `Node` acts as a runtime host and supervisor.
@@ -26,8 +126,8 @@ Aaron is built upon core architectural principles that dictate how distributed s
 5. **Linearizable Distributed Consensus (`OpenRaft 0.9` & FlatBuffers)**:
    Cluster metadata replication and linearizable state machine consensus powered by OpenRaft. All on-disk consensus storage (`meta/vote`, `meta/membership`, `log/{:020index}`) is serialized into binary FlatBuffers schemas (`schemas/control_plane.fbs`), eliminating JSON overhead. Includes automated follower-to-leader HTTP request proxying.
 
-6. **Multi-Service Shard Partitioning (`ShardService`)**:
-   Distributed partition management supporting multi-service shard groups (`service_name`), one-time Raft bootstrap, manual shard assignment, topology rebalancing, and direct QUIC RPC commands to Data Plane workers.
+6. **Deterministic WyHash Partitioning (`ShardService`)**:
+   High-speed key distribution calculated via **WyHash 64-bit** (`wyhash_64(key, 0) % total_shards`). Keys on disk are ordered using Big-Endian partition prefixes (`[u16 BE Shard ID] + [Raw Key]`), enabling atomic range scans and zero-copy boundary filtering.
 
 7. **Hardware Micro-Benchmarking & Dynamic Telemetry (`NodeTelemetry`)**:
    During boot, the node executes a micro-benchmark ([`HardwareBenchmark`](crates/node/src/benchmark.rs)) measuring CPU ALU throughput (MOPS), RAM write bandwidth (MB/s), and disk fsync latency (µs) to calculate baseline nominal Workload Performance Score (WPS). Runtime telemetry continuously tracks live WPS and sliding error rates.
@@ -43,7 +143,7 @@ Aaron is built upon core architectural principles that dictate how distributed s
 
 ---
 
-## 2. Framework vs. User-Space Architectural Boundaries
+## 4. Framework vs. User-Space Architectural Boundaries
 
 Aaron is strictly an **infrastructure runtime and actor-service framework** for building distributed systems, not an out-of-the-box turnkey database. Its boundaries are explicitly delineated:
 
@@ -56,82 +156,6 @@ Aaron is strictly an **infrastructure runtime and actor-service framework** for 
 | **Partition Topology & Routing** | Deterministic route calculation via WyHash 64-bit (`wyhash_64(key, 0) % total_shards`), Big-Endian LSM prefixing (`[u16 BE Shard ID] + [Raw Key]`), multi-service shard assignment, and QUIC command dispatching. | **Data Replication**: Replicating application state across partition replicas (via local Raft, WAL streams, CRDTs, or event sourcing). |
 | **Shard Leadership & Role Feedback** | Authoritative cluster-wide registry of shard assignments, epochs, and replica placements. | **Role State Machine**: Electing or transitioning partition roles within the worker nodes and reporting authoritative role state back to the Control Plane. |
 | **Data Persistence** | Embedded ACID LSM-tree engine (Fjall) with keyspace isolation and 256 striped mutexes for atomic Read-Modify-Write. | Data modeling, indexing, transactions, serialization formats, and query semantics. |
-
----
-
-## 3. Runtime Architecture & Management
-
-### Comprehensive Multi-Service Runtime Architecture
-
-<p align="center">
-  <img src="./assets/aaron_full_architecture.jpg" alt="Aaron Runtime Architecture" width="100%" />
-</p>
-
-### Embedded Web Admin Dashboard & Live Topology
-
-<p align="center">
-  <img src="./assets/admin_panel_overview.png" alt="Aaron Admin Dashboard" width="100%" />
-</p>
-
-The embedded Vue.js 3 dashboard (`admin-service`) is compiled directly into the binary via `rust-embed` and provides:
-- **Interactive 2D Canvas Ring Topology**: Real-time visualization of cluster nodes with camera Pan & Zoom, smooth physics, and animated particle streams for SWIM gossip, Raft replication, and shard traffic.
-- **Raft Consensus Control**: 1-click bootstrap, learner synchronization, voter promotion, and clean node expulsion (`RemoveNodes`).
-- **Distributed Shards Console**: Search, filter by service name, edit primary/replica placements, and execute cluster bootstrap with support for up to 65,536 partitions under deterministic WyHash 64-bit routing.
-- **Live Node Telemetry**: Real-time display of Workload Performance Scores (WPS), nominal capacities, and sliding error rates.
-- **Fault Simulation Sandbox**: Interactive testing sandbox to inject node load, partition networks, and watch live shard failover animations.
-- **LSM Storage Explorer**: Browse keyspaces, inspect raw/JSON data, and run batch read/write throughput benchmarks.
-
----
-
-## 4. Expressive Cluster Composition in Rust
-
-Spinning up a secure, supervised node with embedded storage, dynamic logging, SWIM gossip, Raft consensus, and an embedded Vue.js dashboard:
-
-```rust
-use aaron::{
-    AdminService, ControlPlaneService, MembershipService, Node, ShardService, TracingService,
-};
-use std::time::Duration;
-
-#[tokio::main]
-async fn main() -> Result<(), node::BoxError> {
-    // 1. Initialize services and operational handles
-    let (membership_svc, membership_handle) = MembershipService::pair();
-    let (control_plane_svc, cp_handle) = ControlPlaneService::pair();
-    let (shard_svc, shard_handle) = ShardService::coordinator(cp_handle.clone());
-    let tracing_svc = TracingService::new();
-
-    let admin_svc = AdminService::new()
-        .with_membership_handle(membership_handle.clone())
-        .with_control_plane_handle(cp_handle.clone())
-        .with_shard_handle(shard_handle.clone())
-        .with_service_schema(&membership_svc)
-        .with_service_schema(&control_plane_svc)
-        .with_service_schema(&tracing_svc);
-
-    // 2. Compose the Node runtime with service identity and supervised services
-    let node = Node::new("bank")
-        .with_tag("role:control-plane")
-        .with(tracing_svc)
-        .with(membership_svc)
-        .with(control_plane_svc)
-        .with(shard_svc)
-        .with(admin_svc);
-
-    // 3. Connect to the cluster seed asynchronously
-    tokio::spawn(async move {
-        tokio::time::sleep(Duration::from_millis(100)).await;
-        let seed_addr = "127.0.0.1:7946".parse().unwrap();
-        match membership_handle.join(seed_addr).await {
-            Ok(peers) => println!("Joined cluster! Discovered {} peer(s)", peers.len()),
-            Err(err) => eprintln!("Failed to join cluster: {err}"),
-        }
-    });
-
-    // 4. Run the supervised node runtime
-    node.run().await
-}
-```
 
 ---
 
@@ -190,6 +214,9 @@ cargo run --example admin_node
 ```bash
 # Run all workspace unit, integration, chaos, and fuzz tests
 cargo test --all-targets --release
+
+# Run Shard Route WyHash benchmarks
+cargo bench -p shard-service --bench route_bench
 
 # Run EventHub Criterion 0.8 benchmarks
 cargo bench -p node --bench event_hub_bench
