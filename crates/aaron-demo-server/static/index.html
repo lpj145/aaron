@@ -194,7 +194,7 @@
 
         <!-- Perspective 1: Live Animated Cluster Topology (Active) -->
         <div id="hero-view-cluster" class="transition-all duration-300">
-          <svg viewBox="0 0 1440 540" class="w-full h-auto overflow-visible" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 1380 520" class="w-full h-auto overflow-visible" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
       @keyframes flowLine {
@@ -205,11 +205,12 @@
         stroke-dasharray: 6 6;
         animation: flowLine 1.4s linear infinite;
       }
-      .svg-node-card {
-        transition: filter 0.2s ease, transform 0.2s ease;
+      .svg-node {
+        transition: transform 0.25s ease, filter 0.25s ease;
+        cursor: pointer;
       }
-      .svg-node-card:hover {
-        filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.4));
+      .svg-node:hover {
+        filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.6));
       }
       text {
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -220,34 +221,43 @@
     </style>
 
     <!-- Glow Filters -->
-    <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3.5" result="blur" />
+    <filter id="glow-cyan" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
-    <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3.5" result="blur" />
+    <filter id="glow-emerald" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
-    <filter id="glow-brand" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3.5" result="blur" />
+    <filter id="glow-brand" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4.5" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
 
-    <!-- Gradients -->
-    <linearGradient id="node-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.95" />
-      <stop offset="100%" stop-color="#090d16" stop-opacity="0.98" />
-    </linearGradient>
+    <!-- Radial Node Chassis Gradients -->
+    <radialGradient id="node-chassis-grad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#141f36" stop-opacity="0.95" />
+      <stop offset="70%" stop-color="#0b1120" stop-opacity="0.98" />
+      <stop offset="100%" stop-color="#060911" stop-opacity="1" />
+    </radialGradient>
 
-    <linearGradient id="supervisor-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.45" />
-      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.65" />
-    </linearGradient>
+    <radialGradient id="core-user-grad" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="70%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#082f49" />
+    </radialGradient>
 
-    <linearGradient id="service-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.75" />
-      <stop offset="100%" stop-color="#0b0f19" stop-opacity="0.88" />
-    </linearGradient>
+    <radialGradient id="core-cp-grad" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="70%" stop-color="#3730a3" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </radialGradient>
+
+    <radialGradient id="core-worker-grad" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="70%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#064e3b" />
+    </radialGradient>
 
     <!-- Conduit Stream Gradients -->
     <linearGradient id="grad-user-direct" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -256,7 +266,7 @@
       <stop offset="100%" stop-color="#34d399" />
     </linearGradient>
 
-    <linearGradient id="grad-raft-rpc" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="grad-cp-rpc" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#818cf8" />
       <stop offset="50%" stop-color="#6366f1" />
       <stop offset="100%" stop-color="#38bdf8" />
@@ -272,40 +282,42 @@
   <!-- Canvas Outer Background -->
   <rect width="100%" height="100%" fill="#070a10" rx="16" />
 
-  <!-- Top Section Category Labels -->
-  <g opacity="0.92">
-    <text x="140" y="26" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="10.5" font-weight="700" letter-spacing="1.5">USER / CLIENT</text>
-    <text x="560" y="26" text-anchor="middle" fill="#818cf8" class="font-mono" font-size="10.5" font-weight="700" letter-spacing="1.5">CONTROL-PLANE COORDINATOR</text>
-    <text x="890" y="26" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="10.5" font-weight="700" letter-spacing="1.5">CLUSTER INTERCONNECT</text>
-    <text x="1215" y="26" text-anchor="middle" fill="#34d399" class="font-mono" font-size="10.5" font-weight="700" letter-spacing="1.5">AUTONOMOUS WORKER NODES</text>
+  <!-- Top Category Labels -->
+  <g opacity="0.9">
+    <text x="140" y="28" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="11" font-weight="700" letter-spacing="1.5">USER / CLIENT</text>
+    <text x="510" y="28" text-anchor="middle" fill="#818cf8" class="font-mono" font-size="11" font-weight="700" letter-spacing="1.5">CONTROL-PLANE</text>
+    <text x="820" y="28" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="11" font-weight="700" letter-spacing="1.5">CLUSTER INTERCONNECT</text>
+    <text x="1150" y="28" text-anchor="middle" fill="#34d399" class="font-mono" font-size="11" font-weight="700" letter-spacing="1.5">AUTONOMOUS WORKER NODES</text>
   </g>
 
   <!-- ======================================================== -->
-  <!-- CONDUITS & ROUTING FABRIC (Animated Flows)               -->
+  <!-- CLUSTER CONDUITS & ROUTING FABRIC (Smooth Curved Paths)  -->
   <!-- ======================================================== -->
 
-  <!-- 1. User to Control Plane Connection (Route Discovery & Schema) -->
-  <path id="path-user-cp" d="M 255 260 L 390 260" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-dasharray="5 3" class="flow-line" opacity="0.88" />
+  <!-- 1. User -> Control-Plane (Route Discovery) -->
+  <path id="path-user-cp" d="M 215 260 L 420 260" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-dasharray="5 3" class="flow-line" opacity="0.9" />
 
-  <!-- 2. User to Worker 01 Direct Shard I/O (Upper Arch) -->
-  <path id="path-user-w1" d="M 230 52 C 340 12, 850 12, 1045 68" fill="none" stroke="url(#grad-user-direct)" stroke-width="2.4" opacity="0.88" />
+  <!-- 2. User -> Worker 01 (Upper Direct Shard I/O) -->
+  <path id="path-user-w1" d="M 185 200 C 270 50, 750 42, 1060 145" fill="none" stroke="url(#grad-user-direct)" stroke-width="2.4" opacity="0.88" />
 
-  <!-- 3. User to Worker 02 Direct Shard I/O (Lower Arch) -->
-  <path id="path-user-w2" d="M 230 488 C 340 528, 850 528, 1045 472" fill="none" stroke="url(#grad-user-direct)" stroke-width="2.4" opacity="0.88" />
+  <!-- 3. User -> Worker 02 (Lower Direct Shard I/O) -->
+  <path id="path-user-w2" d="M 185 320 C 270 470, 750 478, 1060 375" fill="none" stroke="url(#grad-user-direct)" stroke-width="2.4" opacity="0.88" />
 
-  <!-- 4. Control Plane Shard Placement & Command RPC Conduits -->
-  <path id="path-raft-w1" d="M 730 162 C 870 162, 920 148, 1045 148" fill="none" stroke="url(#grad-raft-rpc)" stroke-width="2.2" opacity="0.88" />
-  <path id="path-raft-w2" d="M 730 162 C 870 162, 920 382, 1045 382" fill="none" stroke="url(#grad-raft-rpc)" stroke-width="2.2" opacity="0.88" />
+  <!-- 4. Control-Plane -> Worker 01 (Shard RPC) -->
+  <path id="path-cp-w1" d="M 598 240 C 760 240, 890 145, 1060 145" fill="none" stroke="url(#grad-cp-rpc)" stroke-width="2.2" opacity="0.88" />
 
-  <!-- 5. SWIM Gossip Mesh Conduits (Bi-directional failure detection) -->
-  <path id="path-swim-w1" d="M 730 228 C 870 228, 920 214, 1045 214" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" opacity="0.82" />
-  <path id="path-swim-w2" d="M 730 228 C 870 228, 920 448, 1045 448" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" opacity="0.82" />
+  <!-- 5. Control-Plane -> Worker 02 (Shard RPC) -->
+  <path id="path-cp-w2" d="M 598 280 C 760 280, 890 375, 1060 375" fill="none" stroke="url(#grad-cp-rpc)" stroke-width="2.2" opacity="0.88" />
 
-  <!-- 6. Direct Worker-to-Worker Peer Shard Sync Bridge -->
-  <path id="path-peer-sync" d="M 1378 180 C 1406 230, 1406 310, 1378 360" fill="none" stroke="#10b981" stroke-width="1.8" stroke-dasharray="4 3" class="flow-line" opacity="0.75" />
+  <!-- 6. SWIM Gossip Mesh Conduits -->
+  <path id="path-swim-w1" d="M 598 255 C 760 255, 890 162, 1060 162" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" opacity="0.85" />
+  <path id="path-swim-w2" d="M 598 265 C 760 265, 890 358, 1060 358" fill="none" stroke="url(#grad-swim-gossip)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" opacity="0.85" />
+
+  <!-- 7. Inter-Worker P2P Peer Shard Sync Bridge -->
+  <path id="path-worker-sync" d="M 1240 145 C 1300 145, 1300 375, 1240 375" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="4 3" class="flow-line" opacity="0.8" />
 
   <!-- ======================================================== -->
-  <!-- ANIMATED SVG TRAFFIC PARTICLES                           -->
+  <!-- ANIMATED TRAFFIC PARTICLES                               -->
   <!-- ======================================================== -->
   <!-- User to CP Particle -->
   <circle r="4" fill="#38bdf8" filter="url(#glow-cyan)">
@@ -328,338 +340,212 @@
     </animateMotion>
   </circle>
 
-  <!-- CP to Worker RPC Particles -->
+  <!-- CP to Worker 1 RPC Particle -->
   <circle r="3.8" fill="#818cf8" filter="url(#glow-brand)">
     <animateMotion dur="1.8s" repeatCount="indefinite">
-      <mpath href="#path-raft-w1"/>
+      <mpath href="#path-cp-w1"/>
     </animateMotion>
   </circle>
+
+  <!-- CP to Worker 2 RPC Particle -->
   <circle r="3.8" fill="#818cf8" filter="url(#glow-brand)">
     <animateMotion dur="1.8s" begin="0.9s" repeatCount="indefinite">
-      <mpath href="#path-raft-w2"/>
+      <mpath href="#path-cp-w2"/>
     </animateMotion>
   </circle>
 
   <!-- ======================================================== -->
   <!-- CONDUIT FLOATING BADGES                                  -->
   <!-- ======================================================== -->
-  <!-- User to CP Query Badge -->
-  <g transform="translate(322, 260)">
-    <rect x="-65" y="-12" width="130" height="24" rx="12" fill="#090d16" stroke="#38bdf8" stroke-width="1" opacity="0.95" />
+  <!-- User to CP Badge -->
+  <g transform="translate(315, 260)">
+    <rect x="-65" y="-12" width="130" height="24" rx="12" fill="#090d16" stroke="#38bdf8" stroke-width="1.2" filter="url(#glow-cyan)" />
     <circle cx="-52" cy="0" r="3" fill="#38bdf8" />
-    <text x="-42" y="3.5" fill="#38bdf8" class="font-mono" font-size="8" font-weight="700">1. Query Route &amp; Meta</text>
+    <text x="-42" y="4" fill="#38bdf8" class="font-mono" font-size="8.5" font-weight="700">1. Query Route &amp; Meta</text>
   </g>
 
   <!-- User to Worker 1 Direct I/O Badge -->
-  <g transform="translate(615, 20)">
-    <rect x="-85" y="-11" width="170" height="22" rx="11" fill="#090d16" stroke="#10b981" stroke-width="1" opacity="0.95" />
-    <circle cx="-73" cy="0" r="3" fill="#34d399" />
-    <text x="-64" y="3.5" fill="#34d399" class="font-mono" font-size="8.2" font-weight="700">2. Direct Shard I/O • Read/Write</text>
+  <g transform="translate(620, 48)">
+    <rect x="-90" y="-12" width="180" height="24" rx="12" fill="#090d16" stroke="#10b981" stroke-width="1.2" filter="url(#glow-emerald)" />
+    <circle cx="-77" cy="0" r="3" fill="#34d399" />
+    <text x="-67" y="4" fill="#34d399" class="font-mono" font-size="8.5" font-weight="700">2. Direct Shard I/O • Read/Write</text>
   </g>
 
   <!-- User to Worker 2 Direct I/O Badge -->
-  <g transform="translate(615, 520)">
-    <rect x="-85" y="-11" width="170" height="22" rx="11" fill="#090d16" stroke="#10b981" stroke-width="1" opacity="0.95" />
-    <circle cx="-73" cy="0" r="3" fill="#34d399" />
-    <text x="-64" y="3.5" fill="#34d399" class="font-mono" font-size="8.2" font-weight="700">2. Direct Shard I/O • Read/Write</text>
+  <g transform="translate(620, 472)">
+    <rect x="-90" y="-12" width="180" height="24" rx="12" fill="#090d16" stroke="#10b981" stroke-width="1.2" filter="url(#glow-emerald)" />
+    <circle cx="-77" cy="0" r="3" fill="#34d399" />
+    <text x="-67" y="4" fill="#34d399" class="font-mono" font-size="8.5" font-weight="700">2. Direct Shard I/O • Read/Write</text>
   </g>
 
-  <!-- Control-Plane RPC Badge -->
-  <g transform="translate(885, 142)">
-    <rect x="-85" y="-11" width="170" height="22" rx="11" fill="#090d16" stroke="#818cf8" stroke-width="1" opacity="0.95" />
+  <!-- Shard RPC Command Badge -->
+  <g transform="translate(835, 175)">
+    <rect x="-85" y="-12" width="170" height="24" rx="12" fill="#090d16" stroke="#818cf8" stroke-width="1.2" filter="url(#glow-brand)" />
     <circle cx="-72" cy="0" r="3" fill="#818cf8" />
-    <text x="-62" y="3.5" fill="#c7d2fe" class="font-mono" font-size="8" font-weight="700">Control-Plane RPC • :18946</text>
+    <text x="-62" y="4" fill="#c7d2fe" class="font-mono" font-size="8.5" font-weight="700">Control-Plane RPC • :18946</text>
   </g>
 
   <!-- SWIM Gossip Badge -->
-  <g transform="translate(885, 221)">
-    <rect x="-78" y="-11" width="156" height="22" rx="11" fill="#090d16" stroke="#06b6d4" stroke-width="1" opacity="0.95" />
-    <circle cx="-66" cy="0" r="3" fill="#06b6d4" />
-    <text x="-56" y="3.5" fill="#67e8f9" class="font-mono" font-size="8" font-weight="700">SWIM Gossip Mesh • :7946</text>
+  <g transform="translate(835, 345)">
+    <rect x="-80" y="-12" width="160" height="24" rx="12" fill="#090d16" stroke="#06b6d4" stroke-width="1.2" />
+    <circle cx="-67" cy="0" r="3" fill="#06b6d4" />
+    <text x="-57" y="4" fill="#67e8f9" class="font-mono" font-size="8.5" font-weight="700">SWIM Gossip Mesh • :7946</text>
   </g>
 
   <!-- Inter-Worker Sync Pill -->
-  <g transform="translate(1390, 270)">
-    <rect x="-24" y="-8" width="48" height="16" rx="8" fill="#090d16" stroke="#10b981" stroke-width="1" opacity="0.95" />
-    <text x="0" y="3" text-anchor="middle" fill="#34d399" class="font-mono" font-size="7" font-weight="700">P2P SYNC</text>
+  <g transform="translate(1305, 260)">
+    <rect x="-30" y="-10" width="60" height="20" rx="10" fill="#090d16" stroke="#10b981" stroke-width="1.2" />
+    <text x="0" y="3.5" text-anchor="middle" fill="#34d399" class="font-mono" font-size="8" font-weight="700">P2P SYNC</text>
   </g>
 
   <!-- ======================================================== -->
-  <!-- NODE 0: USER / CLIENT APP                                -->
+  <!-- NÓ 0: USER / CLIENT (APENAS O NÓ)                        -->
   <!-- ======================================================== -->
-  <g class="svg-node-card">
-    <!-- Node Process Boundary -->
-    <rect x="25" y="42" width="230" height="456" rx="14" fill="url(#node-bg-grad)" stroke="#38bdf8" stroke-width="1.4" opacity="0.95" />
+  <g class="svg-node" transform="translate(140, 260)">
+    <!-- Outer Orbital Pulse Ring -->
+    <circle r="72" fill="url(#node-chassis-grad)" stroke="#38bdf8" stroke-width="2" filter="url(#glow-cyan)" />
+    <circle r="64" fill="none" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.2" stroke-dasharray="5 4" />
 
-    <!-- Node Header -->
-    <g transform="translate(38, 54)">
-      <circle cx="10" cy="14" r="5" fill="#38bdf8" filter="url(#glow-cyan)" />
-      <text x="24" y="18" fill="#ffffff" class="font-mono" font-size="12" font-weight="700">Client / End-User</text>
-      <rect x="150" y="7" width="55" height="18" rx="9" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1" />
-      <text x="177.5" y="19.5" text-anchor="middle" class="font-mono" font-size="8" font-weight="700" fill="#7dd3fc">CLIENT</text>
-      <text x="24" y="34" fill="#94a3b8" font-size="9.5">aaron-client SDK • End-User App</text>
+    <!-- Central Glowing Core -->
+    <circle r="42" fill="url(#core-user-grad)" stroke="#38bdf8" stroke-width="2" />
+    
+    <!-- User Silhouette Icon -->
+    <circle cx="0" cy="-10" r="9" fill="#ffffff" />
+    <path d="M -14 14 C -14 4, 14 4, 14 14" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" />
+    
+    <!-- Core Title -->
+    <text x="0" y="24" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="800" letter-spacing="0.5">USER</text>
+
+    <!-- Header Badge -->
+    <g transform="translate(0, -90)">
+      <rect x="-55" y="-12" width="110" height="24" rx="12" fill="#090d16" stroke="#38bdf8" stroke-width="1.2" />
+      <circle cx="-42" cy="0" r="3.5" fill="#38bdf8" filter="url(#glow-cyan)" />
+      <text x="-32" y="3.5" fill="#ffffff" class="font-mono" font-size="9" font-weight="700">Client App</text>
     </g>
 
-    <!-- Supervisor Tree Container -->
-    <rect x="37" y="104" width="206" height="376" rx="10" fill="url(#supervisor-bg-grad)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1.2" stroke-dasharray="5 4" />
-    <text x="49" y="124" fill="#7dd3fc" font-size="10" font-weight="700">SUPERVISOR TREE</text>
-    <text x="231" y="123" text-anchor="end" fill="#64748b" class="font-mono" font-size="8">Tasks</text>
-    <text x="49" y="137" fill="#64748b" font-size="8.5">Client runtime &amp; driver services</text>
+    <!-- Subtitle below -->
+    <text x="0" y="90" text-anchor="middle" fill="#94a3b8" font-size="9.5">aaron-client SDK</text>
+    <text x="0" y="103" text-anchor="middle" fill="#64748b" font-size="8.5">Route Cache • Fast QUIC</text>
 
-    <!-- Service 1: Aaron SDK & Route Cache -->
-    <g transform="translate(45, 148)">
-      <rect width="190" height="66" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
-      <circle cx="21" cy="21" r="5" fill="none" stroke="#38bdf8" stroke-width="1.4" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">Aaron SDK Cache</text>
-      <rect x="132" y="7" width="50" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-      <text x="157" y="17.5" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="7.5" font-weight="600">Local Map</text>
-      <text x="8" y="46" fill="#94a3b8" font-size="8.5">Cached Shard Route Map</text>
-      <text x="8" y="58" fill="#64748b" font-size="8">Zero-latency destination lookups</text>
-    </g>
-
-    <!-- Service 2: Route Discovery Client -->
-    <g transform="translate(45, 226)">
-      <rect width="190" height="66" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(129, 140, 248, 0.15)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1" />
-      <path d="M 16 21 L 26 21 M 22 17 L 26 21 L 22 25" fill="none" stroke="#a5b4fc" stroke-width="1.3" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">Route Resolver</text>
-      <rect x="132" y="7" width="50" height="15" rx="7.5" fill="rgba(129, 140, 248, 0.12)" stroke="rgba(129, 140, 248, 0.25)" stroke-width="1" />
-      <text x="157" y="17.5" text-anchor="middle" fill="#a5b4fc" class="font-mono" font-size="7.5" font-weight="600">RPC :18946</text>
-      <text x="8" y="46" fill="#94a3b8" font-size="8.5">Queries Control-Plane</text>
-      <text x="8" y="58" fill="#64748b" font-size="8">Refreshes routing table on topology changes</text>
-    </g>
-
-    <!-- Service 3: Direct Shard QUIC Client -->
-    <g transform="translate(45, 304)">
-      <rect width="190" height="66" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
-      <path d="M 21 15 L 17 22 L 21 22 L 20 27 L 25 20 L 21 20 Z" fill="none" stroke="#34d399" stroke-width="1.2" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">QUIC Data Client</text>
-      <rect x="132" y="7" width="50" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
-      <text x="157" y="17.5" text-anchor="middle" fill="#34d399" class="font-mono" font-size="7.5" font-weight="600">QUIC I/O</text>
-      <text x="8" y="46" fill="#94a3b8" font-size="8.5">Fast Read/Write Streams</text>
-      <text x="8" y="58" fill="#64748b" font-size="8">Direct connection to target worker nodes</text>
-    </g>
-
-    <!-- Service 4: Write Buffer & Telemetry -->
-    <g transform="translate(45, 382)">
-      <rect width="190" height="66" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
-      <rect x="16" y="17" width="10" height="8" rx="1.5" fill="none" stroke="#38bdf8" stroke-width="1.2" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">Client Buffer</text>
-      <rect x="132" y="7" width="50" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-      <text x="157" y="17.5" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="7.5" font-weight="600">Batching</text>
-      <text x="8" y="46" fill="#94a3b8" font-size="8.5">Async Batching &amp; Stats</text>
-      <text x="8" y="58" fill="#64748b" font-size="8">Local queues &amp; connection telemetry</text>
-    </g>
-
-    <!-- Outbound Port Dots -->
-    <circle cx="230" cy="52" r="4" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
-    <circle cx="255" cy="260" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
-    <circle cx="230" cy="488" r="4" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
+    <!-- Ports -->
+    <circle cx="72" cy="0" r="4" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="45" cy="-60" r="4" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="45" cy="60" r="4" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
   </g>
 
   <!-- ======================================================== -->
-  <!-- NODE 1: CONTROL-PLANE COORDINATOR                        -->
+  <!-- NÓ 1: CONTROL-PLANE COORDINATOR (APENAS O NÓ)             -->
   <!-- ======================================================== -->
-  <g class="svg-node-card">
-    <!-- Node Process Boundary -->
-    <rect x="390" y="42" width="340" height="456" rx="14" fill="url(#node-bg-grad)" stroke="#818cf8" stroke-width="1.4" opacity="0.95" />
+  <g class="svg-node" transform="translate(510, 260)">
+    <!-- Outer Orbital Ring -->
+    <circle r="88" fill="url(#node-chassis-grad)" stroke="#818cf8" stroke-width="2.2" filter="url(#glow-brand)" />
+    <circle r="78" fill="none" stroke="rgba(129, 140, 248, 0.4)" stroke-width="1.4" stroke-dasharray="6 5" />
 
-    <!-- Node Header (Clean Control-Plane without redundant order-coordinator text) -->
-    <g transform="translate(404, 54)">
-      <circle cx="10" cy="14" r="5" fill="#818cf8" filter="url(#glow-brand)" />
-      <text x="24" y="18" fill="#ffffff" class="font-mono" font-size="12" font-weight="700">Control-Plane Coordinator</text>
-      <rect x="236" y="7" width="80" height="18" rx="9" fill="rgba(129, 140, 248, 0.15)" stroke="rgba(129, 140, 248, 0.35)" stroke-width="1" />
-      <text x="276" y="19.5" text-anchor="middle" class="font-mono" font-size="8" font-weight="700" fill="#a5b4fc">CONTROL-PLANE</text>
-      <text x="24" y="34" fill="#94a3b8" font-size="9.5">aaron::Node Process Container • Cluster Coordinator</text>
+    <!-- Central Glowing Core -->
+    <circle r="52" fill="url(#core-cp-grad)" stroke="#818cf8" stroke-width="2.2" />
+    
+    <!-- Crown / Coordinator Icon -->
+    <polygon points="0,-22 9,-10 18,-18 12,2 -12,2 -18,-18 -9,-10" fill="#ffffff" />
+    
+    <!-- Core Title -->
+    <text x="0" y="16" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="800" letter-spacing="0.5">CONTROL-PLANE</text>
+    <text x="0" y="28" text-anchor="middle" fill="#a5b4fc" class="font-mono" font-size="8.5" font-weight="700">LEADER ACTIVE</text>
+
+    <!-- Header Badge -->
+    <g transform="translate(0, -106)">
+      <rect x="-80" y="-12" width="160" height="24" rx="12" fill="#090d16" stroke="#818cf8" stroke-width="1.2" />
+      <circle cx="-67" cy="0" r="3.5" fill="#818cf8" filter="url(#glow-brand)" />
+      <text x="-57" y="3.5" fill="#c7d2fe" class="font-mono" font-size="9" font-weight="700">Cluster Coordinator</text>
     </g>
 
-    <!-- Inbound Port Dot from User Query -->
-    <circle cx="390" cy="260" r="4.5" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
+    <!-- Subtitle below -->
+    <text x="0" y="106" text-anchor="middle" fill="#94a3b8" font-size="9.5">State Registry • Shard Placement</text>
+    <text x="0" y="119" text-anchor="middle" fill="#64748b" class="font-mono" font-size="8.5">RPC :18946 • SWIM :7946</text>
 
-    <!-- Supervisor Tree Container -->
-    <rect x="404" y="104" width="312" height="376" rx="10" fill="url(#supervisor-bg-grad)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1.2" stroke-dasharray="5 4" />
-    <text x="418" y="124" fill="#c7d2fe" font-size="10" font-weight="700">SUPERVISOR TREE</text>
-    <text x="702" y="123" text-anchor="end" fill="#818cf8" class="font-mono" font-size="8">Restart: OneForOne</text>
-    <text x="418" y="137" fill="#64748b" font-size="8.5">Autonomous lifecycle, health supervision &amp; cancellation</text>
-
-    <!-- Service 1: ControlPlaneService (Consensus Engine) -->
-    <g transform="translate(412, 148)">
-      <rect width="296" height="52" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <circle cx="318" cy="14" r="4" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(129, 140, 248, 0.15)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1" />
-      <path d="M 21 13 L 16 22 L 21 22 L 19 28 L 26 19 L 21 19 Z" fill="none" stroke="#818cf8" stroke-width="1.2" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">ControlPlaneService (Consensus)</text>
-      <rect x="238" y="7" width="50" height="15" rx="7.5" fill="rgba(129, 140, 248, 0.12)" stroke="rgba(129, 140, 248, 0.25)" stroke-width="1" />
-      <text x="263" y="17.5" text-anchor="middle" fill="#818cf8" class="font-mono" font-size="7.5" font-weight="600">:18946</text>
-      <text x="42" y="34" fill="#94a3b8" font-size="8.5">Leader Election • Cluster State Consensus</text>
-    </g>
-
-    <!-- Service 2: MembershipService -->
-    <g transform="translate(412, 208)">
-      <rect width="296" height="52" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <circle cx="318" cy="20" r="4" fill="#06b6d4" stroke="#070a10" stroke-width="1.5" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
-      <circle cx="21" cy="21" r="5" fill="none" stroke="#10b981" stroke-width="1.3" />
-      <circle cx="17" cy="18" r="1.5" fill="#10b981" />
-      <circle cx="25" cy="24" r="1.5" fill="#10b981" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">MembershipService (SWIM)</text>
-      <rect x="238" y="7" width="50" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
-      <text x="263" y="17.5" text-anchor="middle" fill="#10b981" class="font-mono" font-size="7.5" font-weight="600">:7946</text>
-      <text x="42" y="34" fill="#94a3b8" font-size="8.5">SWIM Gossip • Decentralized Failure Detector</text>
-    </g>
-
-    <!-- Service 3: ShardCoordinator -->
-    <g transform="translate(412, 268)">
-      <rect width="296" height="52" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
-      <circle cx="21" cy="21" r="5" fill="none" stroke="#38bdf8" stroke-width="1.3" />
-      <line x1="21" y1="13" x2="21" y2="16" stroke="#38bdf8" stroke-width="1.3" />
-      <line x1="21" y1="26" x2="21" y2="29" stroke="#38bdf8" stroke-width="1.3" />
-      <line x1="13" y1="21" x2="16" y2="21" stroke="#38bdf8" stroke-width="1.3" />
-      <line x1="26" y1="21" x2="29" y2="21" stroke="#38bdf8" stroke-width="1.3" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">ShardCoordinator</text>
-      <rect x="238" y="7" width="50" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-      <text x="263" y="17.5" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="7.5" font-weight="600">Topology</text>
-      <text x="42" y="34" fill="#94a3b8" font-size="8.5">Consistent Hash Ring • Shard Placement</text>
-    </g>
-
-    <!-- Service 4: AdminService -->
-    <g transform="translate(412, 328)">
-      <rect width="296" height="52" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(244, 63, 94, 0.15)" stroke="rgba(244, 63, 94, 0.3)" stroke-width="1" />
-      <rect x="15" y="15" width="12" height="12" rx="2" fill="none" stroke="#f43f5e" stroke-width="1.3" />
-      <line x1="15" y1="19" x2="27" y2="19" stroke="#f43f5e" stroke-width="1.3" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">AdminService &amp; Web UI</text>
-      <rect x="238" y="7" width="50" height="15" rx="7.5" fill="rgba(244, 63, 94, 0.12)" stroke="rgba(244, 63, 94, 0.25)" stroke-width="1" />
-      <text x="263" y="17.5" text-anchor="middle" fill="#fb7185" class="font-mono" font-size="7.5" font-weight="600">:3000</text>
-      <text x="42" y="34" fill="#94a3b8" font-size="8.5">Embedded Web Console &amp; Real-Time SSE</text>
-    </g>
-
-    <!-- Service 5: EventHub -->
-    <g transform="translate(412, 388)">
-      <rect width="296" height="52" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <rect x="8" y="8" width="26" height="26" rx="5" fill="rgba(129, 140, 248, 0.15)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1" />
-      <path d="M 16 23 L 21 16 L 26 23" fill="none" stroke="#a5b4fc" stroke-width="1.3" />
-      <text x="42" y="20" fill="#ffffff" font-size="10.5" font-weight="700">EventHub</text>
-      <rect x="234" y="7" width="54" height="15" rx="7.5" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" />
-      <text x="261" y="17.5" text-anchor="middle" fill="#cbd5e1" class="font-mono" font-size="7.5" font-weight="600">In-Process</text>
-      <text x="42" y="34" fill="#94a3b8" font-size="8.5">Zero-Allocation Intra-Node Actor Messaging</text>
-    </g>
+    <!-- Ports -->
+    <circle cx="-88" cy="0" r="4.5" fill="#38bdf8" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="88" cy="-20" r="4" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="88" cy="20" r="4" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="88" cy="-5" r="4" fill="#06b6d4" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="88" cy="5" r="4" fill="#06b6d4" stroke="#070a10" stroke-width="1.5" />
   </g>
 
   <!-- ======================================================== -->
-  <!-- NODE 2: WORKER SHARD 01 (UNIFIED EMERALD COLOR)          -->
+  <!-- NÓ 2: WORKER 01 (APENAS O NÓ)                             -->
   <!-- ======================================================== -->
-  <g class="svg-node-card">
-    <!-- Node Process Boundary -->
-    <rect x="1045" y="42" width="340" height="216" rx="14" fill="url(#node-bg-grad)" stroke="#10b981" stroke-width="1.4" opacity="0.95" />
+  <g class="svg-node" transform="translate(1150, 145)">
+    <!-- Outer Orbital Ring -->
+    <circle r="80" fill="url(#node-chassis-grad)" stroke="#10b981" stroke-width="2" filter="url(#glow-emerald)" />
+    <circle r="70" fill="none" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1.2" stroke-dasharray="5 4" />
 
-    <!-- Node Header -->
-    <g transform="translate(1060, 54)">
-      <circle cx="10" cy="14" r="5" fill="#10b981" filter="url(#glow-emerald)" />
-      <text x="24" y="18" fill="#ffffff" class="font-mono" font-size="12" font-weight="700">Node: "worker-shard-01"</text>
-      <rect x="216" y="7" width="94" height="18" rx="9" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" />
-      <text x="263" y="19.5" text-anchor="middle" class="font-mono" font-size="8" font-weight="700" fill="#6ee7b7">WORKER SHARD</text>
-      <text x="24" y="34" fill="#94a3b8" font-size="9.5">aaron::Node Process Container • Storage Host</text>
+    <!-- Central Glowing Core -->
+    <circle r="46" fill="url(#core-worker-grad)" stroke="#10b981" stroke-width="2" />
+    
+    <!-- Shard Database Icon -->
+    <rect x="-12" y="-18" width="24" height="8" rx="2" fill="#ffffff" />
+    <rect x="-12" y="-8" width="24" height="8" rx="2" fill="#a7f3d0" />
+    <rect x="-12" y="2" width="24" height="8" rx="2" fill="#ffffff" />
+    
+    <!-- Core Title -->
+    <text x="0" y="20" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="800">WORKER 01</text>
+    <text x="0" y="32" text-anchor="middle" fill="#a7f3d0" class="font-mono" font-size="8.5" font-weight="700">[0000..4095]</text>
+
+    <!-- Header Badge -->
+    <g transform="translate(0, -98)">
+      <rect x="-70" y="-12" width="140" height="24" rx="12" fill="#090d16" stroke="#10b981" stroke-width="1.2" />
+      <circle cx="-57" cy="0" r="3.5" fill="#10b981" filter="url(#glow-emerald)" />
+      <text x="-47" y="3.5" fill="#6ee7b7" class="font-mono" font-size="9" font-weight="700">Worker Shard</text>
     </g>
 
-    <!-- Supervisor Tree Container -->
-    <rect x="1060" y="104" width="310" height="142" rx="10" fill="url(#supervisor-bg-grad)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1.2" stroke-dasharray="5 4" />
-    <text x="1074" y="122" fill="#a7f3d0" font-size="10" font-weight="700">SUPERVISOR TREE</text>
-    <text x="1356" y="121" text-anchor="end" fill="#34d399" class="font-mono" font-size="8">Tasks • LSM Store</text>
+    <!-- Subtitle below -->
+    <text x="0" y="98" text-anchor="middle" fill="#94a3b8" font-size="9.5">LSM Storage Host</text>
+    <text x="0" y="111" text-anchor="middle" fill="#64748b" class="font-mono" font-size="8.5">QUIC IO • SWIM :7947</text>
 
-    <!-- Service 1: ShardService & LSM Storage -->
-    <g transform="translate(1068, 132)">
-      <rect width="294" height="50" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <circle cx="-23" cy="16" r="4" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
-      <circle cx="310" cy="16" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
-      <rect x="8" y="7" width="26" height="26" rx="5" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
-      <rect x="14" y="13" width="14" height="10" rx="1.5" fill="none" stroke="#10b981" stroke-width="1.2" />
-      <line x1="14" y1="18" x2="28" y2="18" stroke="#10b981" stroke-width="1.2" />
-      <text x="42" y="19" fill="#ffffff" font-size="10.5" font-weight="700">ShardService &amp; LSM Store</text>
-      <rect x="214" y="6" width="72" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
-      <text x="250" y="16.5" text-anchor="middle" fill="#34d399" class="font-mono" font-size="7.5" font-weight="600">[0000..4095]</text>
-      <text x="42" y="33" fill="#94a3b8" font-size="8.5">Disk WAL • Fast MemTable • Zero-Copy RPC</text>
-    </g>
-
-    <!-- Service 2: MembershipService (SWIM) -->
-    <g transform="translate(1068, 188)">
-      <rect width="294" height="50" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <circle cx="-23" cy="26" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
-      <rect x="8" y="7" width="26" height="26" rx="5" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
-      <circle cx="21" cy="20" r="5" fill="none" stroke="#38bdf8" stroke-width="1.3" />
-      <circle cx="17" cy="17" r="1.5" fill="#38bdf8" />
-      <circle cx="25" cy="23" r="1.5" fill="#38bdf8" />
-      <text x="42" y="19" fill="#ffffff" font-size="10.5" font-weight="700">MembershipService (SWIM)</text>
-      <rect x="238" y="6" width="48" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-      <text x="262" y="16.5" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="7.5" font-weight="600">:7947</text>
-      <text x="42" y="33" fill="#94a3b8" font-size="8.5">SWIM Gossip • P2P Cluster Discovery</text>
-    </g>
-
-    <!-- Direct I/O Port Dot from User -->
-    <circle cx="1045" cy="68" r="4" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
+    <!-- Ports -->
+    <circle cx="-80" cy="0" r="4.5" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="-80" cy="17" r="4" fill="#06b6d4" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="80" cy="0" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
   </g>
 
   <!-- ======================================================== -->
-  <!-- NODE 3: WORKER SHARD 02 (UNIFIED EMERALD COLOR)          -->
+  <!-- NÓ 3: WORKER 02 (APENAS O NÓ - UNIFIED EMERALD)           -->
   <!-- ======================================================== -->
-  <g class="svg-node-card">
-    <!-- Node Process Boundary -->
-    <rect x="1045" y="282" width="340" height="216" rx="14" fill="url(#node-bg-grad)" stroke="#10b981" stroke-width="1.4" opacity="0.95" />
+  <g class="svg-node" transform="translate(1150, 375)">
+    <!-- Outer Orbital Ring -->
+    <circle r="80" fill="url(#node-chassis-grad)" stroke="#10b981" stroke-width="2" filter="url(#glow-emerald)" />
+    <circle r="70" fill="none" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1.2" stroke-dasharray="5 4" />
 
-    <!-- Node Header -->
-    <g transform="translate(1060, 294)">
-      <circle cx="10" cy="14" r="5" fill="#10b981" filter="url(#glow-emerald)" />
-      <text x="24" y="18" fill="#ffffff" class="font-mono" font-size="12" font-weight="700">Node: "worker-shard-02"</text>
-      <rect x="216" y="7" width="94" height="18" rx="9" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" />
-      <text x="263" y="19.5" text-anchor="middle" class="font-mono" font-size="8" font-weight="700" fill="#6ee7b7">WORKER SHARD</text>
-      <text x="24" y="34" fill="#94a3b8" font-size="9.5">aaron::Node Process Container • Storage Host</text>
+    <!-- Central Glowing Core -->
+    <circle r="46" fill="url(#core-worker-grad)" stroke="#10b981" stroke-width="2" />
+    
+    <!-- Shard Database Icon -->
+    <rect x="-12" y="-18" width="24" height="8" rx="2" fill="#ffffff" />
+    <rect x="-12" y="-8" width="24" height="8" rx="2" fill="#a7f3d0" />
+    <rect x="-12" y="2" width="24" height="8" rx="2" fill="#ffffff" />
+    
+    <!-- Core Title -->
+    <text x="0" y="20" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="800">WORKER 02</text>
+    <text x="0" y="32" text-anchor="middle" fill="#a7f3d0" class="font-mono" font-size="8.5" font-weight="700">[4096..8191]</text>
+
+    <!-- Header Badge -->
+    <g transform="translate(0, -98)">
+      <rect x="-70" y="-12" width="140" height="24" rx="12" fill="#090d16" stroke="#10b981" stroke-width="1.2" />
+      <circle cx="-57" cy="0" r="3.5" fill="#10b981" filter="url(#glow-emerald)" />
+      <text x="-47" y="3.5" fill="#6ee7b7" class="font-mono" font-size="9" font-weight="700">Worker Shard</text>
     </g>
 
-    <!-- Supervisor Tree Container -->
-    <rect x="1060" y="344" width="310" height="142" rx="10" fill="url(#supervisor-bg-grad)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1.2" stroke-dasharray="5 4" />
-    <text x="1074" y="362" fill="#a7f3d0" font-size="10" font-weight="700">SUPERVISOR TREE</text>
-    <text x="1356" y="361" text-anchor="end" fill="#34d399" class="font-mono" font-size="8">Tasks • LSM Store</text>
+    <!-- Subtitle below -->
+    <text x="0" y="98" text-anchor="middle" fill="#94a3b8" font-size="9.5">LSM Storage Host</text>
+    <text x="0" y="111" text-anchor="middle" fill="#64748b" class="font-mono" font-size="8.5">QUIC IO • SWIM :7948</text>
 
-    <!-- Service 1: ShardService & LSM Storage -->
-    <g transform="translate(1068, 372)">
-      <rect width="294" height="50" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <circle cx="-23" cy="10" r="4" fill="#818cf8" stroke="#070a10" stroke-width="1.5" />
-      <circle cx="310" cy="10" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
-      <rect x="8" y="7" width="26" height="26" rx="5" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
-      <rect x="14" y="13" width="14" height="10" rx="1.5" fill="none" stroke="#10b981" stroke-width="1.2" />
-      <line x1="14" y1="18" x2="28" y2="18" stroke="#10b981" stroke-width="1.2" />
-      <text x="42" y="19" fill="#ffffff" font-size="10.5" font-weight="700">ShardService &amp; LSM Store</text>
-      <rect x="214" y="6" width="72" height="15" rx="7.5" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
-      <text x="250" y="16.5" text-anchor="middle" fill="#34d399" class="font-mono" font-size="7.5" font-weight="600">[4096..8191]</text>
-      <text x="42" y="33" fill="#94a3b8" font-size="8.5">Disk WAL • Fast MemTable • Zero-Copy RPC</text>
-    </g>
-
-    <!-- Service 2: MembershipService (SWIM) -->
-    <g transform="translate(1068, 428)">
-      <rect width="294" height="50" rx="7" fill="url(#service-bg-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-      <circle cx="-23" cy="20" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
-      <rect x="8" y="7" width="26" height="26" rx="5" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
-      <circle cx="21" cy="20" r="5" fill="none" stroke="#38bdf8" stroke-width="1.3" />
-      <circle cx="17" cy="17" r="1.5" fill="#38bdf8" />
-      <circle cx="25" cy="23" r="1.5" fill="#38bdf8" />
-      <text x="42" y="19" fill="#ffffff" font-size="10.5" font-weight="700">MembershipService (SWIM)</text>
-      <rect x="238" y="6" width="48" height="15" rx="7.5" fill="rgba(56, 189, 248, 0.12)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" />
-      <text x="262" y="16.5" text-anchor="middle" fill="#38bdf8" class="font-mono" font-size="7.5" font-weight="600">:7948</text>
-      <text x="42" y="33" fill="#94a3b8" font-size="8.5">SWIM Gossip • P2P Cluster Discovery</text>
-    </g>
-
-    <!-- Direct I/O Port Dot from User -->
-    <circle cx="1045" cy="472" r="4" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
+    <!-- Ports -->
+    <circle cx="-80" cy="0" r="4.5" fill="#34d399" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="-80" cy="-17" r="4" fill="#06b6d4" stroke="#070a10" stroke-width="1.5" />
+    <circle cx="80" cy="0" r="4" fill="#10b981" stroke="#070a10" stroke-width="1.5" />
   </g>
 
 </svg>
         </div>
-
-        <!-- Perspective 2: In-Process Node Runtime & Modular Services (Hidden by default) -->
         <div id="hero-view-runtime" class="hidden transition-all duration-300">
           <svg viewBox="0 0 1440 850" class="w-full h-auto overflow-visible" xmlns="http://www.w3.org/2000/svg">
   <defs>
