@@ -74,25 +74,41 @@ table InstallSnapshotResponse {
 table KeyValueCommand {
   op_type: uint8; // 0 = Set, 1 = Delete
   key: string;
-  value: string;
+  value: [ubyte];
 }
 
 table KeyValueResponse {
   success: bool;
-  value: string;
+  value: [ubyte];
 }
 
 table ShardCommand {
   shard_id: uint32;
-  role: uint8; // 0 = Primary, 1 = Replica
+  role: uint8; // 0 = Primary/Leader, 1 = Replica/Voter, 2 = Learner
   primary: Aaron.Node.Uuid;
   replicas: [Aaron.Node.Uuid];
   epoch: uint64;
+  op_type: uint8; // 0 = AssignGroup, 1 = Promote, 2 = Demote, 3 = Leave
+  target_role: uint8; // 0 = Learner, 1 = Voter, 2 = Leader
 }
 
 table ShardCommandResponse {
   success: bool;
   shard_id: uint32;
+  current_role: uint8; // 0 = Learner, 1 = Voter, 2 = Leader
+  term: uint64;
+  reject_reason: uint8; // 0 = None, 1 = StaleEpoch, 2 = StaleTerm, 3 = NotAMember, 4 = Busy
+}
+
+table TelemetryHeartbeat {
+  node_id: Aaron.Node.Uuid;
+  current_wps: uint32;
+  error_rate: uint32;
+  timestamp: uint64;
+}
+
+table TelemetryHeartbeatResponse {
+  acknowledged: bool;
 }
 
 union ControlPlanePayload {
@@ -105,7 +121,9 @@ union ControlPlanePayload {
   KeyValueCommand,
   KeyValueResponse,
   ShardCommand,
-  ShardCommandResponse
+  ShardCommandResponse,
+  TelemetryHeartbeat,
+  TelemetryHeartbeatResponse
 }
 
 table ControlPlaneMessage {
@@ -113,3 +131,34 @@ table ControlPlaneMessage {
 }
 
 root_type ControlPlaneMessage;
+
+// ----------------------------------------------------------------------------
+// Persistent Storage Schemas (On-Disk Format)
+// ----------------------------------------------------------------------------
+
+table StoredVote {
+  term: uint64;
+  node_id: uint64;
+  is_committed: bool;
+}
+
+table StoredLogId {
+  term: uint64;
+  index: uint64;
+}
+
+table StoredMembership {
+  log_id: StoredLogId;
+  voter_ids: [uint64];
+  nodes: [NodeEndpoint];
+}
+
+table StoredLogEntry {
+  term: uint64;
+  index: uint64;
+  entry_type: uint8; // 0 = Blank, 1 = Normal, 2 = Membership
+  normal_op: uint8;   // 0 = Set, 1 = Delete
+  normal_key: string;
+  normal_value: [ubyte];
+  membership: StoredMembership;
+}

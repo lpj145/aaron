@@ -1,6 +1,6 @@
 use crate::message::RaftMessage;
 use crate::types::{ControlPlaneNode, TypeConfig};
-use node::{read_frame, write_frame, QuicManager};
+use node::{read_frame_with_limit, write_frame_with_limit, QuicManager, DEFAULT_MAX_RAFT_FRAME_SIZE};
 use openraft::error::{
     InstallSnapshotError, NetworkError, RPCError, RaftError, Unreachable,
 };
@@ -88,15 +88,28 @@ impl ControlPlaneNetwork {
         Ok(conn)
     }
 
-    async fn send_rpc_bytes(&self, bytes: &[u8], timeout: Duration) -> Result<Vec<u8>, RPCError<u64, ControlPlaneNode, RaftError<u64>>> {
+    async fn send_rpc_bytes(
+        &self,
+        action: RPCTypes,
+        bytes: &[u8],
+        timeout: Duration,
+    ) -> Result<Vec<u8>, RPCError<u64, ControlPlaneNode, RaftError<u64>>> {
         let send_future = async {
             let conn = self.get_or_connect().await?;
+
+            let target_addr_opt = {
+                let table = self.routing_table.read().await;
+                table.get(&self.target).cloned()
+            };
 
             let (mut send, mut recv) = match conn.open_bi().await {
                 Ok(streams) => streams,
                 Err(_) => {
-                    // Stale connection - invalidate cache and reconnect
+                    // Stale connection - invalidate cache, evict from pool, and reconnect
                     *self.cached_conn.lock().await = None;
+                    if let Some(ref addr) = target_addr_opt {
+                        self.quic.disconnect(addr).await;
+                    }
                     let fresh_conn = self.get_or_connect().await?;
                     fresh_conn
                         .open_bi()
@@ -105,21 +118,30 @@ impl ControlPlaneNetwork {
                 }
             };
 
-            if let Err(e) = write_frame(&mut send, bytes).await {
+            if let Err(e) = write_frame_with_limit(&mut send, bytes, DEFAULT_MAX_RAFT_FRAME_SIZE).await {
                 *self.cached_conn.lock().await = None;
+                if let Some(ref addr) = target_addr_opt {
+                    self.quic.disconnect(addr).await;
+                }
                 return Err(RPCError::Network(NetworkError::new(&std::io::Error::other(e.to_string()))));
             }
 
             let _ = send.finish();
 
-            let resp_bytes = match read_frame(&mut recv).await {
+            let resp_bytes = match read_frame_with_limit(&mut recv, DEFAULT_MAX_RAFT_FRAME_SIZE).await {
                 Ok(Some(b)) => b,
                 Ok(None) => {
                     *self.cached_conn.lock().await = None;
+                    if let Some(ref addr) = target_addr_opt {
+                        self.quic.disconnect(addr).await;
+                    }
                     return Err(RPCError::Network(NetworkError::new(&std::io::Error::other("unexpected EOF from peer"))));
                 }
                 Err(e) => {
                     *self.cached_conn.lock().await = None;
+                    if let Some(ref addr) = target_addr_opt {
+                        self.quic.disconnect(addr).await;
+                    }
                     return Err(RPCError::Network(NetworkError::new(&std::io::Error::other(e.to_string()))));
                 }
             };
@@ -132,7 +154,7 @@ impl ControlPlaneNetwork {
             Err(_) => {
                 *self.cached_conn.lock().await = None;
                 Err(RPCError::Timeout(openraft::error::Timeout {
-                    action: RPCTypes::Vote,
+                    action,
                     id: self.target,
                     target: self.target,
                     timeout,
@@ -152,7 +174,7 @@ impl RaftNetwork<TypeConfig> for ControlPlaneNetwork {
         let msg = RaftMessage::Append(req);
         let bytes = msg.to_bytes();
 
-        let resp_bytes = self.send_rpc_bytes(&bytes, timeout).await?;
+        let resp_bytes = self.send_rpc_bytes(RPCTypes::AppendEntries, &bytes, timeout).await?;
         let parsed = RaftMessage::from_bytes(&resp_bytes)
             .map_err(|e| RPCError::Network(NetworkError::new(&std::io::Error::other(e.to_string()))))?;
 
@@ -174,7 +196,7 @@ impl RaftNetwork<TypeConfig> for ControlPlaneNetwork {
         let msg = RaftMessage::Snapshot(req);
         let bytes = msg.to_bytes();
 
-        let resp_bytes = self.send_rpc_bytes(&bytes, timeout).await.map_err(|e| match e {
+        let resp_bytes = self.send_rpc_bytes(RPCTypes::InstallSnapshot, &bytes, timeout).await.map_err(|e| match e {
             RPCError::Timeout(t) => RPCError::Timeout(t),
             RPCError::Unreachable(u) => RPCError::Unreachable(u),
             RPCError::Network(n) => RPCError::Network(n),
@@ -200,7 +222,7 @@ impl RaftNetwork<TypeConfig> for ControlPlaneNetwork {
         let msg = RaftMessage::Vote(req);
         let bytes = msg.to_bytes();
 
-        let resp_bytes = self.send_rpc_bytes(&bytes, timeout).await?;
+        let resp_bytes = self.send_rpc_bytes(RPCTypes::Vote, &bytes, timeout).await?;
         let parsed = RaftMessage::from_bytes(&resp_bytes)
             .map_err(|e| RPCError::Network(NetworkError::new(&std::io::Error::other(e.to_string()))))?;
 

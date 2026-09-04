@@ -5,7 +5,7 @@ use crate::network::ControlPlaneNetworkFactory;
 use crate::storage::ControlPlaneStorage;
 use crate::types::Raft;
 use membership_service::MembershipEvent;
-use node::{read_frame, write_frame, BoxError, Context, Service, ServiceConfig};
+use node::{read_frame_with_limit, write_frame_with_limit, DEFAULT_MAX_RAFT_FRAME_SIZE, BoxError, Context, Service, ServiceConfig};
 use openraft::storage::Adaptor;
 use openraft::Config as RaftConfig;
 use std::net::SocketAddr;
@@ -78,6 +78,10 @@ impl Service for ControlPlaneService {
 
     fn name(&self) -> &str {
         "control-plane-service"
+    }
+
+    fn capabilities(&self) -> Vec<&str> {
+        vec!["control-plane"]
     }
 
     async fn run(&self, ctx: Context) -> Result<(), BoxError> {
@@ -197,6 +201,7 @@ impl Service for ControlPlaneService {
 
         let raft_clone = raft.clone();
         let token = ctx.token.clone();
+        let handle_clone = self.handle.clone();
 
         // 5. Accept inbound Raft bi-streams
         loop {
@@ -215,6 +220,7 @@ impl Service for ControlPlaneService {
                     let raft_conn = raft_clone.clone();
                     let conn_token = token.child_token();
                     let conn_event_hub = ctx.event_hub.clone();
+                    let conn_handle = handle_clone.clone();
 
                     tokio::spawn(async move {
                         let connection: quinn::Connection = match connecting.await {
@@ -236,9 +242,10 @@ impl Service for ControlPlaneService {
 
                                     let r = raft_conn.clone();
                                     let event_hub = conn_event_hub.clone();
+                                    let handle = conn_handle.clone();
                                     tokio::spawn(async move {
                                         let rpc_task = async {
-                                            let req_bytes: Vec<u8> = match read_frame(&mut recv).await {
+                                            let req_bytes: Vec<u8> = match read_frame_with_limit(&mut recv, DEFAULT_MAX_RAFT_FRAME_SIZE).await {
                                                 Ok(Some(b)) => b,
                                                 Ok(None) => return,
                                                 Err(e) => {
@@ -288,50 +295,81 @@ impl Service for ControlPlaneService {
                                                 }
                                                 RaftMessage::ShardCommand {
                                                     shard_id,
-                                                    role,
+                                                    role: _,
                                                     primary_high,
                                                     primary_low,
                                                     replicas,
                                                     epoch,
+                                                    op_type,
+                                                    target_role,
                                                 } => {
-                                                    let shard_role = if role == 0 {
-                                                        node::ShardRole::Primary
-                                                    } else {
-                                                        node::ShardRole::Replica
-                                                    };
                                                     let primary = node::Uuid::new(primary_high, primary_low);
-                                                    let replica_uuids = replicas
+                                                    let replica_uuids: Vec<node::Uuid> = replicas
                                                         .into_iter()
                                                         .map(|(h, l)| node::Uuid::new(h, l))
                                                         .collect();
 
-                                                    let event = node::ShardEvent::Assigned {
-                                                        shard_id,
-                                                        role: shard_role,
-                                                        primary,
-                                                        replicas: replica_uuids,
-                                                        epoch,
+                                                    let member_role = match target_role {
+                                                        0 => node::MemberRole::Learner,
+                                                        1 => node::MemberRole::Voter,
+                                                        _ => node::MemberRole::Leader,
                                                     };
+
+                                                    match op_type {
+                                                        1 => {
+                                                            event_hub.publish(node::ShardEvent::RoleChanged {
+                                                                shard_id,
+                                                                role: member_role,
+                                                            }).await;
+                                                        }
+                                                        2 => {
+                                                            event_hub.publish(node::ShardEvent::Leave {
+                                                                shard_id,
+                                                            }).await;
+                                                        }
+                                                        _ => {
+                                                            let mut members = vec![primary];
+                                                            members.extend(&replica_uuids);
+                                                             event_hub.publish(node::ShardEvent::Join {
+                                                                shard_id,
+                                                                members,
+                                                                role: member_role,
+                                                            }).await;
+                                                        }
+                                                    }
 
                                                     info!(
                                                         target: "control_plane",
                                                         shard_id = shard_id,
-                                                        role = ?shard_role,
+                                                        op_type = op_type,
+                                                        role = ?member_role,
                                                         "Received ShardCommand frame from Control Plane, dispatching ShardEvent to EventHub"
                                                     );
-
-                                                    event_hub.publish(event).await;
 
                                                     RaftMessage::ShardCommandResp {
                                                         success: true,
                                                         shard_id,
+                                                        current_role: target_role,
+                                                        term: epoch,
+                                                        reject_reason: 0,
                                                     }
+                                                }
+                                                RaftMessage::TelemetryHeartbeat {
+                                                    node_id_high,
+                                                    node_id_low,
+                                                    current_wps,
+                                                    error_rate,
+                                                    timestamp,
+                                                } => {
+                                                    let node_id = node::Uuid::new(node_id_high, node_id_low);
+                                                    handle.record_node_telemetry(node_id, current_wps, error_rate, timestamp).await;
+                                                    RaftMessage::TelemetryHeartbeatResp { acknowledged: true }
                                                 }
                                                 _ => return,
                                             };
 
                                             let resp_bytes = resp_msg.to_bytes();
-                                            if let Err(e) = write_frame(&mut send, &resp_bytes).await {
+                                            if let Err(e) = write_frame_with_limit(&mut send, &resp_bytes, DEFAULT_MAX_RAFT_FRAME_SIZE).await {
                                                 trace!(target: "control_plane", error = %e, "Failed writing Raft response frame");
                                                 return;
                                             }

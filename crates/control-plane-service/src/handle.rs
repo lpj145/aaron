@@ -21,16 +21,32 @@ struct Inner {
     routing_table: Arc<RwLock<HashMap<u64, SocketAddr>>>,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct NodeTelemetrySnapshot {
+    pub node_id: Uuid,
+    pub current_wps: u32,
+    pub error_rate: u32,
+    pub updated_at: u64,
+}
+
 /// Handle for controlling and querying the Raft Control Plane.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct ControlPlaneHandle {
     inner: Arc<OnceCell<Inner>>,
+    telemetry_cache: Arc<RwLock<HashMap<Uuid, NodeTelemetrySnapshot>>>,
+}
+
+impl Default for ControlPlaneHandle {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ControlPlaneHandle {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             inner: Arc::new(OnceCell::new()),
+            telemetry_cache: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -72,17 +88,17 @@ impl ControlPlaneHandle {
         let inner = self.inner.get().ok_or("Control plane not initialized")?;
 
         if target_uuid == inner.local_uuid {
-            let shard_role = if role == 0 {
-                node::ShardRole::Primary
+            let member_role = if role == 0 {
+                node::MemberRole::Leader
             } else {
-                node::ShardRole::Replica
+                node::MemberRole::Voter
             };
-            let event = node::ShardEvent::Assigned {
+            let mut members = vec![primary];
+            members.extend_from_slice(replicas);
+            let event = node::ShardEvent::Join {
                 shard_id,
-                role: shard_role,
-                primary,
-                replicas: replicas.to_vec(),
-                epoch,
+                members,
+                role: member_role,
             };
             inner.event_hub.publish(event).await;
             return Ok(());
@@ -118,6 +134,8 @@ impl ControlPlaneHandle {
             primary_low: primary.low,
             replicas: replicas_proto,
             epoch,
+            op_type: 0,
+            target_role: role,
         };
         let bytes = msg.to_bytes();
         node::write_frame(&mut send, &bytes).await?;
@@ -125,6 +143,68 @@ impl ControlPlaneHandle {
 
         let _resp_bytes = node::read_frame(&mut recv).await?;
         Ok(())
+    }
+
+    /// Envia um comando estruturado de transição Raft para um nó alvo e aguarda a resposta tipada.
+    pub async fn send_raft_shard_command(
+        &self,
+        target_uuid: Uuid,
+        shard_id: u32,
+        op_type: u8, // 0 = AssignGroup, 1 = SetRole, 2 = Leave
+        target_role: u8, // 0 = Learner, 1 = Voter, 2 = Leader
+        members: &[Uuid],
+    ) -> Result<RaftMessage, Box<dyn std::error::Error + Send + Sync>> {
+        let inner = self.inner.get().ok_or("Control Plane not initialized")?;
+
+        let target_id_u64 = target_uuid.high;
+        let maybe_addr = {
+            let table = inner.routing_table.read().await;
+            table.get(&target_id_u64).map(|a| a.to_string())
+        };
+
+        let target_addr = if let Some(a) = maybe_addr {
+            a
+        } else {
+            let metrics = inner.metrics_rx.borrow().clone();
+            metrics
+                .membership_config
+                .membership()
+                .nodes()
+                .find(|(nid, _)| **nid == target_id_u64)
+                .map(|(_, node)| node.addr.clone())
+                .ok_or_else(|| format!("Target node {target_uuid} not found in routing table or Raft membership"))?
+        };
+
+        let conn = inner.quic.connect_node(&target_addr, target_uuid).await?;
+        let (mut send, mut recv) = conn.open_bi().await?;
+
+        let (primary, replicas) = if members.is_empty() {
+            (target_uuid, Vec::new())
+        } else {
+            (members[0], members[1..].to_vec())
+        };
+
+        let replicas_proto = replicas.iter().map(|u| (u.high, u.low)).collect();
+        let msg = RaftMessage::ShardCommand {
+            shard_id,
+            role: target_role,
+            primary_high: primary.high,
+            primary_low: primary.low,
+            replicas: replicas_proto,
+            epoch: 0,
+            op_type,
+            target_role,
+        };
+        let bytes = msg.to_bytes();
+        node::write_frame(&mut send, &bytes).await?;
+        let _ = send.finish();
+
+        if let Some(resp_bytes) = node::read_frame(&mut recv).await? {
+            let resp = RaftMessage::from_bytes(&resp_bytes)?;
+            Ok(resp)
+        } else {
+            Err("No response received for ShardCommand".into())
+        }
     }
 
     /// Returns the local Raft node ID.
@@ -199,19 +279,32 @@ impl ControlPlaneHandle {
         Ok(resp.data)
     }
 
-    /// Executes a linearizable write (`Set`) through the Raft leader.
+    /// Executes a linearizable write (`Set`) through the Raft leader with raw bytes or string.
     pub async fn set(
         &self,
         key: impl Into<String>,
-        value: impl Into<String>,
+        value: impl AsRef<[u8]>,
     ) -> Result<ClientResponse, RaftError<u64, ClientWriteError<u64, ControlPlaneNode>>> {
         let inner = self.inner.get().ok_or({
             RaftError::Fatal(openraft::error::Fatal::Panicked)
         })?;
         let req = ClientRequest::Set {
             key: key.into(),
-            value: value.into(),
+            value: value.as_ref().to_vec(),
         };
+        let resp = inner.raft.client_write(req).await?;
+        Ok(resp.data)
+    }
+
+    /// Executes an atomic batch write (`SetBatch`) through the Raft leader.
+    pub async fn set_batch(
+        &self,
+        entries: Vec<(String, Vec<u8>)>,
+    ) -> Result<ClientResponse, RaftError<u64, ClientWriteError<u64, ControlPlaneNode>>> {
+        let inner = self.inner.get().ok_or({
+            RaftError::Fatal(openraft::error::Fatal::Panicked)
+        })?;
+        let req = ClientRequest::SetBatch { entries };
         let resp = inner.raft.client_write(req).await?;
         Ok(resp.data)
     }
@@ -229,8 +322,8 @@ impl ControlPlaneHandle {
         Ok(resp.data)
     }
 
-    /// Performs a local read from the replicated state machine.
-    pub async fn get(&self, key: &str) -> Option<String> {
+    /// Performs a local read from the replicated state machine returning raw bytes.
+    pub async fn get(&self, key: &str) -> Option<Vec<u8>> {
         if let Some(inner) = self.inner.get() {
             inner.storage.get_data(key).await
         } else {
@@ -238,10 +331,33 @@ impl ControlPlaneHandle {
         }
     }
 
-    /// Returns a map of all key-value entries in the replicated state machine.
-    pub async fn all_data(&self) -> BTreeMap<String, String> {
+    /// Performs a local read from the replicated state machine returning a String.
+    pub async fn get_string(&self, key: &str) -> Option<String> {
+        self.get(key).await.and_then(|b| String::from_utf8(b).ok())
+    }
+
+    /// Returns a map of all key-value entries in raw binary format.
+    pub async fn all_data(&self) -> BTreeMap<String, Vec<u8>> {
         if let Some(inner) = self.inner.get() {
             inner.storage.all_data().await
+        } else {
+            BTreeMap::new()
+        }
+    }
+
+    /// Returns a map of key-value entries matching a specific prefix.
+    pub async fn prefix_data(&self, prefix: &str) -> BTreeMap<String, Vec<u8>> {
+        if let Some(inner) = self.inner.get() {
+            inner.storage.prefix_data(prefix).await
+        } else {
+            BTreeMap::new()
+        }
+    }
+
+    /// Returns a map of all key-value entries as string (for dashboard and inspection).
+    pub async fn all_data_strings(&self) -> BTreeMap<String, String> {
+        if let Some(inner) = self.inner.get() {
+            inner.storage.all_data_strings().await
         } else {
             BTreeMap::new()
         }
@@ -264,5 +380,51 @@ impl ControlPlaneHandle {
     /// Returns the node ID of the current Raft leader, if one is elected.
     pub fn current_leader(&self) -> Option<u64> {
         self.inner.get().and_then(|i| i.metrics_rx.borrow().current_leader)
+    }
+
+    /// Records or updates the dynamic telemetry snapshot (WPS, Error Rate) for a specific node.
+    pub async fn record_node_telemetry(&self, node_id: Uuid, current_wps: u32, error_rate: u32, updated_at: u64) {
+        self.telemetry_cache.write().await.insert(node_id, NodeTelemetrySnapshot {
+            node_id,
+            current_wps,
+            error_rate,
+            updated_at,
+        });
+    }
+
+    /// Returns the latest telemetry snapshot for a given node ID.
+    pub async fn get_node_telemetry(&self, node_id: Uuid) -> Option<NodeTelemetrySnapshot> {
+        self.telemetry_cache.read().await.get(&node_id).cloned()
+    }
+
+    /// Returns all cached node telemetry snapshots.
+    pub async fn all_node_telemetry(&self) -> HashMap<Uuid, NodeTelemetrySnapshot> {
+        self.telemetry_cache.read().await.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_control_plane_telemetry_cache() {
+        let handle = ControlPlaneHandle::new();
+        let test_node = Uuid::random();
+
+        assert!(handle.get_node_telemetry(test_node).await.is_none());
+        assert!(handle.all_node_telemetry().await.is_empty());
+
+        handle.record_node_telemetry(test_node, 720, 2, 1000).await;
+
+        let snap = handle.get_node_telemetry(test_node).await.expect("snapshot not found");
+        assert_eq!(snap.node_id, test_node);
+        assert_eq!(snap.current_wps, 720);
+        assert_eq!(snap.error_rate, 2);
+        assert_eq!(snap.updated_at, 1000);
+
+        let all = handle.all_node_telemetry().await;
+        assert_eq!(all.len(), 1);
+        assert_eq!(all.get(&test_node).unwrap().current_wps, 720);
     }
 }

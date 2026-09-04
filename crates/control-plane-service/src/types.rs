@@ -6,15 +6,16 @@ use std::fmt;
 /// Application state machine write command.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ClientRequest {
-    Set { key: String, value: String },
+    Set { key: String, value: Vec<u8> },
     Delete { key: String },
+    SetBatch { entries: Vec<(String, Vec<u8>)> },
 }
 
 /// Response returned when a command is applied to the state machine.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ClientResponse {
     pub success: bool,
-    pub value: Option<String>,
+    pub value: Option<Vec<u8>>,
 }
 
 /// Node representation within the Control Plane Raft cluster.

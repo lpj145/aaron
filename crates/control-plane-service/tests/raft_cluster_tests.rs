@@ -68,17 +68,17 @@ async fn test_single_node_bootstrap_and_write_read() {
     let write_res = handle.set("system/version", "v2.0.0").await;
     assert!(write_res.is_ok(), "Raft write should succeed: {:?}", write_res);
 
-    let val = handle.get("system/version").await;
+    let val = handle.get_string("system/version").await;
     assert_eq!(val.as_deref(), Some("v2.0.0"));
 
-    let all = handle.all_data().await;
+    let all = handle.all_data_strings().await;
     assert_eq!(all.get("system/version").map(|s| s.as_str()), Some("v2.0.0"));
 
     // Delete state
     let del_res = handle.delete("system/version").await;
     assert!(del_res.is_ok(), "Raft delete should succeed: {:?}", del_res);
 
-    let val_after = handle.get("system/version").await;
+    let val_after = handle.get_string("system/version").await;
     assert_eq!(val_after, None);
 
     token.cancel();
@@ -168,10 +168,10 @@ async fn test_multi_node_cluster_replication() {
     let mut replicated_node3 = false;
 
     for _ in 0..50 {
-        if handle2.get("cluster/mode").await.as_deref() == Some("raft-replicated") {
+        if handle2.get_string("cluster/mode").await.as_deref() == Some("raft-replicated") {
             replicated_node2 = true;
         }
-        if handle3.get("cluster/mode").await.as_deref() == Some("raft-replicated") {
+        if handle3.get_string("cluster/mode").await.as_deref() == Some("raft-replicated") {
             replicated_node3 = true;
         }
         if replicated_node2 && replicated_node3 {

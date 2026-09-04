@@ -11,7 +11,7 @@ pub mod storage;
 pub mod types;
 
 pub use config::ControlPlaneConfig;
-pub use handle::ControlPlaneHandle;
+pub use handle::{ControlPlaneHandle, NodeTelemetrySnapshot};
 pub use message::RaftMessage;
 pub use service::ControlPlaneService;
 pub use types::{ClientRequest, ClientResponse, ControlPlaneNode, TypeConfig};

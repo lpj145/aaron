@@ -40,10 +40,25 @@ pub enum RaftMessage {
         primary_low: u64,
         replicas: Vec<(u64, u64)>,
         epoch: u64,
+        op_type: u8,
+        target_role: u8,
     },
     ShardCommandResp {
         success: bool,
         shard_id: u32,
+        current_role: u8,
+        term: u64,
+        reject_reason: u8,
+    },
+    TelemetryHeartbeat {
+        node_id_high: u64,
+        node_id_low: u64,
+        current_wps: u32,
+        error_rate: u32,
+        timestamp: u64,
+    },
+    TelemetryHeartbeatResp {
+        acknowledged: bool,
     },
 }
 
@@ -57,11 +72,21 @@ pub(crate) fn encode_payload(payload: &EntryPayload<TypeConfig>) -> Vec<u8> {
                     b.push(0);
                     b.extend_from_slice(&(key.len() as u32).to_le_bytes());
                     b.extend_from_slice(key.as_bytes());
-                    b.extend_from_slice(value.as_bytes());
+                    b.extend_from_slice(value);
                 }
                 crate::types::ClientRequest::Delete { key } => {
                     b.push(1);
                     b.extend_from_slice(key.as_bytes());
+                }
+                crate::types::ClientRequest::SetBatch { entries } => {
+                    b.push(2);
+                    b.extend_from_slice(&(entries.len() as u32).to_le_bytes());
+                    for (k, v) in entries {
+                        b.extend_from_slice(&(k.len() as u32).to_le_bytes());
+                        b.extend_from_slice(k.as_bytes());
+                        b.extend_from_slice(&(v.len() as u32).to_le_bytes());
+                        b.extend_from_slice(v);
+                    }
                 }
             }
             b
@@ -107,14 +132,40 @@ pub(crate) fn decode_payload(bytes: &[u8]) -> EntryPayload<TypeConfig> {
                 let k_len = u32::from_le_bytes(len_bytes) as usize;
                 if sub.len() >= 5 + k_len {
                     let key = String::from_utf8_lossy(&sub[5..5 + k_len]).to_string();
-                    let value = String::from_utf8_lossy(&sub[5 + k_len..]).to_string();
+                    let value = sub[5 + k_len..].to_vec();
                     return EntryPayload::Normal(crate::types::ClientRequest::Set { key, value });
                 }
             }
-        } else {
+        } else if sub[0] == 1 {
             // Delete
             let key = String::from_utf8_lossy(&sub[1..]).to_string();
             return EntryPayload::Normal(crate::types::ClientRequest::Delete { key });
+        } else if sub[0] == 2 {
+            // SetBatch
+            if sub.len() >= 5 {
+                let mut cursor = 1;
+                let count = u32::from_le_bytes(sub[cursor..cursor + 4].try_into().unwrap()) as usize;
+                cursor += 4;
+                let mut entries = Vec::with_capacity(count);
+                for _ in 0..count {
+                    if cursor + 4 > sub.len() { break; }
+                    let k_len = u32::from_le_bytes(sub[cursor..cursor + 4].try_into().unwrap()) as usize;
+                    cursor += 4;
+                    if cursor + k_len > sub.len() { break; }
+                    let key = String::from_utf8_lossy(&sub[cursor..cursor + k_len]).to_string();
+                    cursor += k_len;
+
+                    if cursor + 4 > sub.len() { break; }
+                    let v_len = u32::from_le_bytes(sub[cursor..cursor + 4].try_into().unwrap()) as usize;
+                    cursor += 4;
+                    if cursor + v_len > sub.len() { break; }
+                    let value = sub[cursor..cursor + v_len].to_vec();
+                    cursor += v_len;
+
+                    entries.push((key, value));
+                }
+                return EntryPayload::Normal(crate::types::ClientRequest::SetBatch { entries });
+            }
         }
     } else if bytes[0] == 2 {
         let mut cursor = 1;
@@ -283,6 +334,8 @@ impl RaftMessage {
                 primary_low,
                 replicas,
                 epoch,
+                op_type,
+                target_role,
             } => {
                 let primary_proto = proto_node::Uuid {
                     high: *primary_high,
@@ -302,13 +355,51 @@ impl RaftMessage {
                     primary: Some(primary_proto),
                     replicas: Some(replicas_proto),
                     epoch: *epoch,
+                    op_type: *op_type,
+                    target_role: *target_role,
                 }))
             }
-            Self::ShardCommandResp { success, shard_id } => {
+            Self::ShardCommandResp {
+                success,
+                shard_id,
+                current_role,
+                term,
+                reject_reason,
+            } => {
                 proto::ControlPlanePayload::ShardCommandResponse(Box::new(
                     proto::ShardCommandResponse {
                         success: *success,
                         shard_id: *shard_id,
+                        current_role: *current_role,
+                        term: *term,
+                        reject_reason: *reject_reason,
+                    },
+                ))
+            }
+            Self::TelemetryHeartbeat {
+                node_id_high,
+                node_id_low,
+                current_wps,
+                error_rate,
+                timestamp,
+            } => {
+                let node_proto = proto_node::Uuid {
+                    high: *node_id_high,
+                    low: *node_id_low,
+                };
+                proto::ControlPlanePayload::TelemetryHeartbeat(Box::new(
+                    proto::TelemetryHeartbeat {
+                        node_id: Some(node_proto),
+                        current_wps: *current_wps,
+                        error_rate: *error_rate,
+                        timestamp: *timestamp,
+                    },
+                ))
+            }
+            Self::TelemetryHeartbeatResp { acknowledged } => {
+                proto::ControlPlanePayload::TelemetryHeartbeatResponse(Box::new(
+                    proto::TelemetryHeartbeatResponse {
+                        acknowledged: *acknowledged,
                     },
                 ))
             }
@@ -487,6 +578,8 @@ impl RaftMessage {
                     }
                 }
                 let epoch = cmd.epoch()?;
+                let op_type = cmd.op_type().unwrap_or(0);
+                let target_role = cmd.target_role().unwrap_or(0);
                 Ok(Self::ShardCommand {
                     shard_id,
                     role,
@@ -494,14 +587,76 @@ impl RaftMessage {
                     primary_low,
                     replicas,
                     epoch,
+                    op_type,
+                    target_role,
                 })
             }
             proto::ControlPlanePayloadRef::ShardCommandResponse(resp) => {
                 let success = resp.success()?;
                 let shard_id = resp.shard_id()?;
-                Ok(Self::ShardCommandResp { success, shard_id })
+                let current_role = resp.current_role().unwrap_or(0);
+                let term = resp.term().unwrap_or(0);
+                let reject_reason = resp.reject_reason().unwrap_or(0);
+                Ok(Self::ShardCommandResp {
+                    success,
+                    shard_id,
+                    current_role,
+                    term,
+                    reject_reason,
+                })
+            }
+            proto::ControlPlanePayloadRef::TelemetryHeartbeat(t) => {
+                let node_ref = t.node_id()?.ok_or(MessageError::MissingField { field: "node_id" })?;
+                Ok(Self::TelemetryHeartbeat {
+                    node_id_high: node_ref.high(),
+                    node_id_low: node_ref.low(),
+                    current_wps: t.current_wps()?,
+                    error_rate: t.error_rate()?,
+                    timestamp: t.timestamp()?,
+                })
+            }
+            proto::ControlPlanePayloadRef::TelemetryHeartbeatResponse(t) => {
+                Ok(Self::TelemetryHeartbeatResp {
+                    acknowledged: t.acknowledged()?,
+                })
             }
             _ => Err(MessageError::UnknownPayload),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_telemetry_heartbeat_roundtrip() {
+        let original = RaftMessage::TelemetryHeartbeat {
+            node_id_high: 0x1122334455667788,
+            node_id_low: 0x99AABBCCDDEEFF00,
+            current_wps: 450,
+            error_rate: 3,
+            timestamp: 1725321600,
+        };
+
+        let bytes = original.to_bytes();
+        let decoded = RaftMessage::from_bytes(&bytes).expect("failed to decode TelemetryHeartbeat");
+
+        match decoded {
+            RaftMessage::TelemetryHeartbeat {
+                node_id_high,
+                node_id_low,
+                current_wps,
+                error_rate,
+                timestamp,
+            } => {
+                assert_eq!(node_id_high, 0x1122334455667788);
+                assert_eq!(node_id_low, 0x99AABBCCDDEEFF00);
+                assert_eq!(current_wps, 450);
+                assert_eq!(error_rate, 3);
+                assert_eq!(timestamp, 1725321600);
+            }
+            _ => panic!("Decoded wrong message variant"),
         }
     }
 }
