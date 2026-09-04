@@ -29,6 +29,7 @@ crates/membership-service/src/
 - **SWIM Failure Detection**: Direct `Ping` probes backed by indirect `PingReq` across $k$ random intermediaries on probe timeout.
 - **Incarnation Conflict Resolution**: Strictly enforces incarnation ordering, status precedence (`Alive` < `Suspect` < `Dead`/`Left`), and automatic refutation of false suspicions against the local node.
 - **Cluster Authorization & Security Token**: Enforces strict `cluster_id` validation at the gatekeeper (`JoinRequest`) to reject rogue/foreign nodes.
+- **Capability Tags & Hostname Propagation**: Automatically propagates `service:<name>`, `host:<hostname>`, functional roles (`control-plane`, `shard-worker`), and custom tags via gossip without polluting the mesh with internal engine plumbing.
 - **Direct Query Handle (`MembershipHandle`)**: Provides sub-microsecond in-memory topology lookups for other services (Admin, RPC, HTTP).
 - **Dynamic Join Commands**: Dispatches and handles dynamic cluster join commands (`JoinClusterCommand`) via `EventHub` at runtime.
 
@@ -39,6 +40,7 @@ crates/membership-service/src/
 | `MEMBERSHIP_BIND_ADDR` | `String` | `"0.0.0.0:7946"` | QUIC listen socket address |
 | `MEMBERSHIP_SEEDS` | `String` | `""` | Comma-separated list of seed node socket addresses |
 | `MEMBERSHIP_CLUSTER_ID` | `String` | `""` | 128-bit Cluster ID UUID token (required for joiner nodes) |
+| `AARON_TAGS` | `String` | `""` | Optional comma-separated custom tags (e.g. `zone:us-east-1,tier:worker`) |
 
 ### Cluster Authorization Policy
 
@@ -58,7 +60,7 @@ crates/membership-service/src/
 
 ## Usage Examples
 
-### 1. Registering the Service with `MembershipHandle`
+### 1. Registering the Service with `MembershipHandle` and Custom Tags
 
 ```rust
 use std::time::Duration;
@@ -75,8 +77,10 @@ async fn main() -> Result<(), node::BoxError> {
     // 1. Create paired service and query handle
     let (membership, handle) = MembershipService::pair_with_config(config);
 
-    // 2. Register with Node alongside an Admin/Worker service
-    Node::new()
+    // 2. Register with Node with explicit service identity and tags
+    Node::new("treasurer")
+        .with_tag("role:worker")
+        .with_tag("tier:data-plane")
         .with(membership)
         .with(service_fn("admin", move |ctx: Context| {
             let handle = handle.clone();
@@ -86,6 +90,10 @@ async fn main() -> Result<(), node::BoxError> {
                 // Query topology directly from in-memory table
                 let active = handle.active_members().await;
                 info!("Cluster size: {}", active.len());
+
+                for member in &active {
+                    info!("Node {} (host: {:?}) tags: {:?}", member.node_id.id(), member.hostname(), member.tags);
+                }
 
                 let cluster_id = handle.cluster_id().await;
                 info!("Active Cluster ID: {:?}", cluster_id);

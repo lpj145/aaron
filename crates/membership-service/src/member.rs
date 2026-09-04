@@ -38,6 +38,8 @@ pub struct Member {
     pub status: MemberStatus,
     /// Incarnation counter used for state conflict resolution (monotonic per node).
     pub incarnation: u64,
+    /// Node capabilities, services, hostname, and metadata tags propagated via SWIM gossip.
+    pub tags: Vec<String>,
 }
 
 impl Member {
@@ -49,7 +51,14 @@ impl Member {
             addr,
             status: MemberStatus::Alive,
             incarnation,
+            tags: Vec::new(),
         }
+    }
+
+    /// Sets the tags/capabilities for the member.
+    pub fn with_tags(mut self, tags: Vec<String>) -> Self {
+        self.tags = tags;
+        self
     }
 
     /// Creates a `Member` with explicit status and incarnation.
@@ -64,6 +73,7 @@ impl Member {
             addr,
             status,
             incarnation,
+            tags: Vec::new(),
         }
     }
 
@@ -92,11 +102,12 @@ impl fmt::Display for Member {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Member(id={}, addr={}, status={}, incarnation={})",
+            "Member(id={}, addr={}, status={}, incarnation={}, tags={:?})",
             self.node_id.id(),
             self.addr,
             self.status,
-            self.incarnation
+            self.incarnation,
+            self.tags
         )
     }
 }

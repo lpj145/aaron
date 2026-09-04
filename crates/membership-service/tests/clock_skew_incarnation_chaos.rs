@@ -80,18 +80,19 @@ async fn test_restart_after_forced_future_incarnation_cannot_reassert_itself() {
     let local_table = MembershipTable::new(local_id, addr(19710));
 
     // Some peer suspects us at a far-future incarnation.
+    let future_inc = now_millis() + ONE_YEAR_MS;
     let future_claim = Member::with_status(
-        NodeId::new(node_uuid, now_millis() + ONE_YEAR_MS, None),
+        NodeId::new(node_uuid, future_inc, None),
         addr(19710),
         MemberStatus::Suspect,
-        now_millis() + ONE_YEAR_MS,
+        future_inc,
     );
     let refutation = local_table.upsert(future_claim).await;
     let refuted_incarnation = match refutation {
         Some(MembershipChange::Refuted(m)) => m.incarnation,
         other => panic!("expected a self-refutation, got {other:?}"),
     };
-    assert!(refuted_incarnation > now_millis() + ONE_YEAR_MS);
+    assert!(refuted_incarnation >= future_inc + 1);
 
     // The cluster now remembers this node at ~now+1year. Model an observer that learned it.
     let observer =

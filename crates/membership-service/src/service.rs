@@ -115,10 +115,59 @@ impl Service for MembershipService {
         );
 
         // 4. Initialize core SWIM components with established Cluster ID
-        let mut local_identity = ctx.identity;
+        let mut local_identity = ctx.identity.clone();
         local_identity.cluster_id = Some(cluster_id);
 
-        let table = MembershipTable::new(local_identity, local_addr);
+        let mut local_tags = Vec::new();
+
+        // 4.1 Primary application service identity (e.g. service:bank, service:treasurer)
+        let primary_service_tag = format!("service:{}", ctx.service_name);
+        if !local_tags.contains(&primary_service_tag) {
+            local_tags.push(primary_service_tag);
+        }
+
+        // 4.2 Explicit node tags from Node::with_tag/with_tags
+        for t in ctx.tags().await {
+            if !local_tags.contains(&t) {
+                local_tags.push(t);
+            }
+        }
+
+        // 4.3 Service capabilities dynamically declared by registered services
+        let svcs = ctx.services().await;
+        for s in svcs {
+            for cap in s.capabilities {
+                if !local_tags.contains(&cap) {
+                    local_tags.push(cap);
+                }
+            }
+        }
+
+        // 4.2 Collect node hostname / pod name
+        let host = ctx
+            .env
+            .get::<String>("POD_NAME")
+            .or_else(|| ctx.env.get::<String>("HOSTNAME"))
+            .or_else(|| std::env::var("HOSTNAME").ok())
+            .or_else(|| std::env::var("HOST").ok());
+        if let Some(h) = host {
+            let trimmed = h.trim();
+            if !trimmed.is_empty() {
+                local_tags.push(format!("host:{trimmed}"));
+            }
+        }
+
+        // 4.3 Collect any custom user tags from AARON_TAGS env var
+        if let Ok(custom) = std::env::var("AARON_TAGS") {
+            for t in custom.split(',') {
+                let trimmed = t.trim();
+                if !trimmed.is_empty() && !local_tags.contains(&trimmed.to_string()) {
+                    local_tags.push(trimmed.to_string());
+                }
+            }
+        }
+
+        let table = MembershipTable::new_with_tags(local_identity, local_addr, local_tags);
         let config_arc = std::sync::Arc::new(tokio::sync::RwLock::new(config.clone()));
 
         let ingress = IngressHandler::new(

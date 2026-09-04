@@ -197,7 +197,7 @@ impl ProbeLoop {
         }
 
         let mut indirect_success = false;
-        let mut tasks = Vec::new();
+        let mut join_set = tokio::task::JoinSet::new();
         let indirect_start = std::time::Instant::now();
 
         for mediator in intermediaries {
@@ -210,7 +210,7 @@ impl ProbeLoop {
                 .await;
             let timeout = probe_timeout;
 
-            tasks.push(tokio::spawn(async move {
+            join_set.spawn(async move {
                 let ping_req = Message::PingReq {
                     seq,
                     target: target_clone,
@@ -219,15 +219,15 @@ impl ProbeLoop {
                 };
 
                 EgressTransport::ping_req(&quic_clone, mediator.addr, ping_req, timeout).await
-            }));
+            });
         }
 
-        for task in tasks {
+        while let Some(res) = join_set.join_next().await {
             if let Ok(Ok(Message::Ack {
                 seq: ack_seq,
                 sender: ack_sender,
                 gossip: ack_gossip,
-            })) = task.await
+            })) = res
                 && ack_seq == seq
             {
                 indirect_success = true;
@@ -237,6 +237,7 @@ impl ProbeLoop {
                 for u in ack_gossip {
                     self.process_member_update(u).await;
                 }
+                join_set.abort_all();
                 break;
             }
         }

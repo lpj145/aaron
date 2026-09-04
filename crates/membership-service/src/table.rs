@@ -44,11 +44,16 @@ pub struct MembershipTable {
 impl MembershipTable {
     /// Creates a new `MembershipTable` with the specified local node identity and bind address.
     pub fn new(local_id: NodeId, local_addr: SocketAddr) -> Self {
+        Self::new_with_tags(local_id, local_addr, Vec::new())
+    }
+
+    /// Creates a new `MembershipTable` with local node identity, bind address, and initial tags.
+    pub fn new_with_tags(local_id: NodeId, local_addr: SocketAddr, tags: Vec<String>) -> Self {
         let initial_seed = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_or(0xDEADBEEF, |d| d.as_nanos() as u64);
 
-        let local_member = Member::new(local_id, local_addr);
+        let local_member = Member::new(local_id, local_addr).with_tags(tags);
 
         Self {
             local_node: Arc::new(RwLock::new(local_member)),
@@ -129,8 +134,12 @@ impl MembershipTable {
                 };
             }
 
-            // Same incarnation: apply state transition hierarchy: Alive < Suspect < Dead/Left
+            // Same incarnation: sync tags if available, and apply state transition hierarchy
             if update.incarnation == current.incarnation {
+                if !update.tags.is_empty() && current.tags != update.tags {
+                    current.tags = update.tags.clone();
+                }
+
                 if current.status == MemberStatus::Alive && update.status == MemberStatus::Suspect {
                     current.status = MemberStatus::Suspect;
                     entry.state_updated_at = Instant::now();
@@ -300,13 +309,30 @@ impl MembershipTable {
         }
 
         let table = self.entries.read().await;
-        let mut candidates: Vec<Member> = table.values().map(|e| e.member.clone()).collect();
-        let mut gossip = vec![local];
+        let mut priority_candidates: Vec<Member> = Vec::new();
+        let mut normal_candidates: Vec<Member> = Vec::new();
 
-        let target_len = max_items.min(candidates.len() + 1);
-        while gossip.len() < target_len && !candidates.is_empty() {
-            let idx = (self.next_rand() as usize) % candidates.len();
-            gossip.push(candidates.swap_remove(idx));
+        for entry in table.values() {
+            if entry.member.status != MemberStatus::Alive {
+                priority_candidates.push(entry.member.clone());
+            } else {
+                normal_candidates.push(entry.member.clone());
+            }
+        }
+
+        let mut gossip = vec![local];
+        let target_len = max_items.min(priority_candidates.len() + normal_candidates.len() + 1);
+
+        // Prioritize dissemination of state transitions (Suspect, Dead, Left)
+        while gossip.len() < target_len && !priority_candidates.is_empty() {
+            let idx = (self.next_rand() as usize) % priority_candidates.len();
+            gossip.push(priority_candidates.swap_remove(idx));
+        }
+
+        // Fill remaining slots with healthy candidates
+        while gossip.len() < target_len && !normal_candidates.is_empty() {
+            let idx = (self.next_rand() as usize) % normal_candidates.len();
+            gossip.push(normal_candidates.swap_remove(idx));
         }
 
         gossip
@@ -413,15 +439,18 @@ impl MembershipTable {
 
     /// Lightweight thread-safe pseudo-random number generator (xorshift64).
     fn next_rand(&self) -> u64 {
-        let mut x = self.rng_state.load(Ordering::Relaxed);
-        if x == 0 {
-            x = 0x853c49e6748fea9b;
-        }
-        x ^= x << 13;
-        x ^= x >> 7;
-        x ^= x << 17;
-        self.rng_state.store(x, Ordering::Relaxed);
-        x
+        let _ = self
+            .rng_state
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |mut x| {
+                if x == 0 {
+                    x = 0x853c49e6748fea9b;
+                }
+                x ^= x << 13;
+                x ^= x >> 7;
+                x ^= x << 17;
+                Some(x)
+            });
+        self.rng_state.load(Ordering::Relaxed)
     }
 
     /// Immediately deletes a member from the table (used when explicitly purging a removed node).

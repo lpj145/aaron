@@ -374,6 +374,11 @@ fn member_to_record(m: &Member) -> proto::MemberRecord {
         addr: Some(m.addr.to_string()),
         status: proto_status,
         incarnation: m.incarnation,
+        tags: if m.tags.is_empty() {
+            None
+        } else {
+            Some(m.tags.clone())
+        },
     }
 }
 
@@ -408,10 +413,18 @@ fn record_ref_to_member(r: proto::MemberRecordRef<'_>) -> Result<Member, Message
 
     let incarnation = r.incarnation()?;
 
+    let mut tags = Vec::new();
+    if let Some(tags_vec) = r.tags()? {
+        for tag in tags_vec {
+            tags.push(tag?.to_string());
+        }
+    }
+
     Ok(Member {
         node_id,
         addr,
         status,
         incarnation,
+        tags,
     })
 }
