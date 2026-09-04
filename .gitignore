@@ -8,6 +8,8 @@ node_modules/
 **/node_modules/
 dist/
 **/dist/
+!crates/aaron-admin/ui/dist/
+!crates/aaron-admin/ui/dist/**
 .vite/
 
 # Logs & Temporary Files
