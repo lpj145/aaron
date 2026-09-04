@@ -8,7 +8,7 @@ async fn main() {
     println!("=== Starting Aaron Node with TracingService ===");
     println!("Tip: Set LOG_FORMAT=pretty to use pretty formatted logs (default is JSON)\n");
 
-    Node::new()
+    Node::new("tracing-node")
         .with(TracingService::new())
         .with(service_fn("worker", |ctx: Context| async move {
             info!("Worker service started. Initial log level is 'info'.");

@@ -7,7 +7,7 @@ async fn test_node_load_or_create_identity_lifecycle() {
     let _ = std::fs::remove_dir_all(&temp_dir);
 
     // 1. First run: Node starts, creates NodeId and saves in "node" keyspace
-    let node1 = Node::new()
+    let node1 = Node::new("test-identity-node")
         .with_dir_path(&temp_dir)
         .with(service_fn("exit_1", |_ctx| async move { Ok(()) }));
 
@@ -29,7 +29,7 @@ async fn test_node_load_or_create_identity_lifecycle() {
     tokio::time::sleep(std::time::Duration::from_millis(5)).await;
 
     // 2. Second run: Node reopens same directory, reuses UUID and updates incarnation
-    let node2 = Node::new()
+    let node2 = Node::new("test-identity-node")
         .with_dir_path(&temp_dir)
         .with(service_fn("exit_2", |_ctx| async move { Ok(()) }));
 
@@ -56,7 +56,7 @@ async fn test_node_with_dir_path_execution() {
     let executed = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let executed_clone = Arc::clone(&executed);
 
-    let node = Node::new()
+    let node = Node::new("test-identity-node")
         .with_dir_path(&temp_dir)
         .with(service_fn("quick_exit", move |_ctx| {
             let executed = Arc::clone(&executed_clone);

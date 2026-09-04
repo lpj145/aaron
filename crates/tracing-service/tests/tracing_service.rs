@@ -34,7 +34,7 @@ fn test_tracing_service_schema_and_env_example() {
     assert_eq!(schema[0].name, "LOG_LEVEL");
     assert_eq!(schema[1].name, "LOG_FORMAT");
 
-    let node = Node::new().with(TracingService::new());
+    let node = Node::new("tracing-node").with(TracingService::new());
     let example = node.generate_env_example();
     assert!(example.contains("# === [tracing-service] ==="));
     assert!(example.contains("LOG_LEVEL=info"));
@@ -52,7 +52,7 @@ async fn test_tracing_service_dynamic_reload_via_event_hub() {
     let cancel_token = tokio_util::sync::CancellationToken::new();
     let cancel_token_clone = cancel_token.clone();
 
-    let node = Node::new()
+    let node = Node::new("tracing-node")
         .with_dir_path(&temp_dir)
         .with_cancel_token(cancel_token)
         .with(TracingService::new())

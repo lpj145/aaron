@@ -19,10 +19,24 @@ pub use keyspace::KeyspaceExt;
 pub use scan::{KeyValue, Page, ScanOptions};
 
 use backup::copy_dir_all;
+use std::hash::{DefaultHasher, Hasher};
+use std::sync::Mutex;
+
+pub(crate) const STRIPE_COUNT: usize = 256;
 
 pub(crate) struct StoreState {
     pub(crate) db: Database,
     pub(crate) default_keyspace: Keyspace,
+    pub(crate) stripes: Arc<[Mutex<()>; STRIPE_COUNT]>,
+}
+
+impl StoreState {
+    pub(crate) fn get_stripe_lock(&self, key: &[u8]) -> &Mutex<()> {
+        let mut hasher = DefaultHasher::new();
+        hasher.write(key);
+        let idx = (hasher.finish() as usize) % STRIPE_COUNT;
+        &self.stripes[idx]
+    }
 }
 
 /// A thread-safe, embeddable key-value storage engine powered by Fjall.
@@ -165,7 +179,25 @@ impl Store {
     {
         self.check_writable()?;
         let guard = self.read_state();
-        guard.default_keyspace.update(key, f)
+        let key = key.as_ref();
+        let _lock = guard
+            .get_stripe_lock(key)
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+
+        let old_val = guard.default_keyspace.get(key)?;
+        let new_val = f(old_val.clone());
+
+        match new_val {
+            Some(v) => {
+                guard.default_keyspace.insert(key, v)?;
+            }
+            None => {
+                guard.default_keyspace.remove(key)?;
+            }
+        }
+
+        Ok(old_val)
     }
 
     /// Initializes a new atomic [`WriteBatch`].
@@ -281,6 +313,14 @@ impl Store {
         let temp_dir =
             std::env::temp_dir().join(format!("store_swap_{}_{}", std::process::id(), count));
 
+        struct TempDirGuard(std::path::PathBuf);
+        impl Drop for TempDirGuard {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _temp_guard = TempDirGuard(temp_dir.clone());
+
         let temp_db = Database::builder(&temp_dir).open()?;
         let temp_ks = temp_db.keyspace("default", KeyspaceCreateOptions::default)?;
 
@@ -300,8 +340,8 @@ impl Store {
         state.db = new_db;
         state.default_keyspace = new_default;
 
-        // 5. Clean up temporary directory
-        let _ = std::fs::remove_dir_all(temp_dir);
+        // Drop temporary DB handles before guard removes the directory
+        drop(state);
 
         Ok(())
     }

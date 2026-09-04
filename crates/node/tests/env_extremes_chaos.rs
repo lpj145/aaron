@@ -154,7 +154,7 @@ declaring_service!(
 /// two different values, and whichever line comes last silently wins when the file is loaded.
 #[test]
 fn test_colliding_field_names_across_services_produce_a_contradictory_env_example() {
-    let node = Node::new().with(AlphaService).with(BetaService);
+    let node = Node::new("alpha-node").with(AlphaService).with(BetaService);
 
     let example = node.generate_env_example();
     let assignments: Vec<&str> = example
@@ -182,7 +182,7 @@ fn test_colliding_field_types_make_a_valid_value_fail_validation() {
     let env = Env::detect();
     env.set("COLLIDING_VAR", "8080").unwrap();
 
-    let node = Node::new().with(NumericService).with(BoolService);
+    let node = Node::new("numeric-node").with(NumericService).with(BoolService);
 
     let result = node.validate_env(&env);
     assert!(

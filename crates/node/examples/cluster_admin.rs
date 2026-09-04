@@ -25,7 +25,7 @@ async fn main() {
     let (membership, handle) = MembershipService::pair_with_config(config);
 
     // 2. Build and run Node with Tracing, Membership, and an Admin Query Worker
-    Node::new()
+    Node::new("cluster-admin")
         .with(TracingService::new())
         .with(membership)
         .with(service_fn("cluster_admin", move |ctx: Context| {

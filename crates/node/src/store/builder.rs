@@ -55,6 +55,7 @@ impl StoreBuilder {
             state: std::sync::Arc::new(std::sync::RwLock::new(super::StoreState {
                 db,
                 default_keyspace,
+                stripes: std::sync::Arc::new([const { std::sync::Mutex::new(()) }; super::STRIPE_COUNT]),
             })),
             path: self.path,
             maintenance: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),

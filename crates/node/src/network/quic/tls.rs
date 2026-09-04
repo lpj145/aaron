@@ -73,10 +73,19 @@ impl ServerCertVerifier for P2pServerCertVerifier {
         // enforce that the peer's X.509 certificate SAN contains the expected identity.
         if expected.starts_with("node-") || (expected.len() == 32 && expected.is_ascii()) {
             let cert_bytes = end_entity.as_ref();
-            let needle = expected.as_bytes();
-            let matches = cert_bytes
-                .windows(needle.len())
-                .any(|window| window == needle);
+            let san_names = extract_san_names(cert_bytes);
+            let matches = if !san_names.is_empty() {
+                let exp_str = expected.as_ref();
+                san_names.iter().any(|name| {
+                    name.as_str() == exp_str
+                        || (exp_str.starts_with("node-") && name.as_str() == exp_str.trim_start_matches("node-"))
+                        || (name.starts_with("node-") && name.trim_start_matches("node-") == exp_str)
+                })
+            } else {
+                let needle = expected.as_bytes();
+                cert_bytes.windows(needle.len()).any(|window| window == needle)
+            };
+
             if !matches {
                 return Err(RustlsError::InvalidCertificate(
                     rustls::CertificateError::NotValidForName,
@@ -156,4 +165,72 @@ pub fn build_p2p_client_config() -> Result<ClientConfig, BoxError> {
     let client_config = ClientConfig::new(Arc::new(quic_client_config));
 
     Ok(client_config)
+}
+
+/// Extracts all Subject Alternative Names (dNSNames and iPAddresses) from an X.509 DER certificate.
+pub fn extract_san_names(cert_der: &[u8]) -> Vec<String> {
+    let mut names = Vec::new();
+    // Subject Alternative Name OID: 2.5.29.17 -> 06 03 55 1d 11
+    let san_oid = [0x06, 0x03, 0x55, 0x1d, 0x11];
+    let mut pos = 0;
+    while let Some(found) = cert_der[pos..].windows(san_oid.len()).position(|w| w == san_oid) {
+        let mut idx = pos + found + san_oid.len();
+        // Optional critical boolean: 01 01 00 or 01 01 ff
+        if idx + 3 <= cert_der.len() && cert_der[idx] == 0x01 && cert_der[idx + 1] == 0x01 {
+            idx += 3;
+        }
+        // ExtnValue: OCTET STRING 0x04
+        if idx < cert_der.len() && cert_der[idx] == 0x04 {
+            idx += 1;
+            let (octet_len, next_idx) = parse_asn1_length(cert_der, idx);
+            idx = next_idx;
+            let end = (idx + octet_len).min(cert_der.len());
+            // Inside octet string, GeneralNames is a SEQUENCE 0x30
+            if idx < end && cert_der[idx] == 0x30 {
+                idx += 1;
+                let (_, seq_idx) = parse_asn1_length(cert_der, idx);
+                idx = seq_idx;
+                while idx < end {
+                    let tag = cert_der[idx];
+                    idx += 1;
+                    let (item_len, next_idx) = parse_asn1_length(cert_der, idx);
+                    idx = next_idx;
+                    if idx + item_len <= end {
+                        // 0x82 is Context-Specific Tag [2] for dNSName
+                        if (tag == 0x82 || tag == 0x87)
+                            && let Ok(s) = std::str::from_utf8(&cert_der[idx..idx + item_len])
+                        {
+                            names.push(s.to_string());
+                        }
+                        idx += item_len;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        pos += found + san_oid.len();
+    }
+    names
+}
+
+fn parse_asn1_length(buf: &[u8], mut idx: usize) -> (usize, usize) {
+    if idx >= buf.len() {
+        return (0, idx);
+    }
+    let b = buf[idx];
+    idx += 1;
+    if b < 0x80 {
+        (b as usize, idx)
+    } else {
+        let num_bytes = (b & 0x7f) as usize;
+        let mut len = 0usize;
+        for _ in 0..num_bytes {
+            if idx < buf.len() {
+                len = (len << 8) | (buf[idx] as usize);
+                idx += 1;
+            }
+        }
+        (len, idx)
+    }
 }

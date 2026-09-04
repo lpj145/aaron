@@ -23,7 +23,7 @@ impl Uuid {
         Self { high, low }
     }
 
-    /// Generates a new random/time-ordered 128-bit unique UUID (UUIDv7-style).
+    /// Generates a new random/time-ordered 128-bit unique UUID (UUIDv7-style) with CSPRNG entropy.
     pub fn random() -> Self {
         let now_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -31,6 +31,20 @@ impl Uuid {
 
         let high_time = (now_ms & 0x0000_FFFF_FFFF_FFFF) << 16;
 
+        let mut rand_bytes = [0u8; 16];
+        if rustls::crypto::ring::default_provider()
+            .secure_random
+            .fill(&mut rand_bytes)
+            .is_ok()
+        {
+            let rand1 = u64::from_le_bytes(rand_bytes[0..8].try_into().unwrap());
+            let rand2 = u64::from_le_bytes(rand_bytes[8..16].try_into().unwrap());
+            let high = high_time | ((rand1 >> 48) & 0x0FFF) | 0x7000;
+            let low = (rand2 & 0x3FFF_FFFF_FFFF_FFFF) | 0x8000_0000_0000_0000;
+            return Self { high, low };
+        }
+
+        // Fallback to high-resolution time, pid, and atomic counter hash
         static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
         let count = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let nanos = SystemTime::now()

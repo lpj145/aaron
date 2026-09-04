@@ -55,7 +55,7 @@ fn test_validate_env_does_not_poison_tracked_type_metadata() {
     env.set("MOCK_ENABLED", "true").unwrap();
     env.set("MOCK_MAX_MEM", "4096").unwrap();
 
-    let node = Node::new().with(MockTypedService);
+    let node = Node::new("mock-node").with(MockTypedService);
 
     // 1. Validate environment at startup
     let validation_res = node.validate_env(&env);

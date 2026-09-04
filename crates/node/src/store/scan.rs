@@ -135,6 +135,28 @@ pub(crate) fn scan_keyspace(
         }
     } else if let Some(prefix) = options.prefix {
         keyspace.prefix(prefix)
+    } else if let Some(start_from) = options.start_from {
+        if let Some(end_at) = options.end_at {
+            if end_at <= start_from {
+                keyspace.range(end_at..=start_from)
+            } else {
+                keyspace.range(..=start_from)
+            }
+        } else {
+            keyspace.range(..=start_from)
+        }
+    } else if let Some(start_after) = options.start_after {
+        if let Some(end_at) = options.end_at {
+            if end_at <= start_after {
+                keyspace.range(end_at..=start_after)
+            } else {
+                keyspace.range(..=start_after)
+            }
+        } else {
+            keyspace.range(..=start_after)
+        }
+    } else if let Some(end_at) = options.end_at {
+        keyspace.range(end_at..)
     } else {
         keyspace.iter()
     };

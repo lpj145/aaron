@@ -50,21 +50,37 @@ impl<E: Send + Sync + Unpin + 'static> Topic<E> {
         let mut has_dead = false;
 
         // 2. Dispatch to subscribers without holding any locks, with bounded timeout to isolate slow subscribers
-        for tx in active_senders {
+        if active_senders.len() == 1 {
+            let tx = &active_senders[0];
             if tx.is_disconnected() {
                 has_dead = true;
-                continue;
+            } else {
+                match tokio::time::timeout(Duration::from_millis(15), tx.send(event.clone())).await {
+                    Ok(Ok(())) => delivered += 1,
+                    Ok(Err(_)) => has_dead = true,
+                    Err(_timeout) => {}
+                }
             }
-
-            match tokio::time::timeout(Duration::from_millis(15), tx.send(event.clone())).await {
-                Ok(Ok(())) => {
+        } else {
+            let futures = active_senders.into_iter().map(|tx| {
+                let ev = event.clone();
+                async move {
+                    if tx.is_disconnected() {
+                        return (false, true);
+                    }
+                    match tokio::time::timeout(Duration::from_millis(15), tx.send(ev)).await {
+                        Ok(Ok(())) => (true, false),
+                        Ok(Err(_)) => (false, true),
+                        Err(_timeout) => (false, false),
+                    }
+                }
+            });
+            for (success, dead) in futures_util::future::join_all(futures).await {
+                if success {
                     delivered += 1;
                 }
-                Ok(Err(_)) => {
+                if dead {
                     has_dead = true;
-                }
-                Err(_timeout) => {
-                    // Queue full / consumer slow — drop for this specific consumer without stalling others
                 }
             }
         }

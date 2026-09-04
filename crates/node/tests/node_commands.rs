@@ -76,7 +76,7 @@ async fn test_node_commands_dynamic_spawn_and_cluster_id_binding() {
         root_token: token.clone(),
     };
 
-    let node = Node::new()
+    let node = Node::new("command-node")
         .with_dir_path(&path)
         .with_cancel_token(token.clone())
         .with(worker)
@@ -122,7 +122,7 @@ fn test_duplicate_service_registration_panics() {
     };
 
     // Attempting to register two services with the same name must fail fast with panic
-    let _ = Node::new().with(worker1).with(worker2);
+    let _ = Node::new("command-node").with(worker1).with(worker2);
 }
 
 #[tokio::test]
@@ -173,6 +173,7 @@ async fn test_start_node_remove_node_and_ctx_shutdown() {
             // Publish NodeEvent::StartNode
             ctx.event_hub
                 .publish(NodeEvent::StartNode {
+                    service_name: "worker".to_string(),
                     node_id: Uuid::random(),
                     addr: Some("10.0.0.1:17946".to_string()),
                 })
@@ -198,7 +199,7 @@ async fn test_start_node_remove_node_and_ctx_shutdown() {
         remove_tx,
     };
 
-    let node = Node::new().with_dir_path(&path).with(svc);
+    let node = Node::new("command-node").with_dir_path(&path).with(svc);
     node.run().await.unwrap();
 
     assert!(start_rx.recv().await.is_some());

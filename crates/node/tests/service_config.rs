@@ -87,7 +87,7 @@ async fn test_service_config_and_run_execution() {
     let env = Env::detect();
     env.set("P2P_LISTEN_PORT", 9090).unwrap();
 
-    let node = Node::new().with_dir_path(&temp_dir).with_env(env).with(svc);
+    let node = Node::new("p2p-node").with_dir_path(&temp_dir).with_env(env).with(svc);
 
     // Run node
     node.run().await.unwrap();
@@ -113,7 +113,7 @@ async fn test_node_env_validation_fail_fast_aborts_before_run() {
     // Construct env without P2P_LISTEN_PORT
     let env = Env::detect();
 
-    let node = Node::new().with_dir_path(&temp_dir).with_env(env).with(svc);
+    let node = Node::new("p2p-node").with_dir_path(&temp_dir).with_env(env).with(svc);
 
     let explicit_env = Env::detect();
     let validation = node.validate_env(&explicit_env);
@@ -148,7 +148,7 @@ async fn test_node_env_validation_invalid_type_aborts() {
     env.set("P2P_LISTEN_PORT", "not_a_valid_port_number")
         .unwrap();
 
-    let node = Node::new().with_dir_path(&temp_dir).with_env(env).with(svc);
+    let node = Node::new("p2p-node").with_dir_path(&temp_dir).with_env(env).with(svc);
 
     let check_env = Env::detect();
     check_env
@@ -173,7 +173,7 @@ fn test_node_generate_env_example_template() {
         port_seen: Arc::new(AtomicUsize::new(0)),
     };
 
-    let node = Node::new().with(svc);
+    let node = Node::new("p2p-node").with(svc);
     let example = node.generate_env_example();
 
     assert!(example.contains("# === [p2p-service] ==="));

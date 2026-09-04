@@ -16,6 +16,7 @@ pub struct ServiceConfigFieldDescriptor {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ServiceDescriptor {
     pub name: String,
+    pub capabilities: Vec<String>,
     pub schema: Vec<ServiceConfigFieldDescriptor>,
 }
 
@@ -25,6 +26,8 @@ pub struct ServiceDescriptor {
 /// node identity, environment configuration, service cancellation token, and node shutdown controller.
 #[derive(Clone)]
 pub struct Context {
+    /// Name of the primary application service running on this node (e.g. "bank", "treasurer").
+    pub service_name: String,
     /// Shared in-memory pub/sub event bus (lockless crossfire queues).
     pub event_hub: EventHub,
     /// Multi-transport network manager (TCP, UDP, QUIC with P2P TLS).
@@ -39,6 +42,10 @@ pub struct Context {
     pub token: CancellationToken,
     /// Registry of currently registered and supervised services and schemas on this node.
     pub services: Arc<tokio::sync::RwLock<Vec<ServiceDescriptor>>>,
+    /// Node capability tags, metadata, and roles.
+    pub tags: Arc<tokio::sync::RwLock<Vec<String>>>,
+    /// Dynamic hardware benchmark and workload performance telemetry.
+    pub telemetry: Arc<crate::NodeTelemetry>,
     /// Root cancellation token used to initiate a node-wide graceful shutdown.
     shutdown_token: CancellationToken,
 }
@@ -53,7 +60,41 @@ impl Context {
         env: Arc<Env>,
         token: CancellationToken,
     ) -> Self {
+        Self::with_tags("node", event_hub, network, store, identity, env, token, Vec::new())
+    }
+
+    /// Creates a new `Context` instance with a specific primary service name.
+    pub fn named(
+        service_name: impl Into<String>,
+        event_hub: EventHub,
+        network: Network,
+        store: Store,
+        identity: NodeId,
+        env: Arc<Env>,
+        token: CancellationToken,
+    ) -> Self {
+        Self::with_tags(service_name, event_hub, network, store, identity, env, token, Vec::new())
+    }
+
+    /// Creates a new `Context` with pre-populated tags.
+    pub fn with_tags(
+        service_name: impl Into<String>,
+        event_hub: EventHub,
+        network: Network,
+        store: Store,
+        identity: NodeId,
+        env: Arc<Env>,
+        token: CancellationToken,
+        tags: Vec<String>,
+    ) -> Self {
+        let telemetry = Arc::new(crate::NodeTelemetry::default());
+        let mut initial_tags = tags;
+        if !initial_tags.iter().any(|t| t.starts_with("wps:")) {
+            initial_tags.push(format!("wps:{}", telemetry.nominal_wps()));
+        }
+
         Self {
+            service_name: service_name.into(),
             event_hub,
             network,
             store,
@@ -62,6 +103,22 @@ impl Context {
             shutdown_token: token.clone(),
             token,
             services: Arc::new(tokio::sync::RwLock::new(Vec::new())),
+            tags: Arc::new(tokio::sync::RwLock::new(initial_tags)),
+            telemetry,
+        }
+    }
+
+    /// Returns a copy of the node's current tags.
+    pub async fn tags(&self) -> Vec<String> {
+        self.tags.read().await.clone()
+    }
+
+    /// Adds a tag to the node's metadata.
+    pub async fn add_tag(&self, tag: impl Into<String>) {
+        let mut t = self.tags.write().await;
+        let tag_str = tag.into();
+        if !t.contains(&tag_str) {
+            t.push(tag_str);
         }
     }
 

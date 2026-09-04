@@ -168,7 +168,9 @@ impl Service for WorkerService {
 ```rust
 #[tokio::main]
 async fn main() -> Result<(), BoxError> {
-    let node = Node::new()
+    let node = Node::new("worker-node")
+        .with_tag("tier:data-plane")
+        .with_tags(["region:sa-east-1", "storage:nvme"])
         .with_dir_path("./data")
         .with_opts(
             WorkerService::new(),

@@ -8,7 +8,7 @@ use tokio::task::JoinSet;
 pub use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
-pub use crate::events::{NodeEvent, NodeEvents, SetEnvVar, ShardEvent, ShardRole};
+pub use crate::events::{MemberRole, NodeEvent, NodeEvents, SetEnvVar, ShardEvent, ShardGroup, ShardRole};
 // `supervise`/`SupervisedService`/`TaskResult` are internal plumbing, not part
 // of the normal public API — but exposed under `test-util` so integration
 // tests in `tests/` can exercise them directly instead of only through `Node`.
@@ -25,7 +25,7 @@ pub use env::{Env, TrackedVar};
 pub use event_hub::{EventHub, EventHubError, Subscriber};
 pub use identity::{NodeId, NodeIdBuilder, NodeIdRef, Uuid, UuidRef};
 pub use network::{
-    DEFAULT_MAX_FRAME_SIZE, FrameError, Network, NetworkError, P2pServerCertVerifier, QuicManager,
+    DEFAULT_MAX_FRAME_SIZE, DEFAULT_MAX_RAFT_FRAME_SIZE, FrameError, Network, NetworkError, P2pServerCertVerifier, QuicManager,
     QuicPool, TcpConnection, TcpManager, TcpPool, TcpReader, TcpWriter, UdpManager,
     build_p2p_client_config, build_p2p_server_config, generate_node_cert,
     generate_self_signed_cert, read_frame, read_frame_with_limit, write_frame,
@@ -35,6 +35,8 @@ pub use store::{
     KeyValue, Keyspace, KeyspaceExt, Page, Readable, ScanOptions, Snapshot, Store, StoreBuilder,
     StoreError, WriteBatch,
 };
+pub mod benchmark;
+pub use benchmark::{HardwareBenchmark, NodeTelemetry};
 
 mod env;
 mod event_hub;
@@ -46,31 +48,48 @@ mod store;
 mod supervise;
 
 pub struct Node {
+    service_name: String,
     services: Vec<SupervisedService>,
     dir_path: PathBuf,
     env: Option<Arc<Env>>,
     cancel_token: Option<CancellationToken>,
+    tags: Vec<String>,
 }
 
 impl Default for Node {
     fn default() -> Self {
-        Self::new()
+        Self::new("node")
     }
 }
 
 impl Node {
-    pub fn new() -> Self {
+    /// Creates a new `Node` instance with a mandatory service name (e.g. "bank", "treasurer").
+    pub fn new(service_name: impl Into<String>) -> Self {
         let dir_path = std::env::var("DATA_DIR")
             .or_else(|_| std::env::var("NODE_DATA_DIR"))
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("./data"));
 
         Self {
+            service_name: service_name.into(),
             services: vec![],
             dir_path,
             env: None,
             cancel_token: None,
+            tags: vec![],
         }
+    }
+
+    /// Appends a single metadata / capability tag to this node.
+    pub fn with_tag(mut self, tag: impl Into<String>) -> Self {
+        self.tags.push(tag.into());
+        self
+    }
+
+    /// Appends multiple metadata / capability tags to this node.
+    pub fn with_tags(mut self, tags: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.tags.extend(tags.into_iter().map(Into::into));
+        self
     }
 
     /// Sets the directory path where the node's persistent store and data will reside.
@@ -302,13 +321,15 @@ impl Node {
         let token = self.cancel_token.unwrap_or_default();
 
         // 6. Assemble runtime Context
-        let ctx = Context::new(
+        let ctx = Context::with_tags(
+            self.service_name,
             event_hub.clone(),
             network,
             store.clone(),
             node_id,
             env.clone(),
             token.clone(),
+            self.tags,
         );
 
         info!(
@@ -330,6 +351,7 @@ impl Node {
             .iter()
             .map(|s| ServiceDescriptor {
                 name: s.service.dyn_name().to_string(),
+                capabilities: s.service.dyn_capabilities(),
                 schema: s
                     .service
                     .dyn_schema()
@@ -397,9 +419,10 @@ impl Node {
                             );
                         }
                     },
-                    Ok(NodeEvents::StartNode { node_id, addr }) => {
+                    Ok(NodeEvents::StartNode { service_name, node_id, addr }) => {
                         info!(
                             target: "node",
+                            service = %service_name,
                             node_id = %node_id,
                             addr = ?addr,
                             "Received StartNode lifecycle event via EventHub"

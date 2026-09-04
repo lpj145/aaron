@@ -11,7 +11,7 @@
 //! use tracing_service::{TracingService, ChangeLogLevel};
 //!
 //! # async fn doc() -> Result<(), node::BoxError> {
-//! let node = Node::new().with(TracingService::new());
+//! let node = Node::new("tracing-node").with(TracingService::new());
 //! # Ok(())
 //! # }
 //! ```

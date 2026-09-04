@@ -5,7 +5,7 @@ pub mod tcp;
 pub mod udp;
 
 pub use codec::{
-    DEFAULT_MAX_FRAME_SIZE, FrameError, read_frame, read_frame_with_limit, write_frame,
+    DEFAULT_MAX_FRAME_SIZE, DEFAULT_MAX_RAFT_FRAME_SIZE, FrameError, read_frame, read_frame_with_limit, write_frame,
     write_frame_with_limit,
 };
 pub use error::NetworkError;

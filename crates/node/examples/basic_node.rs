@@ -5,7 +5,7 @@ use std::time::Duration;
 async fn main() -> Result<(), node::BoxError> {
     println!("=== Starting Minimal Aaron Node ===");
 
-    Node::new()
+    Node::new("basic-worker")
         .with(service_fn("worker", |ctx: Context| async move {
             println!("Worker service started! Node ID: {}", ctx.identity.id());
             println!(

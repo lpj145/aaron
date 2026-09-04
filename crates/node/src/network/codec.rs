@@ -5,6 +5,9 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 /// Default maximum allowed frame payload size: 3MB (3 * 1024 * 1024 bytes).
 pub const DEFAULT_MAX_FRAME_SIZE: usize = 3 * 1024 * 1024;
 
+/// Default maximum allowed frame payload size for consensus/snapshots: 64MB (64 * 1024 * 1024 bytes).
+pub const DEFAULT_MAX_RAFT_FRAME_SIZE: usize = 64 * 1024 * 1024;
+
 /// Errors that can occur when reading or writing length-prefixed frames.
 #[derive(Debug)]
 pub enum FrameError {

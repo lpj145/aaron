@@ -22,6 +22,7 @@ pub struct QuicManager {
     pool: QuicPool,
     client_endpoint_v4: Arc<OnceCell<quinn::Endpoint>>,
     client_endpoint_v6: Arc<OnceCell<quinn::Endpoint>>,
+    connecting_locks: Arc<tokio::sync::Mutex<std::collections::HashMap<SocketAddr, Arc<tokio::sync::Mutex<()>>>>>,
 }
 
 impl QuicManager {
@@ -31,6 +32,7 @@ impl QuicManager {
             pool: QuicPool::new(),
             client_endpoint_v4: Arc::new(OnceCell::new()),
             client_endpoint_v6: Arc::new(OnceCell::new()),
+            connecting_locks: Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new())),
         }
     }
 
@@ -71,11 +73,11 @@ impl QuicManager {
         Ok(endpoint)
     }
 
-    /// Connects to a remote QUIC peer with automatic connection pooling.
+    /// Connects to a remote QUIC peer with automatic connection pooling and singleflight deduplication.
     ///
-    /// If an active connection to `addr` already exists in the pool, it is returned.
-    /// Otherwise, a new QUIC connection is established with P2P TLS verification,
-    /// stored in the pool, and returned.
+    /// If an active connection to `addr` already exists in the pool, it is returned immediately.
+    /// Concurrent connection requests to the same address are deduplicated so only a single
+    /// QUIC handshake is performed against the target node.
     pub async fn connect(
         &self,
         addr: impl ToSocketAddrs,
@@ -87,22 +89,48 @@ impl QuicManager {
             )) as BoxError
         })?;
 
-        // 1. Check if we already have an active QUIC connection in the pool
+        // 1. Fast path: check if we already have an active QUIC connection in the pool
         if let Some(existing) = self.pool.get(&socket_addr).await {
             return Ok(existing);
         }
 
-        // 2. Obtain or initialize client endpoint matching IPv4/IPv6 address family
+        // 2. Singleflight: acquire per-address lock to deduplicate concurrent handshakes
+        let addr_lock = {
+            let mut map = self.connecting_locks.lock().await;
+            map.entry(socket_addr)
+                .or_insert_with(|| Arc::new(tokio::sync::Mutex::new(())))
+                .clone()
+        };
+
+        let _guard = addr_lock.lock().await;
+
+        // 3. Re-check if another concurrent task completed the handshake while we waited
+        if let Some(existing) = self.pool.get(&socket_addr).await {
+            let mut map = self.connecting_locks.lock().await;
+            if Arc::strong_count(&addr_lock) <= 2 {
+                map.remove(&socket_addr);
+            }
+            return Ok(existing);
+        }
+
+        // 4. Obtain or initialize client endpoint matching IPv4/IPv6 address family
         let endpoint = self
             .get_or_init_client_endpoint(socket_addr.is_ipv6())
             .await?;
 
-        // 3. Initiate QUIC handshake
+        // 5. Initiate QUIC handshake (singleflight execution)
         let connecting = endpoint.connect(socket_addr, server_name)?;
         let connection = connecting.await?;
 
-        // 4. Register in pool atomically (closing redundant connection if a concurrent connect won)
+        // 6. Register in pool atomically
         let final_conn = self.pool.get_or_insert(socket_addr, connection).await;
+
+        {
+            let mut map = self.connecting_locks.lock().await;
+            if Arc::strong_count(&addr_lock) <= 2 {
+                map.remove(&socket_addr);
+            }
+        }
 
         Ok(final_conn)
     }
