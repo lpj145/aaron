@@ -11,7 +11,7 @@ Build-time FlatBuffers schema compiler and code generation tool for Aaron distri
 - **Lightweight Build Dependencies**: Depends strictly on `planus-translation` and `planus-codegen`. Does not pull Tokio, Quinn, Fjall, or any Aaron runtime crates into host builds.
 - **Embedded Core Schemas**: Bundles standard Aaron FlatBuffers schemas (`node.fbs`, `membership.fbs`, `control_plane.fbs`, `shard.fbs`).
 - **Seamless Includes**: Automatically resolves `include "node.fbs";` so domain schemas can utilize `Aaron.Node.Uuid` and `Aaron.Node.NodeId` without copying files.
-- **Automated Serde Sanitization**: Strips hardcoded Serde derives from templates by default to avoid unwanted compile-time requirements.
+- **Automated JSON / Serde Support**: Retains Planus's native Serde derives by default for instant JSON serialization via `serde_json`, or strips them on demand via `.remove_serde(true)`.
 - **Cargo Rerun Directives**: Automatically prints `cargo:rerun-if-changed=<path>` for tracked schemas.
 
 ---
@@ -89,7 +89,8 @@ The `Builder` API provides granular control over compilation:
 | `out_file(name)` | `<stem>_generated.rs` | Customizes output file name inside `OUT_DIR` |
 | `out_dir(path)` | `$OUT_DIR` | Overrides target generation directory |
 | `include_node_schema(bool)` | `false` | Stages `node.fbs` for `include "node.fbs";` resolution |
-| `strip_serde(bool)` | `true` | Removes template Serde derives from generated code |
+| `remove_serde(bool)` | `false` | Strips Serde derives from templates (set `true` if `serde` is not in dependencies) |
+| `strip_serde(bool)` | `false` | Alias for `remove_serde` |
 | `emit_rerun_directives(bool)`| `true` | Emits `cargo:rerun-if-changed` to stdout |
 
 ---

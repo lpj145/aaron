@@ -100,3 +100,68 @@ root_type Item;
     assert_eq!(out_file, out_dir.join("custom_inventory.rs"));
     assert!(out_file.exists());
 }
+
+#[test]
+fn test_default_keeps_serde_for_json() {
+    let dir = tempdir().expect("failed to create tempdir");
+    let schema_file = dir.path().join("payload.fbs");
+    let out_dir = dir.path().join("out");
+
+    fs::write(
+        &schema_file,
+        r#"
+namespace JsonTest;
+
+table Payload {
+    key: string;
+    value: int64;
+}
+
+root_type Payload;
+"#,
+    )
+    .unwrap();
+
+    // Default: remove_serde is false, so serde derives remain for JSON serialization
+    let out_file = aaron_build::Builder::new()
+        .schema(&schema_file)
+        .out_dir(&out_dir)
+        .compile()
+        .expect("compile failed");
+
+    let code = fs::read_to_string(&out_file).unwrap();
+    assert!(code.contains("Serialize"));
+    assert!(code.contains("Deserialize"));
+}
+
+#[test]
+fn test_remove_serde_strips_serde_derives() {
+    let dir = tempdir().expect("failed to create tempdir");
+    let schema_file = dir.path().join("stripped.fbs");
+    let out_dir = dir.path().join("out");
+
+    fs::write(
+        &schema_file,
+        r#"
+namespace StripTest;
+
+table RawData {
+    raw: [uint8];
+}
+
+root_type RawData;
+"#,
+    )
+    .unwrap();
+
+    let out_file = aaron_build::Builder::new()
+        .schema(&schema_file)
+        .out_dir(&out_dir)
+        .remove_serde(true)
+        .compile()
+        .expect("compile failed");
+
+    let code = fs::read_to_string(&out_file).unwrap();
+    assert!(!code.contains("::serde::Serialize"));
+    assert!(!code.contains("::serde::Deserialize"));
+}

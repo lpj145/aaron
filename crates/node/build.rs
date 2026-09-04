@@ -13,6 +13,7 @@ fn main() {
     aaron_build::Builder::new()
         .schema(schema_path)
         .out_file("node_generated.rs")
+        .remove_serde(true)
         .compile()
         .expect("failed to compile node.fbs FlatBuffers schema");
 }

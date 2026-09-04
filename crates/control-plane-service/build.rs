@@ -13,6 +13,7 @@ fn main() {
     aaron_build::Builder::new()
         .schema(schema_path)
         .out_file("control_plane_generated.rs")
+        .remove_serde(true)
         .compile()
         .expect("failed to compile control_plane.fbs FlatBuffers schema");
 }

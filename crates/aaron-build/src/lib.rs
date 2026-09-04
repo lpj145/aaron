@@ -91,7 +91,7 @@ pub struct Builder {
     schemas: Vec<PathBuf>,
     out_dir: Option<PathBuf>,
     out_file: Option<PathBuf>,
-    strip_serde: bool,
+    remove_serde: bool,
     include_node_schema: bool,
     emit_rerun_directives: bool,
 }
@@ -102,7 +102,7 @@ impl Default for Builder {
             schemas: Vec::new(),
             out_dir: None,
             out_file: None,
-            strip_serde: true,
+            remove_serde: false,
             include_node_schema: false,
             emit_rerun_directives: true,
         }
@@ -148,11 +148,20 @@ impl Builder {
         self
     }
 
-    /// Controls whether hardcoded serde derives (`::serde::Serialize, ::serde::Deserialize`)
-    /// from Planus templates should be stripped from the generated code (default: `true`).
-    pub fn strip_serde(mut self, strip: bool) -> Self {
-        self.strip_serde = strip;
+    /// Controls whether Serde derives (`::serde::Serialize, ::serde::Deserialize`)
+    /// from Planus templates should be removed from the generated code (default: `false`).
+    ///
+    /// When kept as default (`false`), FlatBuffers structures retain Serde derives, enabling
+    /// seamless JSON serialization/deserialization with `serde_json`.
+    /// Set to `true` when compiling in environments where `serde` is not a dependency.
+    pub fn remove_serde(mut self, remove: bool) -> Self {
+        self.remove_serde = remove;
         self
+    }
+
+    /// Alias for [`remove_serde`].
+    pub fn strip_serde(self, remove: bool) -> Self {
+        self.remove_serde(remove)
     }
 
     /// Automatically provisions Aaron's standard `node.fbs` schema, making types like
@@ -255,7 +264,7 @@ impl Builder {
         let mut generated_code = planus_codegen::generate_rust(&declarations, false)
             .map_err(|e| BuildError::CodegenFailed(e.to_string()))?;
 
-        if self.strip_serde {
+        if self.remove_serde {
             generated_code = generated_code
                 .replace(", ::serde::Serialize, ::serde::Deserialize", "")
                 .replace("::serde::Serialize, ::serde::Deserialize,", "")
