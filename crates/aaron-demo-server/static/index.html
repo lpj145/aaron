@@ -198,7 +198,7 @@
         </div>
 
         <div class="rounded-2xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
-          <!-- Tabs Header: 4 Options -->
+          <!-- Tabs Header: 5 Options -->
           <div class="flex flex-wrap items-center gap-2 p-3 bg-slate-950 border-b border-white/10 font-mono text-xs">
             <button onclick="setTab(1)" id="tab-btn-1" class="px-4 py-2 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold transition">
               1. Control Plane Node
@@ -212,12 +212,15 @@
             <button onclick="setTab(4)" id="tab-btn-4" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
               4. EventHub & Supervised Service
             </button>
+            <button onclick="setTab(5)" id="tab-btn-5" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
+              5. Binary CLI & Cluster Join
+            </button>
           </div>
 
           <div class="p-6 font-mono text-xs overflow-x-auto text-slate-300 bg-[#070a10]">
             
-            <!-- Tab 1: Control Plane Node (Standard Config) -->
-            <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-slate-500">// 1. Control Plane Node: Raft consensus orchestrator with default configuration</span>
+            <!-- Tab 1: Control Plane Node (Official Default Ports) -->
+            <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-slate-500">// 1. Control Plane Node: In-process OpenRaft orchestrator on documented default ports</span>
 <span class="text-brand-400">use</span> aaron::{
     admin::AdminService,
     control_plane::ControlPlaneService,
@@ -227,22 +230,22 @@
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// Creates standard paired ControlPlaneService (OpenRaft consensus engine)</span>
+    <span class="text-slate-500">// Creates standard ControlPlaneService (OpenRaft consensus listening on 0.0.0.0:18946 via QUIC)</span>
     <span class="text-brand-400">let</span> (control_plane, cp_handle) = ControlPlaneService::pair();
 
-    <span class="text-slate-500">// Compose node with Dynamic Tracing, Raft Control Plane, and Admin Console UI</span>
+    <span class="text-slate-500">// Compose node with Dynamic Tracing, Raft Control Plane, and Admin Dashboard UI</span>
     <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"control-plane-01"</span>)
-        .with(TracingService::new())                                    <span class="text-slate-500">// Dynamic log reload</span>
-        .with(control_plane)                                           <span class="text-slate-500">// Raft metadata state machine</span>
-        .with(AdminService::new().with_control_plane_handle(cp_handle));<span class="text-slate-500">// Web dashboard on port 28100</span>
+        .with(TracingService::new())                                    <span class="text-slate-500">// Dynamic log filter reload</span>
+        .with(control_plane)                                           <span class="text-slate-500">// OpenRaft consensus RPC on port 18946</span>
+        .with(AdminService::new().with_control_plane_handle(cp_handle));<span class="text-slate-500">// Admin Web UI on port 8080</span>
 
-    println!(<span class="text-amber-300">"Control Plane node active. Admin dashboard available at http://localhost:28100"</span>);
+    println!(<span class="text-amber-300">"Control Plane node online. Admin console available at http://127.0.0.1:8080"</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
-            <!-- Tab 2: Worker Node (Standard Config) -->
-            <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-slate-500">// 2. Worker Node: Joins the cluster mesh with standard SWIM gossip config</span>
+            <!-- Tab 2: Worker Node (Official Default Ports) -->
+            <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-slate-500">// 2. Worker Node: Joins the cluster mesh on official Serf/SWIM port 7946</span>
 <span class="text-brand-400">use</span> aaron::{
     membership::{MembershipConfig, MembershipService},
     service_fn, Context, Node,
@@ -250,12 +253,11 @@
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// Standard config pointing to seed node on port 18100</span>
-    <span class="text-brand-400">let</span> config = MembershipConfig {
-        bind_addr: <span class="text-amber-300">"0.0.0.0:18101"</span>.to_string(),
-        seeds: <span class="text-brand-400">vec!</span>[<span class="text-amber-300">"127.0.0.1:18100"</span>.to_string()], <span class="text-slate-500">// Connects to seed / control plane</span>
-        ..Default::default()
-    };
+    <span class="text-slate-500">// MembershipConfig::lan() defaults to "0.0.0.0:7946" (MEMBERSHIP_BIND_ADDR)</span>
+    <span class="text-brand-400">let</span> config = MembershipConfig::lan()
+        .bind_addr(<span class="text-amber-300">"0.0.0.0:7946"</span>)
+        .add_seed(<span class="text-amber-300">"192.168.1.10:7946"</span>); <span class="text-slate-500">// Contacts seed node on standard port 7946</span>
+
     <span class="text-brand-400">let</span> (membership, _handle) = MembershipService::pair_with_config(config);
 
     <span class="text-slate-500">// Node executes supervised business tasks alongside gossip failure detection</span>
@@ -268,7 +270,7 @@
             Ok(())
         }));
 
-    println!(<span class="text-amber-300">"Worker node online and participating in SWIM mesh."</span>);
+    println!(<span class="text-amber-300">"Worker node online on port 7946. Exchanging SWIM gossip with cluster."</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
@@ -334,6 +336,96 @@
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
+
+            <!-- Tab 5: Binary CLI Execution & Cluster Join -->
+            <div id="code-snippet-5" class="hidden space-y-6">
+              <pre class="leading-relaxed"><code><span class="text-slate-500">// 5. Binary CLI: Production daemon accepting --bind, --join, --cluster-ip, and --cluster-id</span>
+<span class="text-brand-400">use</span> aaron::{
+    membership::{MembershipConfig, MembershipService},
+    tracing::TracingService,
+    Node, Uuid,
+};
+<span class="text-brand-400">use</span> clap::Parser;
+
+<span class="text-cyan-400">#[derive(Parser, Debug)]</span>
+<span class="text-cyan-400">#[command(name = "aaron-node", about = "Aaron cluster node daemon")]</span>
+<span class="text-brand-400">struct</span> <span class="text-emerald-400">Args</span> {
+    <span class="text-slate-500">/// Local address/port to bind for SWIM gossip (documented default: 0.0.0.0:7946)</span>
+    <span class="text-cyan-400">#[arg(long, default_value = "0.0.0.0:7946", env = "MEMBERSHIP_BIND_ADDR")]</span>
+    bind: String,
+
+    <span class="text-slate-500">/// Seed node address to join (e.g. 192.168.1.10:7946)</span>
+    <span class="text-cyan-400">#[arg(long, env = "MEMBERSHIP_SEEDS")]</span>
+    join: Option&lt;String&gt;,
+
+    <span class="text-slate-500">/// Node IP or hostname advertised across the cluster network</span>
+    <span class="text-cyan-400">#[arg(long, env = "CLUSTER_IP")]</span>
+    cluster_ip: Option&lt;String&gt;,
+
+    <span class="text-slate-500">/// Cluster UUID token required when joining an established mesh</span>
+    <span class="text-cyan-400">#[arg(long, env = "MEMBERSHIP_CLUSTER_ID")]</span>
+    cluster_id: Option&lt;Uuid&gt;,
+}
+
+<span class="text-cyan-400">#[tokio::main]</span>
+<span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
+    <span class="text-brand-400">let</span> args = Args::parse();
+
+    <span class="text-slate-500">// Build MembershipConfig from CLI args, falling back to Aaron's documented env vars</span>
+    <span class="text-brand-400">let mut</span> config = MembershipConfig::lan().bind_addr(args.bind);
+    <span class="text-brand-400">if let</span> Some(seed) = args.join {
+        config = config.add_seed(seed);
+    }
+    <span class="text-brand-400">if let</span> Some(cid) = args.cluster_id {
+        config = config.cluster_id(cid);
+    }
+
+    <span class="text-brand-400">let</span> (membership, _handle) = MembershipService::pair_with_config(config);
+
+    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"aaron-worker"</span>)
+        .with(TracingService::new())
+        .with(membership);
+
+    node.run().<span class="text-brand-400">await</span>?;
+    Ok(())
+}</code></pre>
+
+              <!-- Terminal Execution Examples -->
+              <div class="p-4 rounded-xl bg-slate-950 border border-white/10 space-y-4">
+                <div class="text-xs font-mono font-bold text-amber-400 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>HOW TO RUN THE COMPILED BINARY (TERMINAL EXAMPLES)</span>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="text-[11px] text-slate-400 font-sans">1. Start the first Seed Node (bootstrap mode on default port 7946):</div>
+                  <div class="p-3 rounded-lg bg-black/60 font-mono text-[11px] text-emerald-400 border border-white/5 select-all">
+                    ./aaron-node --bind 0.0.0.0:7946
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="text-[11px] text-slate-400 font-sans">2. Run subsequent Worker Node passing join address, cluster IP, and cluster UUID:</div>
+                  <div class="p-3 rounded-lg bg-black/60 font-mono text-[11px] text-cyan-300 border border-white/5 select-all">
+                    ./aaron-node \<br>
+                    &nbsp;&nbsp;--bind 0.0.0.0:7946 \<br>
+                    &nbsp;&nbsp;--cluster-ip 192.168.1.11 \<br>
+                    &nbsp;&nbsp;--join 192.168.1.10:7946 \<br>
+                    &nbsp;&nbsp;--cluster-id 550e8400-e29b-41d4-a716-446655440000
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="text-[11px] text-slate-400 font-sans">3. Or execute via Aaron's documented environment variables (e.g. systemd / containers):</div>
+                  <div class="p-3 rounded-lg bg-black/60 font-mono text-[11px] text-amber-300 border border-white/5 select-all">
+                    MEMBERSHIP_BIND_ADDR="0.0.0.0:7946" \<br>
+                    MEMBERSHIP_SEEDS="192.168.1.10:7946" \<br>
+                    MEMBERSHIP_CLUSTER_ID="550e8400-e29b-41d4-a716-446655440000" \<br>
+                    ./aaron-node
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -619,6 +711,58 @@
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Zero-Copy FlatBuffers</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Sub-ms Tick Loop</span>
               <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10">Dynamic Tracing</span>
+            </div>
+          </div>
+
+          <!-- Use Case 5 / Banner: Use Your Imagination -->
+          <div class="lg:col-span-2 tilt-card p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-brand-950/40 border border-white/10 hover:border-amber-400/50 shadow-2xl relative overflow-hidden group">
+            <div class="glare-effect absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
+                  Modular &bull; Unconstrained Composability
+                </span>
+                <span class="text-xs font-mono px-3 py-1 rounded-full bg-white/5 text-slate-300 border border-white/10">
+                  Infinite Architectures
+                </span>
+              </div>
+              <span class="font-mono text-xs text-amber-400 font-bold tracking-wider uppercase">05 &bull; Use Your Imagination</span>
+            </div>
+
+            <h3 class="text-2xl sm:text-3xl font-bold text-white mb-4 group-hover:text-amber-200 transition-colors">
+              Use Your Imagination: Mix, Match & Build Incredible Systems
+            </h3>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6 font-normal max-w-4xl">
+              Aaron is not a rigid all-or-nothing framework. It is an unopinionated, modular suite of distributed primitives designed to be mixed and matched however your architecture demands. Need in-process consensus without external Raft daemons? Combine <code class="text-cyan-300">aaron-control-plane</code> with your storage layer. Need peer-to-peer discovery without full cluster orchestration? Plug in <code class="text-cyan-300">aaron-membership</code>. Need extreme local persistence? Embed <code class="text-cyan-300">aaron-core</code>'s Fjall LSM engine. Combine Aaron's building blocks to construct whatever distributed system you can imagine.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div class="p-4 rounded-xl bg-slate-950/70 border border-white/5">
+                <div class="font-mono text-xs font-bold text-amber-400 mb-1">Decentralized P2P Mesh</div>
+                <div class="text-xs text-slate-400 leading-relaxed">Pair SWIM gossip + intra-node EventHub to coordinate peer swarms without central coordination servers.</div>
+              </div>
+              <div class="p-4 rounded-xl bg-slate-950/70 border border-white/5">
+                <div class="font-mono text-xs font-bold text-cyan-400 mb-1">Stateful Data Engine</div>
+                <div class="text-xs text-slate-400 leading-relaxed">Combine Fjall LSM + Shard Router + OpenRaft to build custom geo-replicated, partition-aware databases.</div>
+              </div>
+              <div class="p-4 rounded-xl bg-slate-950/70 border border-white/5">
+                <div class="font-mono text-xs font-bold text-brand-400 mb-1">Microsecond Telemetry</div>
+                <div class="text-xs text-slate-400 leading-relaxed">Multiplex UDP QUIC streams + zero-copy FlatBuffers to ingest and persist millions of events/sec.</div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400 pt-3 border-t border-white/5">
+              <span class="text-slate-300 font-semibold text-[11px]">Primitives at your disposal:</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">SWIM Gossip</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Quinn QUIC</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Fjall LSM</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">OpenRaft</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">FlatBuffers</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Supervision Tree</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Dynamic Tracing</span>
+              <span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-300 border border-white/10 text-[11px]">Embedded Web UI</span>
             </div>
           </div>
 
@@ -1012,7 +1156,7 @@
     let pollInterval = null;
 
     function setTab(num) {
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= 5; i++) {
         const snippet = document.getElementById(`code-snippet-${i}`);
         const btn = document.getElementById(`tab-btn-${i}`);
         if (snippet) snippet.classList.add('hidden');
