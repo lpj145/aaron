@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/aaron.svg)](https://crates.io/crates/aaron)
 [![docs.rs](https://docs.rs/aaron/badge.svg)](https://docs.rs/aaron)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](../../LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 `aaron` is the umbrella facade crate for the Aaron distributed actor and consensus framework. It aggregates all modular subsystems behind granular Cargo feature flags, allowing users to import only what they need or pull in the complete runtime with a single dependency.
 
@@ -125,9 +125,4 @@ For granular microservice or embedded architectures, individual crates can be co
 
 ## License
 
-Licensed under either of:
-
-- Apache License, Version 2.0 ([LICENSE-APACHE](../../LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](../../LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
+Licensed under the Apache License, Version 2.0 ([LICENSE](https://www.apache.org/licenses/LICENSE-2.0)).
