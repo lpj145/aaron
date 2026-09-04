@@ -6,7 +6,7 @@
   <title>Aaron — Opinionated Distributed Cluster Runtime for Rust (Alpha)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -42,10 +42,10 @@
       animation: float 4.5s ease-in-out infinite;
     }
     .bg-grid {
-      background-size: 36px 36px;
+      background-size: 40px 40px;
       background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     }
     details summary::-webkit-details-marker {
       display: none;
@@ -54,786 +54,780 @@
 </head>
 <body class="bg-[#070a10] text-slate-100 font-sans selection:bg-brand-500 selection:text-white min-h-screen relative overflow-x-hidden">
 
-  <!-- Background Grids & Radial Lights -->
-  <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
-  <div class="fixed top-0 left-1/3 w-[700px] h-[400px] bg-indigo-600/10 blur-[140px] pointer-events-none z-0"></div>
-  <div class="fixed top-40 right-10 w-[500px] h-[400px] bg-cyan-500/10 blur-[130px] pointer-events-none z-0"></div>
-
-  <!-- Navigation -->
-  <header class="sticky top-0 z-50 backdrop-blur-xl bg-[#070a10]/80 border-b border-white/10">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-cyan-400 p-[1px] shadow-lg shadow-brand-500/20">
-          <div class="w-full h-full bg-[#070a10] rounded-[7px] flex items-center justify-center font-mono font-bold text-sm text-cyan-400">
-            λ
-          </div>
-        </div>
-        <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-          Aaron
-        </span>
-        <span class="px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
-          ALPHA v0.1.0
-        </span>
-      </div>
-
-      <nav class="hidden md:flex items-center gap-7 text-xs font-mono uppercase tracking-wider text-slate-400">
-        <a href="#code" class="hover:text-white transition">Code Models</a>
-        <a href="#anatomy" class="hover:text-white transition">Node Anatomy</a>
-        <a href="#lifecycle" class="hover:text-white transition">Lifecycle</a>
-        <a href="#sandbox" class="hover:text-white transition flex items-center gap-1.5 text-cyan-400">
-          <span>Live Sandbox</span>
-          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
-        </a>
-        <a href="#crates" class="hover:text-white transition">Crates</a>
-      </nav>
-
-      <div class="flex items-center gap-3">
-        <!-- Live Cluster Slots Badge -->
-        <div id="nav-slots-badge" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-slate-900 border border-white/10 text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span id="nav-slots-text">Slots: 6 / 6 Free</span>
-        </div>
-
-        <a href="https://crates.io/crates/aaron" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition font-mono flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          <span class="hidden sm:inline">crates.io</span>
-        </a>
-
-        <a href="https://github.com/lpj145/aaron" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-1.5 font-mono">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          <span class="hidden sm:inline">GitHub</span>
-        </a>
-      </div>
+  <!-- ======================================================== -->
+  <!-- 1. FULL-SCREEN HERO SECTION (w-full, min-h-screen)       -->
+  <!-- ======================================================== -->
+  <section class="relative w-full min-h-screen flex flex-col justify-between overflow-hidden">
+    
+    <!-- Immersive Full-Screen Background Mascot Image & Dark Gradients -->
+    <div class="absolute inset-0 z-0">
+      <img 
+        src="/hero-mascot.webp" 
+        alt="Aaron Distributed Runtime" 
+        class="w-full h-full object-cover object-center filter brightness-[0.38] contrast-125 scale-105"
+      />
+      <!-- Atmospheric Gradients: Dark Bottom Fade for Smooth Overlap -->
+      <div class="absolute inset-0 bg-gradient-to-t from-[#070a10] via-[#070a10]/50 to-[#070a10]/80"></div>
+      <div class="absolute inset-0 bg-grid opacity-60"></div>
+      <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-brand-500/15 blur-[160px] pointer-events-none"></div>
     </div>
-  </header>
 
-  <!-- ========================================== -->
-  <!-- HERO SECTION                               -->
-  <!-- ========================================== -->
-  <main class="relative z-10 max-w-7xl mx-auto px-6 pt-12 pb-20">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      
-      <!-- Left Column: Copy & Actions -->
-      <div class="lg:col-span-7 space-y-6">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono bg-amber-500/10 border border-amber-500/20 text-amber-300">
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span>Alpha Release</span>
-          <span class="text-slate-600">&bull;</span>
-          <span class="text-slate-400">APIs Evolving & Feedback Welcome</span>
+    <!-- Navigation Header -->
+    <header class="relative z-20 w-full backdrop-blur-md bg-[#070a10]/40 border-b border-white/10">
+      <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-cyan-400 p-[1px] shadow-lg shadow-brand-500/30">
+            <div class="w-full h-full bg-[#070a10] rounded-[7px] flex items-center justify-center font-mono font-bold text-sm text-cyan-400">
+              λ
+            </div>
+          </div>
+          <span class="font-black text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+            Aaron
+          </span>
+          <span class="px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            ALPHA v0.1.0
+          </span>
         </div>
 
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] text-white">
-          Opinionated Cluster <br/>
-          <span class="bg-gradient-to-r from-cyan-300 via-indigo-300 to-brand-400 bg-clip-text text-transparent">
-            Runtime for Rust
-          </span>
-        </h1>
+        <nav class="hidden md:flex items-center gap-7 text-xs font-mono uppercase tracking-wider text-slate-300">
+          <a href="#code" class="hover:text-cyan-400 transition">Code Models</a>
+          <a href="#opinionated" class="hover:text-cyan-400 transition">Why Aaron</a>
+          <a href="#lifecycle" class="hover:text-cyan-400 transition">Lifecycle</a>
+          <a href="#sandbox" class="hover:text-white transition flex items-center gap-1.5 text-cyan-400">
+            <span>Live Sandbox</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+          </a>
+          <a href="#crates" class="hover:text-cyan-400 transition">Crates</a>
+        </nav>
 
-        <p class="text-base sm:text-lg text-slate-300 leading-relaxed max-w-xl">
-          Aaron provides a cohesive architecture for distributed clusters in Rust: each node is an autonomous runtime unit that supervises its own services, manages disk-backed embedded state, discovers peers through decentralized gossip, and communicates over encrypted multiplexed streams without heap allocations.
-        </p>
+        <div class="flex items-center gap-3">
+          <div id="nav-slots-badge" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-slate-900/80 border border-white/15 text-slate-300 backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="nav-slots-text">Slots: 6 / 6 Free</span>
+          </div>
 
-        <!-- CTA Action Buttons -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-          <a href="#sandbox" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-90 text-white shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2">
-            <span>Test Live Sandbox (3 Nodes)</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          <a href="https://crates.io/crates/aaron" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 transition font-mono flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span class="hidden sm:inline">crates.io</span>
           </a>
 
-          <!-- Quick Copy Box -->
-          <button onclick="copyInstallCmd()" class="px-4 py-3.5 rounded-xl font-mono text-xs bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 transition flex items-center justify-between gap-3">
-            <span class="text-cyan-400">$</span>
-            <span id="install-cmd">cargo add aaron --features full</span>
-            <svg id="copy-icon" class="w-4 h-4 text-slate-500 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-          </button>
-        </div>
-
-        <!-- Design Principles Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/10 text-xs">
-          <div class="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-            <div class="font-mono font-semibold text-cyan-300 mb-1">Autonomous Nodes</div>
-            <div class="text-slate-400">Each node manages its own actors, storage, and lifecycle without external service orchestration dependencies.</div>
-          </div>
-          <div class="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-            <div class="font-mono font-semibold text-indigo-300 mb-1">Decentralized Mesh</div>
-            <div class="text-slate-400">O(1) bounded membership and failure detection via SWIM gossip over QUIC.</div>
-          </div>
-          <div class="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-            <div class="font-mono font-semibold text-emerald-300 mb-1">Zero-Copy Fabric</div>
-            <div class="text-slate-400">Type-safe FlatBuffers messaging and disk-backed Fjall LSM tree in a single unified binary.</div>
-          </div>
+          <a href="https://github.com/lpj145/aaron" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 transition flex items-center gap-1.5 font-mono">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            <span class="hidden sm:inline">GitHub</span>
+          </a>
         </div>
       </div>
+    </header>
 
-      <!-- Right Column: Mascot Graphic & Floating Telemetry Chips -->
-      <div class="lg:col-span-5 relative flex items-center justify-center">
-        <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-brand-500/10 to-transparent blur-3xl -z-10"></div>
-        
-        <div class="w-full relative group">
-          <div class="relative rounded-2xl overflow-hidden border border-white/15 bg-slate-900/60 shadow-2xl backdrop-blur-md p-2">
-            <img 
-              src="/hero-mascot.webp" 
-              alt="Aaron Distributed Runtime Mascot" 
-              class="w-full h-auto rounded-xl animate-float object-cover shadow-inner"
-            />
-          </div>
+    <!-- Centered Hero Overlay Content: Objective & Mission Statement -->
+    <div class="relative z-10 max-w-5xl mx-auto px-6 py-16 text-center flex flex-col items-center justify-center my-auto">
+      
+      <!-- Alpha Pill Notice -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-mono bg-amber-500/10 border border-amber-500/30 text-amber-300 backdrop-blur-md mb-8 shadow-xl">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span class="font-bold tracking-wider uppercase">Alpha v0.1.0</span>
+        <span class="text-slate-600">&bull;</span>
+        <span>Open Architecture for Feedback & Evolution</span>
+      </div>
 
-          <!-- Floating Orbit Status Badge 1: Top Right -->
-          <div class="absolute -top-3 -right-3 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-xs font-mono text-cyan-300 shadow-xl backdrop-blur-md flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span>Mesh QUIC + TLS 1.3</span>
-          </div>
+      <!-- Main Headline -->
+      <h1 class="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white mb-4 drop-shadow-2xl">
+        AARON
+      </h1>
 
-          <!-- Floating Orbit Status Badge 2: Bottom Left -->
-          <div class="absolute -bottom-3 -left-3 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-xs font-mono text-emerald-300 shadow-xl backdrop-blur-md flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Integrated Fjall LSM</span>
-          </div>
-        </div>
+      <div class="text-xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-300 via-indigo-200 to-brand-300 bg-clip-text text-transparent mb-6 drop-shadow">
+        The Opinionated Distributed Cluster Runtime for Rust
+      </div>
+
+      <!-- Core Objective Description -->
+      <p class="text-base sm:text-lg lg:text-xl text-slate-200 font-normal leading-relaxed max-w-3xl mb-10 drop-shadow-md">
+        Aaron is engineered to make building distributed, self-healing clusters in Rust intuitive and robust. It provides a cohesive, single-binary architecture where autonomous nodes supervise services, manage embedded disk-backed state, discover peers via decentralized gossip, and communicate over zero-copy streams without external coordination daemons.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row items-center gap-4">
+        <a href="#code" class="px-8 py-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-95 text-white shadow-xl shadow-brand-500/30 transition flex items-center gap-2">
+          <span>Explore Code Below ↓</span>
+        </a>
+        <a href="#sandbox" class="px-8 py-4 rounded-xl font-semibold text-sm bg-white/10 hover:bg-white/15 border border-white/20 text-white backdrop-blur-md transition flex items-center gap-2">
+          <span>Test Live Sandbox (3 Nodes)</span>
+        </a>
       </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- SECTION 2: CODE MODELS (RIGHT BELOW HERO)  -->
-    <!-- ========================================== -->
-    <section id="code" class="mt-20 scroll-mt-20">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
-        <div>
-          <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-1">Usage Models</div>
-          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Composing an Aaron Node
-          </h2>
-        </div>
-        <p class="text-xs text-slate-400 max-w-md">
-          Aaron provides a composable API. Start with a lightweight single-node service in 15 lines, or scale up to a resilient cluster member with gossip, telemetry, and an admin console.
-        </p>
-      </div>
+    <!-- Scroll Indicator -->
+    <div class="relative z-10 pb-8 flex flex-col items-center justify-center text-slate-400 text-xs font-mono">
+      <span class="mb-1 text-slate-400">Scroll to Explore</span>
+      <svg class="w-5 h-5 animate-bounce text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+      </svg>
+    </div>
+  </section>
 
-      <div class="rounded-2xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
-        <!-- Tabs Header -->
-        <div class="flex flex-wrap items-center gap-2 p-3 bg-slate-950 border-b border-white/10 font-mono text-xs">
-          <button onclick="setTab(1)" id="tab-btn-1" class="px-4 py-2 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold transition">
-            1. Minimal Model (Get Started in 15 Lines)
-          </button>
-          <button onclick="setTab(2)" id="tab-btn-2" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-            2. Production Cluster (SWIM Gossip + Admin + EventHub)
-          </button>
-          <button onclick="setTab(3)" id="tab-btn-3" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-            3. Zero-Copy FlatBuffers RPC
-          </button>
+  <!-- ======================================================== -->
+  <!-- SECTIONS SLIDING OVER THE HERO IMAGE                     -->
+  <!-- ======================================================== -->
+  <div class="relative z-20 -mt-10 sm:-mt-16 rounded-t-3xl border-t border-white/10 bg-[#070a10] shadow-[0_-30px_60px_rgba(0,0,0,0.9)] pb-32">
+    
+    <div class="max-w-7xl mx-auto px-6 pt-16">
+
+      <!-- ======================================================== -->
+      <!-- SECTION 2: CODE MODELS (IMMEDIATELY BELOW HERO)          -->
+      <!-- ======================================================== -->
+      <section id="code" class="scroll-mt-24">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-1">Code Models</div>
+            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              Building Nodes with Aaron
+            </h2>
+          </div>
+          <p class="text-xs text-slate-400 max-w-md">
+            Aaron's API is composable and modular. Configure a control plane, scale worker nodes, run standalone local supervisors, or decouple services with the internal EventHub.
+          </p>
         </div>
 
-        <div class="p-6 font-mono text-xs overflow-x-auto text-slate-300 bg-[#070a10]">
-          <!-- Snippet 1: Minimal Model -->
-          <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-slate-500">// Minimal Model: A lightweight node with embedded persistent storage</span>
-<span class="text-brand-400">use</span> aaron::{Context, Node, service_fn};
+        <div class="rounded-2xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
+          <!-- Tabs Header: 4 Options -->
+          <div class="flex flex-wrap items-center gap-2 p-3 bg-slate-950 border-b border-white/10 font-mono text-xs">
+            <button onclick="setTab(1)" id="tab-btn-1" class="px-4 py-2 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold transition">
+              1. Control Plane Node
+            </button>
+            <button onclick="setTab(2)" id="tab-btn-2" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
+              2. Worker Node
+            </button>
+            <button onclick="setTab(3)" id="tab-btn-3" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
+              3. Standalone Supervisor
+            </button>
+            <button onclick="setTab(4)" id="tab-btn-4" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
+              4. EventHub & Supervised Service
+            </button>
+          </div>
+
+          <div class="p-6 font-mono text-xs overflow-x-auto text-slate-300 bg-[#070a10]">
+            
+            <!-- Tab 1: Control Plane Node (Standard Config) -->
+            <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-slate-500">// 1. Control Plane Node: Raft consensus orchestrator with default configuration</span>
+<span class="text-brand-400">use</span> aaron::{
+    admin::AdminService,
+    control_plane::ControlPlaneService,
+    tracing::TracingService,
+    Node,
+};
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// 1. Create the runtime execution container</span>
-    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"order-service"</span>)
-        <span class="text-slate-500">// 2. Register a supervised async microservice</span>
-        .with(service_fn(<span class="text-amber-300">"orders"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
-            <span class="text-slate-500">// Access isolated keyspace in the Fjall LSM engine</span>
-            <span class="text-brand-400">let</span> orders = ctx.store.keyspace(<span class="text-amber-300">"orders"</span>)?;
+    <span class="text-slate-500">// Creates standard paired ControlPlaneService (OpenRaft consensus engine)</span>
+    <span class="text-brand-400">let</span> (control_plane, cp_handle) = ControlPlaneService::pair();
 
-            <span class="text-slate-500">// Disk write with WAL and ~6 microsecond latency</span>
-            orders.insert(<span class="text-amber-300">"order:1001"</span>, <span class="text-amber-300">br#"{"customer":"alice","amount":99.50}"#</span>)?;
-            ctx.store.persist()?;
+    <span class="text-slate-500">// Compose node with Dynamic Tracing, Raft Control Plane, and Admin Console UI</span>
+    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"control-plane-01"</span>)
+        .with(TracingService::new())                                    <span class="text-slate-500">// Dynamic log reload</span>
+        .with(control_plane)                                           <span class="text-slate-500">// Raft metadata state machine</span>
+        .with(AdminService::new().with_control_plane_handle(cp_handle));<span class="text-slate-500">// Web dashboard on port 28100</span>
 
-            <span class="text-slate-500">// Sub-millisecond point lookup</span>
-            <span class="text-brand-400">if let</span> Some(payload) = orders.get(<span class="text-amber-300">"order:1001"</span>)? {
-                println!(<span class="text-amber-300">"Order stored: {}"</span>, String::from_utf8_lossy(&amp;payload));
-            }
-            Ok(())
-        }));
-
-    println!(<span class="text-amber-300">"Aaron Node active and supervising services."</span>);
+    println!(<span class="text-amber-300">"Control Plane node active. Admin dashboard available at http://localhost:28100"</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
-          <!-- Snippet 2: Full Production Model -->
-          <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-slate-500">// Production Model: Distributed cluster node with SWIM gossip and Admin UI</span>
+            <!-- Tab 2: Worker Node (Standard Config) -->
+            <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-slate-500">// 2. Worker Node: Joins the cluster mesh with standard SWIM gossip config</span>
 <span class="text-brand-400">use</span> aaron::{
-    admin::AdminService,
-    membership::{MembershipConfig, MembershipEvent, MembershipService},
-    tracing::TracingService,
-    Context, Node, Uuid,
+    membership::{MembershipConfig, MembershipService},
+    service_fn, Context, Node,
 };
+
+<span class="text-cyan-400">#[tokio::main]</span>
+<span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
+    <span class="text-slate-500">// Standard config pointing to seed node on port 18100</span>
+    <span class="text-brand-400">let</span> config = MembershipConfig {
+        bind_addr: <span class="text-amber-300">"0.0.0.0:18101"</span>.to_string(),
+        seeds: <span class="text-brand-400">vec!</span>[<span class="text-amber-300">"127.0.0.1:18100"</span>.to_string()], <span class="text-slate-500">// Connects to seed / control plane</span>
+        ..Default::default()
+    };
+    <span class="text-brand-400">let</span> (membership, _handle) = MembershipService::pair_with_config(config);
+
+    <span class="text-slate-500">// Node executes supervised business tasks alongside gossip failure detection</span>
+    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"worker-01"</span>)
+        .with(membership)
+        .with(service_fn(<span class="text-amber-300">"worker-job"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
+            <span class="text-brand-400">let</span> store = ctx.store.keyspace(<span class="text-amber-300">"workloads"</span>)?;
+            store.insert(<span class="text-amber-300">"job:001"</span>, <span class="text-amber-300">b"completed"</span>)?;
+            ctx.store.persist()?;
+            Ok(())
+        }));
+
+    println!(<span class="text-amber-300">"Worker node online and participating in SWIM mesh."</span>);
+    node.run().<span class="text-brand-400">await</span>?;
+    Ok(())
+}</code></pre>
+
+            <!-- Tab 3: Standalone Supervisor Only -->
+            <pre id="code-snippet-3" class="hidden leading-relaxed"><code><span class="text-slate-500">// 3. Standalone Supervisor: Local actor/service supervision without cluster networking</span>
+<span class="text-brand-400">use</span> aaron::{service_fn, Context, Node};
 <span class="text-brand-400">use</span> std::time::Duration;
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// 1. Configure SWIM gossip protocol and O(1) failure detection</span>
-    <span class="text-brand-400">let</span> mem_cfg = MembershipConfig {
-        bind_addr: <span class="text-amber-300">"0.0.0.0:18100"</span>.to_string(),
-        seeds: <span class="text-brand-400">vec!</span>[<span class="text-amber-300">"10.0.0.1:18100"</span>.to_string()], <span class="text-slate-500">// Seed node for initial bootstrap</span>
-        cluster_id: Some(Uuid::random()),
-        probe_interval: Duration::from_millis(400),
-        probe_timeout: Duration::from_millis(150),
-        suspect_timeout: Duration::from_millis(1200),
-        indirect_ping_targets: 3,
-        gossip_fanout: 3,
-    };
-    <span class="text-brand-400">let</span> (membership, handle) = MembershipService::pair_with_config(mem_cfg);
+    <span class="text-slate-500">// Supervise local async services with graceful shutdown & embedded storage</span>
+    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"local-runner"</span>)
+        .with(service_fn(<span class="text-amber-300">"metrics-collector"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
+            <span class="text-brand-400">let</span> stats = ctx.store.keyspace(<span class="text-amber-300">"metrics"</span>)?;
+            <span class="text-brand-400">let mut</span> ticks: u64 = 0;
 
-    <span class="text-slate-500">// 2. Compose the node with observability, clustering, and Vue 3 Admin UI</span>
-    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"worker-01"</span>)
-        .with(TracingService::new())                                <span class="text-slate-500">// Dynamic log level reload</span>
-        .with(membership)                                          <span class="text-slate-500">// SWIM protocol over QUIC transport</span>
-        .with(AdminService::new().with_membership_handle(handle)); <span class="text-slate-500">// Embedded web console on port 28100</span>
-
-    <span class="text-slate-500">// 3. React to cluster topology events in real time (internal EventHub)</span>
-    <span class="text-brand-400">let mut</span> sub = node.context().event_hub.subscribe::&lt;MembershipEvent&gt;().<span class="text-brand-400">await</span>;
-    tokio::spawn(<span class="text-brand-400">async move</span> {
-        <span class="text-brand-400">while let</span> Ok(event) = sub.recv().<span class="text-brand-400">await</span> {
-            <span class="text-brand-400">match</span> event {
-                MembershipEvent::MemberJoined { node_id, addr } =&gt; {
-                    println!(<span class="text-amber-300">"Node {node_id} joined cluster via {addr}"</span>);
-                }
-                MembershipEvent::MemberSuspect { node_id } =&gt; {
-                    println!(<span class="text-amber-300">"Node {node_id} suspected faulty. Dispatching indirect probes..."</span>);
-                }
-                MembershipEvent::MemberDead { node_id } =&gt; {
-                    println!(<span class="text-amber-300">"Node {node_id} confirmed DEAD by the mesh."</span>);
-                }
+            <span class="text-slate-500">// Loops until the supervisor signals graceful shutdown via CancellationToken</span>
+            <span class="text-brand-400">while</span> !ctx.cancellation_token.is_cancelled() {
+                tokio::time::sleep(Duration::from_secs(1)).<span class="text-brand-400">await</span>;
+                ticks += 1;
+                stats.insert(<span class="text-amber-300">"ticks"</span>, ticks.to_le_bytes())?;
+                println!(<span class="text-amber-300">"Supervised heartbeat tick: {ticks}"</span>);
             }
-        }
-    });
+            Ok(())
+        }));
 
-    println!(<span class="text-amber-300">"Node active. Management console available at http://localhost:28100"</span>);
+    println!(<span class="text-amber-300">"Supervisor active. Press Ctrl+C for graceful drain."</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
-          <!-- Snippet 3: FlatBuffers Zero-Copy -->
-          <pre id="code-snippet-3" class="hidden leading-relaxed"><code><span class="text-slate-500">// FlatBuffers schemas compiled at build-time with aaron-build</span>
-<span class="text-slate-500">// High-speed RPC without heap allocation or dynamic string parsing</span>
-<span class="text-brand-400">use</span> my_schemas::transaction_generated::Transaction;
+            <!-- Tab 4: EventHub with Supervised Service -->
+            <pre id="code-snippet-4" class="hidden leading-relaxed"><code><span class="text-slate-500">// 4. EventHub: Decoupled in-memory async pub/sub between supervised services</span>
+<span class="text-brand-400">use</span> aaron::{service_fn, Context, Node};
 
-<span class="text-slate-500">// Direct read from the QUIC network stream buffer</span>
-<span class="text-brand-400">let</span> packet_bytes: &amp;[u8] = quic_stream.read_chunk().<span class="text-brand-400">await</span>?;
+<span class="text-cyan-400">#[derive(Clone, Debug)]</span>
+<span class="text-brand-400">struct</span> <span class="text-emerald-400">OrderCreated</span> {
+    id: u64,
+    amount_cents: u64,
+}
 
-<span class="text-slate-500">// Pointer-based field access with O(1) bounds verification</span>
-<span class="text-brand-400">let</span> tx = Transaction::from_buffer(packet_bytes)?;
+<span class="text-cyan-400">#[tokio::main]</span>
+<span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
+    <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"event-driven-node"</span>)
+        <span class="text-slate-500">// Service A: Asynchronous Subscriber reacting to OrderCreated</span>
+        .with(service_fn(<span class="text-amber-300">"billing-worker"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
+            <span class="text-brand-400">let mut</span> sub = ctx.event_hub.subscribe::&lt;OrderCreated&gt;().<span class="text-brand-400">await</span>;
+            tokio::spawn(<span class="text-brand-400">async move</span> {
+                <span class="text-brand-400">while let</span> Ok(event) = sub.recv().<span class="text-brand-400">await</span> {
+                    println!(<span class="text-amber-300">"Billing processed order #{} for ${:.2}"</span>, event.id, event.amount_cents <span class="text-brand-400">as</span> f64 / 100.0);
+                }
+            });
+            Ok(())
+        }))
+        <span class="text-slate-500">// Service B: Event Publisher dispatching strongly-typed messages</span>
+        .with(service_fn(<span class="text-amber-300">"order-gateway"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
+            <span class="text-brand-400">let</span> hub = ctx.event_hub.clone();
+            hub.publish(OrderCreated { id: 1001, amount_cents: 9950 }).<span class="text-brand-400">await</span>;
+            Ok(())
+        }));
 
-println!(<span class="text-amber-300">"ID: {} | Account: {} | Amount: ${}"</span>, tx.id(), tx.account()?, tx.amount());</code></pre>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- SECTION 3: ANATOMY OF AN AARON NODE        -->
-    <!-- ========================================== -->
-    <section id="anatomy" class="mt-32 scroll-mt-20">
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Opinionated Architecture</div>
-        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
-          Anatomy of an Aaron Node
-        </h2>
-        <p class="text-slate-400 text-sm sm:text-base">
-          Instead of relying on sprawling external infrastructure, each Aaron node is a self-contained runtime unit providing the fundamental building blocks of a modern distributed system.
-        </p>
-      </div>
-
-      <!-- Interactive Node Diagram Architecture Block -->
-      <div class="rounded-2xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl relative overflow-hidden">
-        
-        <!-- Node Outer Shell -->
-        <div class="border-2 border-dashed border-cyan-500/30 rounded-xl p-6 bg-slate-950/60 relative">
-          <div class="flex items-center justify-between pb-6 mb-6 border-b border-white/10">
-            <div class="flex items-center gap-3">
-              <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="font-mono font-bold text-sm text-white">Aaron Node Instance (Single Rust Process)</span>
-            </div>
-            <div class="text-xs font-mono text-slate-400">
-              Identity: <span class="text-cyan-400">Cluster UUID + Node ID + Incarnation</span>
-            </div>
-          </div>
-
-          <!-- Internal Components Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            
-            <!-- Component 1: Actor & Service Supervisor -->
-            <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-brand-500/40 transition">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2 h-2 rounded-full bg-brand-400"></span>
-                <h3 class="font-bold text-sm text-white">Service Supervisor</h3>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Manages the lifecycle of async actors and microservices via Tokio. Injects shared <code>Context</code> and orchestrates graceful shutdown via CancellationToken.
-              </p>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">Tokio Supervision</span>
-            </div>
-
-            <!-- Component 2: Embedded Storage Engine -->
-            <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-amber-500/40 transition">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                <h3 class="font-bold text-sm text-white">Fjall LSM Storage Engine</h3>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Embedded disk persistence with Write-Ahead Logging (WAL), logical keyspace partitioning, and write latency in the ~6 microsecond range.
-              </p>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">Disk-backed LSM Tree</span>
-            </div>
-
-            <!-- Component 3: QUIC Transport Engine -->
-            <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-cyan-500/40 transition">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                <h3 class="font-bold text-sm text-white">QUIC Multi-Stream Fabric</h3>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Secure UDP transport with mutual TLS 1.3 and auto-generated certificates. Stream multiplexing eliminates Head-of-Line blocking across concurrent services.
-              </p>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Quinn / Rustls TLS 1.3</span>
-            </div>
-
-            <!-- Component 4: Gossip & Failure Detector -->
-            <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-emerald-500/40 transition">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <h3 class="font-bold text-sm text-white">SWIM Gossip Membership</h3>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Decentralized O(1) node discovery and health monitoring. Employs direct and indirect (ping-req) probing with Alive &rarr; Suspect &rarr; Dead states and incarnation refutation.
-              </p>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">O(1) Bounded Probing</span>
-            </div>
-
-            <!-- Component 5: EventHub Bus -->
-            <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-indigo-500/40 transition">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-                <h3 class="font-bold text-sm text-white">Internal EventHub Bus</h3>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                In-memory async pub/sub bus for local decoupling. Allows services to subscribe to topology transitions, partition warnings, and telemetry events.
-              </p>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">Type-safe Event Bus</span>
-            </div>
-
-            <!-- Component 6: Admin & Telemetry Plane -->
-            <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-rose-500/40 transition">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-                <h3 class="font-bold text-sm text-white">Admin & Observability</h3>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Embedded REST management API and Vue 3 web dashboard packaged into the binary via <code>rust-embed</code>. Dynamic log level reload without process restarts.
-              </p>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">Single-binary SPA UI</span>
-            </div>
-
+    node.run().<span class="text-brand-400">await</span>?;
+    Ok(())
+}</code></pre>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ========================================== -->
-    <!-- SECTION 4: NODE LIFECYCLE                  -->
-    <!-- ========================================== -->
-    <section id="lifecycle" class="mt-32 scroll-mt-20">
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Resilience & State Transitions</div>
-        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
-          Cluster Node Lifecycle
-        </h2>
-        <p class="text-slate-400 text-sm sm:text-base">
-          How nodes join the mesh, converge topology state, detect network partitions, and autonomously self-heal without manual intervention.
-        </p>
-      </div>
-
-      <!-- Lifecycle Steps Timeline -->
-      <div class="space-y-4 max-w-4xl mx-auto font-mono text-xs">
-        
-        <!-- Phase 1 -->
-        <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold shrink-0">
-            01
-          </div>
-          <div class="space-y-1">
-            <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Bootstrap & Initial Discovery</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300">Initialization</span>
-            </div>
-            <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              The node allocates its QUIC port, initializes local Fjall LSM storage, and assigns its unique <code>Uuid</code>. If seed addresses are configured, it performs handshake probes against the seed; otherwise, it operates as the initial seed for subsequent peers.
-            </p>
-          </div>
-        </div>
-
-        <!-- Phase 2 -->
-        <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 font-bold shrink-0">
-            02
-          </div>
-          <div class="space-y-1">
-            <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>SWIM Gossip Convergence</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300">O(log N) Dissemination</span>
-            </div>
-            <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              The gossip engine propagates the new node across the mesh in bounded random steps. Each node maintains an ordered local membership table and disseminates updates probabilistically via QUIC datagrams.
-            </p>
-          </div>
-        </div>
-
-        <!-- Phase 3 -->
-        <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold shrink-0">
-            03
-          </div>
-          <div class="space-y-1">
-            <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Failure Detection: Direct & Indirect (Ping-Req)</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">Suspect State</span>
-            </div>
-            <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              At configured probe intervals (e.g. 400ms), a node pings a random peer. Upon probe timeout (150ms), it recruits 3 neighboring peers to execute indirect <code>ping-req</code> probes. If unanswered, the target enters the <code>Suspect</code> state with a decay timer.
-            </p>
-          </div>
-        </div>
-
-        <!-- Phase 4 -->
-        <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-bold shrink-0">
-            04
-          </div>
-          <div class="space-y-1">
-            <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Dead Declaration or Incarnation Self-Healing</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-300">Self-Healing</span>
-            </div>
-            <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              If the suspicion timer expires without refutation, the node is declared <code>Dead</code> and evicted from active routing. However, if the node was temporarily delayed or crashed and restarted, it refutes the suspicion by incrementing its <code>incarnation</code> counter, immediately restoring <code>Alive</code> status without cluster restarts.
-            </p>
-          </div>
-        </div>
-
-        <!-- Phase 5 -->
-        <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold shrink-0">
-            05
-          </div>
-          <div class="space-y-1">
-            <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Graceful Drain & Shutdown</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Graceful Drain</span>
-            </div>
-            <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              During planned termination (SIGTERM / CancellationToken), async services drain in-flight requests, Fjall LSM tables flush pending commits to disk, and the node dispatches departure notifications to peers to prevent false suspect alarms.
-            </p>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- SECTION 5: INTERACTIVE LIVE SANDBOX        -->
-    <!-- ========================================== -->
-    <section id="sandbox" class="mt-32 scroll-mt-20">
-      <div class="p-8 sm:p-10 rounded-2xl bg-slate-900/80 border border-white/10 shadow-2xl relative overflow-hidden">
-        
-        <!-- Header & Quota Controls -->
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
-          <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 mb-2">
-              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>Interactive Live Sandbox</span>
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Launch a Genuine 3-Node Cluster
-            </h2>
-            <p class="text-sm text-slate-400 mt-1 max-w-xl">
-              Each sandbox session launches 3 genuine in-process Aaron nodes with dynamically allocated QUIC ports. Test chaos injection (Kill/Revive), observe SWIM gossip detection, benchmark LSM writes, and explore the admin dashboard on a dedicated route.
-            </p>
-          </div>
-
-          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div class="text-right">
-              <div class="text-xs font-mono text-slate-400 uppercase tracking-wider">Cluster Quota</div>
-              <div id="slot-status-label" class="text-base font-bold text-emerald-400">6 of 6 Available</div>
-              <div class="text-[11px] text-slate-500">15 min session TTL</div>
-            </div>
-
-            <button id="btn-launch-sandbox" onclick="launchDemoCluster()" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white shadow-lg shadow-brand-500/20 transition flex items-center gap-2 disabled:opacity-50">
-              <span id="btn-launch-text">Spawn 3-Node Cluster</span>
-              <svg id="btn-launch-spinner" class="hidden animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- IDLE CONTAINER -->
-        <div id="sandbox-idle" class="py-16 text-center">
-          <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center text-slate-400 mb-4">
-            <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-          </div>
-          <h3 class="text-lg font-semibold text-white mb-1">No Active Sandbox Session</h3>
-          <p class="text-sm text-slate-400 max-w-md mx-auto mb-6">
-            Click "Spawn 3-Node Cluster" above to reserve a sandbox slot and launch 3 live Aaron nodes in this session.
+      <!-- ======================================================== -->
+      <!-- SECTION 3: OPINIONATED CHOICES AND WHY                   -->
+      <!-- ======================================================== -->
+      <section id="opinionated" class="mt-32 scroll-mt-24">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Architectural Philosophy</div>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
+            Opinionated Choices & Why
+          </h2>
+          <p class="text-slate-400 text-sm sm:text-base">
+            Instead of stitching together dozens of disparate infrastructure tools, Aaron makes deliberate architectural commitments designed to maximize resilience, zero-copy performance, and operational simplicity.
           </p>
         </div>
 
-        <!-- ACTIVE CLUSTER DASHBOARD -->
-        <div id="sandbox-active" class="hidden pt-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          <!-- Cluster Status Bar with Dedicated Route Button -->
-          <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-950 border border-white/10">
-            <div class="flex items-center gap-3">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="active-session-id" class="font-mono text-sm font-bold text-white">cluster-xxxxxxxx</span>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 font-mono" id="active-cluster-id">
-                UUID: ...
-              </span>
+          <!-- Choice 1: Autonomous Nodes -->
+          <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-brand-500/40 transition">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 font-semibold">01 &bull; Single-Binary Philosophy</span>
             </div>
+            <h3 class="font-bold text-base text-white mb-2">Autonomous Nodes</h3>
+            <p class="text-xs text-slate-400 leading-relaxed mb-4">
+              <strong class="text-slate-300">The Choice:</strong> Every node packages supervision, storage, gossip, and transport inside a single Rust process.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-cyan-300">Why:</strong> Standard microservices require deploying Redis for caches, ZooKeeper/etcd for locks, and separate sidecars. With Aaron, you eliminate external moving parts: a production cluster is born simply by launching instances of your compiled binary.
+            </p>
+          </div>
 
-            <div class="flex items-center gap-3">
-              <div class="text-xs font-mono text-slate-400">
-                TTL: <span id="active-ttl-timer" class="text-amber-400 font-bold">14:59</span>
+          <!-- Choice 2: QUIC Transport -->
+          <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-cyan-500/40 transition">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-semibold">02 &bull; Quinn / Rustls</span>
+            </div>
+            <h3 class="font-bold text-base text-white mb-2">QUIC Multi-Stream Fabric</h3>
+            <p class="text-xs text-slate-400 leading-relaxed mb-4">
+              <strong class="text-slate-300">The Choice:</strong> QUIC over UDP with mandatory mutual TLS 1.3 encryption by default.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-cyan-300">Why:</strong> TCP clusters suffer from Head-of-Line blocking—a dropped packet on stream A stalls all other streams. QUIC multiplexes thousands of independent streams over a single UDP port where packet loss in one stream never degrades another.
+            </p>
+          </div>
+
+          <!-- Choice 3: SWIM Gossip -->
+          <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-emerald-500/40 transition">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">03 &bull; Decentralized O(1)</span>
+            </div>
+            <h3 class="font-bold text-base text-white mb-2">SWIM Gossip Membership</h3>
+            <p class="text-xs text-slate-400 leading-relaxed mb-4">
+              <strong class="text-slate-300">The Choice:</strong> Decentralized probabilistic gossip with direct & indirect probing (ping-req) and incarnation counters.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-cyan-300">Why:</strong> Centralized coordinators become single points of failure. SWIM scales with bounded $O(1)$ network load per node. Indirect probes eliminate false-positive evictions from temporary packet drops, while incarnation numbers allow self-healing.
+            </p>
+          </div>
+
+          <!-- Choice 4: Embedded Fjall LSM -->
+          <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-amber-500/40 transition">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">04 &bull; Disk-backed LSM</span>
+            </div>
+            <h3 class="font-bold text-base text-white mb-2">Embedded Fjall LSM Storage</h3>
+            <p class="text-xs text-slate-400 leading-relaxed mb-4">
+              <strong class="text-slate-300">The Choice:</strong> Integrated disk persistence with Write-Ahead Log (WAL) and logical keyspace isolation.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-cyan-300">Why:</strong> Accessing state over an external network hop introduces milliseconds of latency. Fjall provides ~6 microsecond write latencies and sub-millisecond point lookups directly within the node process space without external database dependencies.
+            </p>
+          </div>
+
+          <!-- Choice 5: FlatBuffers RPC -->
+          <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-indigo-500/40 transition">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">05 &bull; Zero-Copy RPC</span>
+            </div>
+            <h3 class="font-bold text-base text-white mb-2">FlatBuffers Schemas</h3>
+            <p class="text-xs text-slate-400 leading-relaxed mb-4">
+              <strong class="text-slate-300">The Choice:</strong> Build-time schema generation via <code>aaron-build</code> and memory-mapped offsets.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-cyan-300">Why:</strong> JSON parsing and Protobuf deserialization burn CPU cycles and trigger heap allocations. FlatBuffers allows reading fields directly from the QUIC network buffer via offset pointers in $O(1)$ time with zero heap copies.
+            </p>
+          </div>
+
+          <!-- Choice 6: OpenRaft In-Process -->
+          <div class="p-6 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-rose-500/40 transition">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-semibold">06 &bull; In-Process Raft</span>
+            </div>
+            <h3 class="font-bold text-base text-white mb-2">Embedded OpenRaft</h3>
+            <p class="text-xs text-slate-400 leading-relaxed mb-4">
+              <strong class="text-slate-300">The Choice:</strong> Raft consensus integrated directly inside <code>aaron-control-plane</code>.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-cyan-300">Why:</strong> While gossip handles eventual consistency for 99% of node topology, linearizable consensus is required for shard assignment. Embedding OpenRaft lets consensus run as an Aaron service without managing external Raft daemons.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 4: NODE LIFECYCLE                                -->
+      <!-- ======================================================== -->
+      <section id="lifecycle" class="mt-32 scroll-mt-24">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Resilience & Transitions</div>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
+            Cluster Node Lifecycle
+          </h2>
+          <p class="text-slate-400 text-sm sm:text-base">
+            How nodes join the mesh, converge topology state, detect network partitions, and autonomously self-heal without manual intervention.
+          </p>
+        </div>
+
+        <div class="space-y-4 max-w-4xl mx-auto font-mono text-xs">
+          
+          <!-- Phase 1 -->
+          <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold shrink-0">
+              01
+            </div>
+            <div class="space-y-1">
+              <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
+                <span>Bootstrap & Initial Discovery</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300">Initialization</span>
               </div>
-
-              <!-- Open Dedicated Route Button -->
-              <button onclick="openAdminDedicatedRoute()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-1.5 shadow-md">
-                <span>Open Admin Console in New Route ↗</span>
-              </button>
-
-              <!-- Destroy Cluster -->
-              <button onclick="stopDemoCluster()" class="px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                Destroy Cluster
-              </button>
+              <p class="text-slate-400 font-sans text-xs leading-relaxed">
+                The node allocates its QUIC port, initializes local Fjall LSM storage, and assigns its unique <code>Uuid</code>. If seed addresses are configured, it performs handshake probes against the seed; otherwise, it operates as the initial seed for subsequent peers.
+              </p>
             </div>
           </div>
 
-          <!-- 3 Node Cards Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="nodes-container">
-            <!-- Node 1 -->
-            <div id="node-card-1" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <span id="node-1-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                  <span class="font-bold text-sm text-white">Node 1 (Seed / Admin)</span>
-                </div>
-                <span id="node-1-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  RUNNING
-                </span>
-              </div>
-              <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                <div>QUIC: <span id="node-1-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                <div>Admin: <span id="node-1-admin" class="text-cyan-400">127.0.0.1:----</span></div>
-                <div>Role: <span class="text-slate-300">Topology Coordinator</span></div>
-              </div>
-              <div class="flex gap-2">
-                <button id="btn-node-1-action" onclick="toggleNode(1)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                  Kill Node 1
-                </button>
-              </div>
+          <!-- Phase 2 -->
+          <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 font-bold shrink-0">
+              02
             </div>
-
-            <!-- Node 2 -->
-            <div id="node-card-2" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <span id="node-2-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                  <span class="font-bold text-sm text-white">Node 2 (Worker)</span>
-                </div>
-                <span id="node-2-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  RUNNING
-                </span>
+            <div class="space-y-1">
+              <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
+                <span>SWIM Gossip Convergence</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300">O(log N) Dissemination</span>
               </div>
-              <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                <div>QUIC: <span id="node-2-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                <div>Seed: <span class="text-slate-400">Node 1</span></div>
-                <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
-              </div>
-              <div class="flex gap-2">
-                <button id="btn-node-2-action" onclick="toggleNode(2)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                  Kill Node 2
-                </button>
-              </div>
-            </div>
-
-            <!-- Node 3 -->
-            <div id="node-card-3" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <span id="node-3-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                  <span class="font-bold text-sm text-white">Node 3 (Worker)</span>
-                </div>
-                <span id="node-3-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  RUNNING
-                </span>
-              </div>
-              <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                <div>QUIC: <span id="node-3-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                <div>Seed: <span class="text-slate-400">Node 1</span></div>
-                <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
-              </div>
-              <div class="flex gap-2">
-                <button id="btn-node-3-action" onclick="toggleNode(3)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                  Kill Node 3
-                </button>
-              </div>
+              <p class="text-slate-400 font-sans text-xs leading-relaxed">
+                The gossip engine propagates the new node across the mesh in bounded random steps. Each node maintains an ordered local membership table and disseminates updates probabilistically via QUIC datagrams.
+              </p>
             </div>
           </div>
 
-          <!-- Benchmark Toolbar -->
-          <div class="p-4 rounded-xl bg-slate-950 border border-white/10 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <button onclick="runBenchmark(1000)" id="btn-bench" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-2">
-                <span>⚡ Run 1,000 Writes Benchmark</span>
-              </button>
-              <span class="text-xs text-slate-400">Measures Fjall LSM write throughput and latency in microseconds.</span>
+          <!-- Phase 3 -->
+          <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold shrink-0">
+              03
             </div>
-
-            <div id="bench-result" class="hidden text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/30 text-cyan-300">
-              Throughput: <span id="bench-ops" class="font-bold text-white">--</span> ops/sec | Latency: <span id="bench-lat" class="font-bold text-white">--</span> µs/op
+            <div class="space-y-1">
+              <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
+                <span>Failure Detection: Direct & Indirect (Ping-Req)</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">Suspect State</span>
+              </div>
+              <p class="text-slate-400 font-sans text-xs leading-relaxed">
+                At configured probe intervals (e.g. 400ms), a node pings a random peer. Upon probe timeout (150ms), it recruits 3 neighboring peers to execute indirect <code>ping-req</code> probes. If unanswered, the target enters the <code>Suspect</code> state with a decay timer.
+              </p>
             </div>
           </div>
 
-          <!-- Live Cluster Event Logs -->
-          <div class="p-4 rounded-xl bg-slate-950 border border-white/10">
-            <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                <span class="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider">Cluster Telemetry & Gossip Stream</span>
-              </div>
-              <button onclick="clearLogs()" class="text-[11px] font-mono text-slate-500 hover:text-slate-300">Clear</button>
+          <!-- Phase 4 -->
+          <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-bold shrink-0">
+              04
             </div>
-            <div id="cluster-logs" class="h-32 overflow-y-auto font-mono text-xs text-slate-400 space-y-1">
-              <div class="text-slate-600">[00:00.000] Cluster session ready.</div>
+            <div class="space-y-1">
+              <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
+                <span>Dead Declaration or Incarnation Self-Healing</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-300">Self-Healing</span>
+              </div>
+              <p class="text-slate-400 font-sans text-xs leading-relaxed">
+                If the suspicion timer expires without refutation, the node is declared <code>Dead</code> and evicted from active routing. However, if the node was temporarily delayed or crashed and restarted, it refutes the suspicion by incrementing its <code>incarnation</code> counter, immediately restoring <code>Alive</code> status without cluster restarts.
+              </p>
+            </div>
+          </div>
+
+          <!-- Phase 5 -->
+          <div class="p-5 rounded-xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+              05
+            </div>
+            <div class="space-y-1">
+              <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
+                <span>Graceful Drain & Shutdown</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Graceful Drain</span>
+              </div>
+              <p class="text-slate-400 font-sans text-xs leading-relaxed">
+                During planned termination (SIGTERM / CancellationToken), async services drain in-flight requests, Fjall LSM tables flush pending commits to disk, and the node dispatches departure notifications to peers to prevent false suspect alarms.
+              </p>
             </div>
           </div>
 
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ========================================== -->
-    <!-- SECTION 6: COLLAPSIBLE OFFICIAL CRATES     -->
-    <!-- ========================================== -->
-    <section id="crates" class="mt-32">
-      <details class="group rounded-2xl border border-white/10 bg-slate-900/60 overflow-hidden">
-        <summary class="p-6 cursor-pointer flex items-center justify-between hover:bg-white/[0.02] transition select-none">
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold">
-              📦
-            </div>
+      <!-- ======================================================== -->
+      <!-- SECTION 5: INTERACTIVE LIVE SANDBOX                      -->
+      <!-- ======================================================== -->
+      <section id="sandbox" class="mt-32 scroll-mt-24">
+        <div class="p-8 sm:p-10 rounded-2xl bg-slate-900/80 border border-white/10 shadow-2xl relative overflow-hidden">
+          
+          <!-- Header & Quota Controls -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
             <div>
-              <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <span>Official Aaron Ecosystem Crates</span>
-                <span class="text-xs font-mono font-normal text-slate-400">(8 published crates on crates.io)</span>
-              </h3>
-              <p class="text-xs text-slate-400">Click to expand the published modular crates table.</p>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 mb-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                <span>Interactive Live Sandbox</span>
+              </div>
+              <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                Launch a Genuine 3-Node Cluster
+              </h2>
+              <p class="text-sm text-slate-400 mt-1 max-w-xl">
+                Each sandbox session launches 3 genuine in-process Aaron nodes with dynamically allocated QUIC ports. Test chaos injection (Kill/Revive), observe SWIM gossip detection, benchmark LSM writes, and explore the admin dashboard on a dedicated route.
+              </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div class="text-right">
+                <div class="text-xs font-mono text-slate-400 uppercase tracking-wider">Cluster Quota</div>
+                <div id="slot-status-label" class="text-base font-bold text-emerald-400">6 of 6 Available</div>
+                <div class="text-[11px] text-slate-500">15 min session TTL</div>
+              </div>
+
+              <button id="btn-launch-sandbox" onclick="launchDemoCluster()" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white shadow-lg shadow-brand-500/20 transition flex items-center gap-2 disabled:opacity-50">
+                <span id="btn-launch-text">Spawn 3-Node Cluster</span>
+                <svg id="btn-launch-spinner" class="hidden animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+              </button>
             </div>
           </div>
-          <div class="text-slate-400 group-open:rotate-180 transition-transform duration-200">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+
+          <!-- IDLE CONTAINER -->
+          <div id="sandbox-idle" class="py-16 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center text-slate-400 mb-4">
+              <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-1">No Active Sandbox Session</h3>
+            <p class="text-sm text-slate-400 max-w-md mx-auto mb-6">
+              Click "Spawn 3-Node Cluster" above to reserve a sandbox slot and launch 3 live Aaron nodes in this session.
+            </p>
           </div>
-        </summary>
 
-        <div class="border-t border-white/10 overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-slate-950/80 border-b border-white/10 font-mono text-xs uppercase text-slate-400">
-              <tr>
-                <th class="py-3 px-6">Crate</th>
-                <th class="py-3 px-6">Architectural Role</th>
-                <th class="py-3 px-6">Version</th>
-                <th class="py-3 px-6">Link</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/5 font-mono text-xs">
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Unified facade with re-exports and optional features (full, admin, membership, tracing)</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron-core</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Runtime container, actor supervision, QUIC engine, and embedded Fjall LSM storage</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-core" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron-build</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Build-time FlatBuffers schema code generator for build.rs workflows</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-build" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron-membership</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Decentralized SWIM gossip membership protocol and probabilistic failure detector</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-membership" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron-control-plane</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Embedded OpenRaft consensus engine for distributed state synchronization</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-control-plane" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron-shard</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Shard placement, consistent hashing rings, and replica partitioning</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-shard" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron-tracing</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Dynamic runtime log level reconfiguration and ring buffer telemetry</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-tracing" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-              <tr class="hover:bg-white/5 transition">
-                <td class="py-3 px-6 font-bold text-cyan-400">aaron-admin</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Single-binary Vue 3 web console and REST administrative API</td>
-                <td class="py-3 px-6 text-slate-400">v0.1.0</td>
-                <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-admin" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- ACTIVE CLUSTER DASHBOARD -->
+          <div id="sandbox-active" class="hidden pt-6 space-y-6">
+            
+            <!-- Cluster Status Bar with Dedicated Route Button -->
+            <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-950 border border-white/10">
+              <div class="flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="active-session-id" class="font-mono text-sm font-bold text-white">cluster-xxxxxxxx</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 font-mono" id="active-cluster-id">
+                  UUID: ...
+                </span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div class="text-xs font-mono text-slate-400">
+                  TTL: <span id="active-ttl-timer" class="text-amber-400 font-bold">14:59</span>
+                </div>
+
+                <!-- Open Dedicated Route Button -->
+                <button onclick="openAdminDedicatedRoute()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-1.5 shadow-md">
+                  <span>Open Admin Console in New Route ↗</span>
+                </button>
+
+                <!-- Destroy Cluster -->
+                <button onclick="stopDemoCluster()" class="px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                  Destroy Cluster
+                </button>
+              </div>
+            </div>
+
+            <!-- 3 Node Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="nodes-container">
+              <!-- Node 1 -->
+              <div id="node-card-1" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span id="node-1-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <span class="font-bold text-sm text-white">Node 1 (Seed / Admin)</span>
+                  </div>
+                  <span id="node-1-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    RUNNING
+                  </span>
+                </div>
+                <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                  <div>QUIC: <span id="node-1-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                  <div>Admin: <span id="node-1-admin" class="text-cyan-400">127.0.0.1:----</span></div>
+                  <div>Role: <span class="text-slate-300">Topology Coordinator</span></div>
+                </div>
+                <div class="flex gap-2">
+                  <button id="btn-node-1-action" onclick="toggleNode(1)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                    Kill Node 1
+                  </button>
+                </div>
+              </div>
+
+              <!-- Node 2 -->
+              <div id="node-card-2" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span id="node-2-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <span class="font-bold text-sm text-white">Node 2 (Worker)</span>
+                  </div>
+                  <span id="node-2-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    RUNNING
+                  </span>
+                </div>
+                <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                  <div>QUIC: <span id="node-2-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                  <div>Seed: <span class="text-slate-400">Node 1</span></div>
+                  <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
+                </div>
+                <div class="flex gap-2">
+                  <button id="btn-node-2-action" onclick="toggleNode(2)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                    Kill Node 2
+                  </button>
+                </div>
+              </div>
+
+              <!-- Node 3 -->
+              <div id="node-card-3" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span id="node-3-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <span class="font-bold text-sm text-white">Node 3 (Worker)</span>
+                  </div>
+                  <span id="node-3-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    RUNNING
+                  </span>
+                </div>
+                <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                  <div>QUIC: <span id="node-3-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                  <div>Seed: <span class="text-slate-400">Node 1</span></div>
+                  <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
+                </div>
+                <div class="flex gap-2">
+                  <button id="btn-node-3-action" onclick="toggleNode(3)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                    Kill Node 3
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Benchmark Toolbar -->
+            <div class="p-4 rounded-xl bg-slate-950 border border-white/10 flex flex-wrap items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <button onclick="runBenchmark(1000)" id="btn-bench" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-2">
+                  <span>⚡ Run 1,000 Writes Benchmark</span>
+                </button>
+                <span class="text-xs text-slate-400">Measures Fjall LSM write throughput and latency in microseconds.</span>
+              </div>
+
+              <div id="bench-result" class="hidden text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/30 text-cyan-300">
+                Throughput: <span id="bench-ops" class="font-bold text-white">--</span> ops/sec | Latency: <span id="bench-lat" class="font-bold text-white">--</span> µs/op
+              </div>
+            </div>
+
+            <!-- Live Cluster Event Logs -->
+            <div class="p-4 rounded-xl bg-slate-950 border border-white/10">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  <span class="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider">Cluster Telemetry & Gossip Stream</span>
+                </div>
+                <button onclick="clearLogs()" class="text-[11px] font-mono text-slate-500 hover:text-slate-300">Clear</button>
+              </div>
+              <div id="cluster-logs" class="h-32 overflow-y-auto font-mono text-xs text-slate-400 space-y-1">
+                <div class="text-slate-600">[00:00.000] Cluster session ready.</div>
+              </div>
+            </div>
+
+          </div>
         </div>
-      </details>
-    </section>
+      </section>
 
-    <!-- Footer -->
-    <footer class="mt-32 pt-12 pb-16 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
-      <div class="flex items-center gap-3">
-        <div class="w-6 h-6 rounded bg-brand-600/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold">λ</div>
-        <span>Aaron Distributed Systems Runtime &bull; Licensed under MIT or Apache-2.0</span>
-      </div>
-      <div>
-        Authored by <span class="text-slate-300 font-medium">Marcos Dantas</span> (<a href="mailto:marcos.adantas@hotmail.com" class="hover:underline">marcos.adantas@hotmail.com</a>)
-      </div>
-    </footer>
-  </main>
+      <!-- ======================================================== -->
+      <!-- SECTION 6: COLLAPSIBLE OFFICIAL CRATES                   -->
+      <!-- ======================================================== -->
+      <section id="crates" class="mt-32">
+        <details class="group rounded-2xl border border-white/10 bg-slate-900/60 overflow-hidden">
+          <summary class="p-6 cursor-pointer flex items-center justify-between hover:bg-white/[0.02] transition select-none">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold">
+                📦
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <span>Official Aaron Ecosystem Crates</span>
+                  <span class="text-xs font-mono font-normal text-slate-400">(8 published crates on crates.io)</span>
+                </h3>
+                <p class="text-xs text-slate-400">Click to expand the published modular crates table.</p>
+              </div>
+            </div>
+            <div class="text-slate-400 group-open:rotate-180 transition-transform duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
+
+          <div class="border-t border-white/10 overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-950/80 border-b border-white/10 font-mono text-xs uppercase text-slate-400">
+                <tr>
+                  <th class="py-3 px-6">Crate</th>
+                  <th class="py-3 px-6">Architectural Role</th>
+                  <th class="py-3 px-6">Version</th>
+                  <th class="py-3 px-6">Link</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5 font-mono text-xs">
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Unified facade with re-exports and optional features (full, admin, membership, tracing)</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron-core</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Runtime container, actor supervision, QUIC engine, and embedded Fjall LSM storage</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-core" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron-build</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Build-time FlatBuffers schema code generator for build.rs workflows</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-build" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron-membership</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Decentralized SWIM gossip membership protocol and probabilistic failure detector</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-membership" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron-control-plane</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Embedded OpenRaft consensus engine for distributed state synchronization</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-control-plane" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron-shard</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Shard placement, consistent hashing rings, and replica partitioning</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-shard" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron-tracing</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Dynamic runtime log level reconfiguration and ring buffer telemetry</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-tracing" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="py-3 px-6 font-bold text-cyan-400">aaron-admin</td>
+                  <td class="py-3 px-6 font-sans text-slate-300">Single-binary Vue 3 web console and REST administrative API</td>
+                  <td class="py-3 px-6 text-slate-400">v0.1.0</td>
+                  <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-admin" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-32 pt-12 pb-16 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded bg-brand-600/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold">λ</div>
+          <span>Aaron Distributed Systems Runtime &bull; Licensed under MIT or Apache-2.0</span>
+        </div>
+        <div>
+          Authored by <span class="text-slate-300 font-medium">Marcos Dantas</span> (<a href="mailto:marcos.adantas@hotmail.com" class="hover:underline">marcos.adantas@hotmail.com</a>)
+        </div>
+      </footer>
+
+    </div>
+  </div>
 
   <!-- Interactive JavaScript -->
   <script>
     let activeSession = null;
     let pollInterval = null;
 
-    function copyInstallCmd() {
-      const text = document.getElementById('install-cmd').innerText;
-      navigator.clipboard.writeText(text);
-      const icon = document.getElementById('copy-icon');
-      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
-      setTimeout(() => {
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
-      }, 2000);
-    }
-
     function setTab(num) {
-      for (let i = 1; i <= 3; i++) {
-        document.getElementById(`code-snippet-${i}`).classList.add('hidden');
-        document.getElementById(`tab-btn-${i}`).className = 'px-4 py-2 rounded-lg text-slate-400 hover:text-white transition';
+      for (let i = 1; i <= 4; i++) {
+        const snippet = document.getElementById(`code-snippet-${i}`);
+        const btn = document.getElementById(`tab-btn-${i}`);
+        if (snippet) snippet.classList.add('hidden');
+        if (btn) btn.className = 'px-4 py-2 rounded-lg text-slate-400 hover:text-white transition';
       }
-      document.getElementById(`code-snippet-${num}`).classList.remove('hidden');
-      document.getElementById(`tab-btn-${num}`).className = 'px-4 py-2 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold transition';
+      const activeSnippet = document.getElementById(`code-snippet-${num}`);
+      const activeBtn = document.getElementById(`tab-btn-${num}`);
+      if (activeSnippet) activeSnippet.classList.remove('hidden');
+      if (activeBtn) activeBtn.className = 'px-4 py-2 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold transition';
     }
 
     async function updateStats() {
@@ -1015,7 +1009,6 @@ println!(<span class="text-amber-300">"ID: {} | Account: {} | Amount: ${}"</span
       btn.innerText = '⚡ Run 1,000 Writes Benchmark';
     }
 
-    // Opens Admin in a DEDICATED ROUTE in a new tab
     function openAdminDedicatedRoute() {
       if (!activeSession) return;
       const adminUrl = `/demo/${activeSession}/`;
