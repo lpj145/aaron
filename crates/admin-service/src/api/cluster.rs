@@ -188,11 +188,6 @@ pub async fn get_cluster_info(State(state): State<AppState>) -> Json<ClusterInfo
         std::collections::HashMap::new()
     };
 
-    let pod_names = if let Some(ref k) = state.kube {
-        k.resolve_all().await
-    } else {
-        std::collections::HashMap::new()
-    };
     let local_pod_name = state.ctx.env.get::<String>("POD_NAME");
 
     if let Some(ref handle) = state.membership {
@@ -201,12 +196,11 @@ pub async fn get_cluster_info(State(state): State<AppState>) -> Json<ClusterInfo
             .local_member()
             .await
             .map(|m| {
-                let name = local_pod_name.clone().or_else(|| pod_names.get(&m.addr.ip().to_string()).cloned());
                 let snap = live_telemetry.get(&m.node_id.id());
                 MemberInfoResponse::from_member_with_rtt_and_raft(
                     m,
                     local_id,
-                    name,
+                    local_pod_name.clone(),
                     Some(std::time::Duration::ZERO),
                     &voter_ids,
                     &learner_ids,
@@ -225,10 +219,10 @@ pub async fn get_cluster_info(State(state): State<AppState>) -> Json<ClusterInfo
             .into_iter()
             .map(|(m, rtt)| {
                 let is_local = m.node_id.id() == local_id;
-                let name = if is_local && local_pod_name.is_some() {
+                let name = if is_local {
                     local_pod_name.clone()
                 } else {
-                    pod_names.get(&m.addr.ip().to_string()).cloned()
+                    None
                 };
                 let snap = live_telemetry.get(&m.node_id.id());
                 MemberInfoResponse::from_member_with_rtt_and_raft(

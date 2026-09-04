@@ -128,8 +128,6 @@ impl Service for AdminService {
             });
         }
 
-        let kube = crate::k8s::KubePodResolver::try_detect();
-
         let state = AppState {
             ctx: ctx.clone(),
             membership: self.membership_handle.clone(),
@@ -138,7 +136,6 @@ impl Service for AdminService {
             start_time: Instant::now(),
             static_dir: config.static_dir.clone(),
             services: Arc::new(services_list),
-            kube,
         };
 
         // 3. Build Axum Router

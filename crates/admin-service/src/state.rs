@@ -33,5 +33,4 @@ pub struct AppState {
     pub start_time: Instant,
     pub static_dir: Option<PathBuf>,
     pub services: Arc<Vec<ServiceMetadata>>,
-    pub kube: Option<crate::k8s::KubePodResolver>,
 }
