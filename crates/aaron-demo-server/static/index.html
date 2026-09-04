@@ -70,17 +70,24 @@
 <body class="bg-[#070a10] text-slate-100 font-sans selection:bg-brand-500 selection:text-white min-h-screen relative overflow-x-hidden">
 
   <!-- ======================================================== -->
-  <!-- 1. FULL-SCREEN HERO SECTION (w-full, min-h-screen)       -->
+  <!-- 1. FULL-SCREEN WIDE-SCREEN HERO SECTION                  -->
   <!-- ======================================================== -->
   <section class="relative w-full min-h-screen flex flex-col justify-between overflow-hidden">
     
-    <!-- Ambient Background Radial Lighting -->
-    <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-    <div class="absolute bottom-1/4 right-10 w-96 h-96 bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-    <div class="absolute top-1/2 left-10 w-80 h-80 bg-brand-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <!-- Panoramic Wide-Screen 16:9 Concept Background Image -->
+    <div class="absolute inset-0 z-0">
+      <img 
+        src="/cluster-concept.webp" 
+        alt="Aaron Panoramic Distributed Cluster Mesh" 
+        class="w-full h-full object-cover object-center filter brightness-75 contrast-110"
+      />
+      <!-- Soft directional fade to smoothly transition into code sections below -->
+      <div class="absolute inset-0 bg-gradient-to-b from-[#070a10]/80 via-transparent to-[#070a10]"></div>
+      <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#070a10] via-[#070a10]/80 to-transparent"></div>
+    </div>
 
     <!-- Navigation Header -->
-    <header class="relative z-20 w-full backdrop-blur-md bg-[#070a10]/80 border-b border-white/10">
+    <header class="relative z-20 w-full backdrop-blur-md bg-[#070a10]/70 border-b border-white/10">
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-cyan-400 p-[1px] shadow-lg shadow-brand-500/30">
@@ -127,115 +134,40 @@
       </div>
     </header>
 
-    <!-- Hero Content: 2-Column Split with Conceptual Architecture Visualization -->
-    <div class="relative z-10 max-w-7xl mx-auto px-6 py-12 lg:py-16 w-full my-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+    <!-- Hero Content: Wide-Screen Centered Typography Directly Over the Background (No Cards) -->
+    <div class="relative z-10 max-w-5xl mx-auto px-6 py-16 text-center my-auto flex flex-col items-center">
       
-      <!-- Left Column: Value Proposition & CTAs -->
-      <div class="lg:col-span-6 space-y-6">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span>ALPHA v0.1.0</span>
-          <span class="text-slate-500">&bull;</span>
-          <span class="text-amber-200">Distributed Cluster Runtime</span>
-        </div>
-
-        <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.12]">
-          The Opinionated Distributed Cluster Runtime for Rust
-        </h1>
-
-        <p class="text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
-          Aaron is engineered to build resilient, self-healing clusters in a single compiled binary. Autonomous nodes supervise internal services, persist state to embedded disk-backed LSM trees, discover peers through decentralized SWIM gossip, and stream zero-copy data over QUIC without external coordination daemons.
-        </p>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap items-center gap-4 pt-2">
-          <a href="#code" class="px-7 py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-90 text-white shadow-xl shadow-brand-500/30 transition flex items-center gap-2">
-            <span>Explore Code Below ↓</span>
-          </a>
-          <a href="#sandbox" class="px-7 py-3.5 rounded-xl font-semibold text-sm bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md transition flex items-center gap-2">
-            <span>Test Live Sandbox (3 Nodes)</span>
-          </a>
-        </div>
-
-        <!-- Architecture Feature Highlights -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-white/10 text-[11px] font-mono">
-          <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
-            <div class="text-cyan-400 font-bold mb-0.5">SWIM Mesh</div>
-            <div class="text-slate-400">O(1) Gossip</div>
-          </div>
-          <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
-            <div class="text-brand-400 font-bold mb-0.5">Quinn QUIC</div>
-            <div class="text-slate-400">Multi-Stream</div>
-          </div>
-          <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
-            <div class="text-amber-400 font-bold mb-0.5">Fjall LSM</div>
-            <div class="text-slate-400">Embedded Disk</div>
-          </div>
-          <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
-            <div class="text-rose-400 font-bold mb-0.5">OpenRaft</div>
-            <div class="text-slate-400">In-Process</div>
-          </div>
-        </div>
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-mono bg-amber-500/20 border border-amber-500/40 text-amber-300 mb-6 font-semibold shadow-lg backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span>ALPHA v0.1.0</span>
+        <span class="text-slate-500">&bull;</span>
+        <span class="text-amber-200">Distributed Cluster Runtime</span>
       </div>
 
-      <!-- Right Column: Conceptual Architecture Showcase (Fluent Bit style with live beacons) -->
-      <div class="lg:col-span-6 relative flex items-center justify-center">
-        
-        <!-- Glowing card frame -->
-        <div class="relative w-full max-w-lg rounded-3xl p-2.5 bg-gradient-to-br from-cyan-500/30 via-slate-800/40 to-amber-500/20 border border-cyan-500/40 shadow-[0_0_60px_rgba(6,182,212,0.18)] backdrop-blur-2xl group overflow-hidden">
-          
-          <!-- Animated Scanline effect across the concept visualization -->
-          <div class="absolute inset-x-0 -top-24 h-24 bg-gradient-to-b from-transparent via-cyan-400/15 to-transparent pointer-events-none animate-scan z-20"></div>
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] mb-6 drop-shadow-2xl">
+        The Opinionated Distributed Cluster Runtime for Rust
+      </h1>
 
-          <!-- The Concept Artwork -->
-          <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-white/10">
-            <img 
-              src="/cluster-concept.webp" 
-              alt="Aaron Conceptual Cluster Topology: 4-Node Mesh with Embedded Storage and Consensus" 
-              class="w-full h-auto object-cover transform group-hover:scale-[1.03] transition-transform duration-700 ease-out"
-            />
+      <p class="max-w-3xl text-base sm:text-lg text-slate-200 font-normal leading-relaxed mb-10 drop-shadow-lg">
+        Aaron is engineered to build resilient, self-healing clusters in a single compiled binary. Autonomous nodes supervise internal services, persist state to embedded disk-backed LSM trees, discover peers through decentralized SWIM gossip, and stream zero-copy data over QUIC without external coordination daemons.
+      </p>
 
-            <!-- FluentBit-style Live Dynamic Beacons overlaid on the topology -->
-            <div class="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/85 border border-emerald-500/40 backdrop-blur-md text-[11px] font-mono text-emerald-300 shadow-xl">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>SWIM Gossip Mesh Active</span>
-            </div>
-
-            <div class="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/85 border border-purple-500/40 backdrop-blur-md text-[11px] font-mono text-purple-300 shadow-xl">
-              <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-              <span>QUIC &bull; Zero HoL</span>
-            </div>
-
-            <div class="absolute bottom-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/85 border border-amber-500/40 backdrop-blur-md text-[11px] font-mono text-amber-300 shadow-xl">
-              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-              <span>Embedded Fjall LSM Core</span>
-            </div>
-
-            <div class="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/85 border border-cyan-500/40 backdrop-blur-md text-[11px] font-mono text-cyan-300 shadow-xl">
-              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>OpenRaft Quorum Ring</span>
-            </div>
-          </div>
-
-          <!-- Bottom caption card inside the frame -->
-          <div class="p-3 mt-2 rounded-xl bg-slate-950/80 border border-white/5 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span class="flex items-center gap-1.5 text-slate-300">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-              <span>Autonomous 4-Node Mesh</span>
-            </span>
-            <span class="text-[11px] text-cyan-400">Linearizable &bull; Self-Healing</span>
-          </div>
-
-        </div>
-
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="#code" class="px-8 py-4 rounded-xl font-bold text-sm bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-90 text-white shadow-2xl shadow-brand-500/40 transition flex items-center gap-2">
+          <span>Explore Code Below ↓</span>
+        </a>
+        <a href="#sandbox" class="px-8 py-4 rounded-xl font-semibold text-sm bg-slate-900/80 hover:bg-slate-800/80 border border-white/20 text-white backdrop-blur-md transition flex items-center gap-2 shadow-xl">
+          <span>Test Live Sandbox (3 Nodes)</span>
+        </a>
       </div>
 
     </div>
 
     <!-- Scroll Indicator -->
-    <div class="relative z-10 pb-6 flex flex-col items-center justify-center text-slate-400 text-xs font-mono">
-      <span class="mb-1 font-medium">Scroll to explore architecture</span>
-      <svg class="w-5 h-5 animate-bounce text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="relative z-10 pb-6 flex flex-col items-center justify-center text-slate-300 text-xs font-mono">
+      <span class="mb-1 drop-shadow font-medium">Scroll to explore code</span>
+      <svg class="w-5 h-5 animate-bounce text-cyan-400 drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
       </svg>
     </div>
