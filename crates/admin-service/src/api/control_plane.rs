@@ -73,7 +73,7 @@ pub async fn get_control_plane_status(
     let node_id = handle.node_id();
     let is_leader = handle.is_leader();
     let current_leader = handle.current_leader();
-    let state_data = handle.all_data().await;
+    let state_data = handle.all_data_strings().await;
 
     let (current_term, last_log_index, last_applied_index, voters, voter_uuids, learners, learner_uuids, nodes) =
         if let Some(m) = metrics {

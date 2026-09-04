@@ -15,6 +15,8 @@ use crate::state::AppState;
 pub struct MemberInfoResponse {
     pub id: String,
     pub addr: String,
+    pub hostname: Option<String>,
+    pub tags: Vec<String>,
     pub status: String,
     pub incarnation: u64,
     pub is_local: bool,
@@ -23,6 +25,9 @@ pub struct MemberInfoResponse {
     pub raft_node_id: Option<u64>,
     pub raft_role: String,
     pub raft_addr: String,
+    pub wps: Option<u32>,
+    pub nominal_wps: Option<u32>,
+    pub error_rate: Option<u32>,
 }
 
 pub fn derive_cp_port(swim_port: u16) -> u16 {
@@ -38,12 +43,15 @@ impl MemberInfoResponse {
     fn from_member_with_rtt_and_raft(
         m: Member,
         local_id: Uuid,
+        fallback_node_name: Option<String>,
         rtt: Option<std::time::Duration>,
         voter_ids: &BTreeSet<u64>,
         learner_ids: &BTreeSet<u64>,
         uuid_to_raft: &BTreeMap<Uuid, (u64, String)>,
         current_leader: Option<u64>,
         is_local_leader: bool,
+        live_telemetry: Option<&control_plane_service::NodeTelemetrySnapshot>,
+        local_telemetry: Option<&node::NodeTelemetry>,
     ) -> Self {
         let is_local = m.node_id.id() == local_id;
         let status = match m.status {
@@ -83,9 +91,46 @@ impl MemberInfoResponse {
             "member".to_string()
         };
 
+        let hostname = m
+            .tags
+            .iter()
+            .find(|t| t.starts_with("host:"))
+            .map(|t| t.trim_start_matches("host:").to_string())
+            .or(fallback_node_name);
+
+        let nominal_wps = if is_local {
+            local_telemetry.map(|lt| lt.nominal_wps())
+        } else {
+            m.tags
+                .iter()
+                .find(|t| t.starts_with("wps:"))
+                .and_then(|t| t.trim_start_matches("wps:").parse::<u32>().ok())
+        };
+
+        let idle_baseline = nominal_wps.map(|n| (n / 10).max(40));
+        let (wps, error_rate) = if is_local {
+            if let Some(lt) = local_telemetry {
+                (Some(lt.current_wps()), Some(lt.error_rate()))
+            } else {
+                (idle_baseline, Some(0))
+            }
+        } else if let Some(snap) = live_telemetry {
+            (Some(snap.current_wps), Some(snap.error_rate))
+        } else {
+            let e = m
+                .tags
+                .iter()
+                .find(|t| t.starts_with("err:"))
+                .and_then(|t| t.trim_start_matches("err:").parse::<u32>().ok())
+                .or(Some(0));
+            (idle_baseline, e)
+        };
+
         Self {
             id: member_uuid.to_string(),
             addr: m.addr.to_string(),
+            hostname,
+            tags: m.tags,
             status,
             incarnation: m.incarnation,
             is_local,
@@ -94,6 +139,9 @@ impl MemberInfoResponse {
             raft_node_id: Some(raft_node_id),
             raft_role,
             raft_addr,
+            wps,
+            nominal_wps,
+            error_rate,
         }
     }
 }
@@ -134,37 +182,69 @@ pub async fn get_cluster_info(State(state): State<AppState>) -> Json<ClusterInfo
         }
     }
 
+    let live_telemetry = if let Some(ref cp) = state.control_plane {
+        cp.all_node_telemetry().await
+    } else {
+        std::collections::HashMap::new()
+    };
+
+    let pod_names = if let Some(ref k) = state.kube {
+        k.resolve_all().await
+    } else {
+        std::collections::HashMap::new()
+    };
+    let local_pod_name = state.ctx.env.get::<String>("POD_NAME");
+
     if let Some(ref handle) = state.membership {
         let cluster_id = handle.cluster_id().await.map(|c| c.to_string());
         let local_member = handle
             .local_member()
             .await
-            .map(|m| MemberInfoResponse::from_member_with_rtt_and_raft(
-                m,
-                local_id,
-                Some(std::time::Duration::ZERO),
-                &voter_ids,
-                &learner_ids,
-                &uuid_to_raft,
-                current_leader,
-                is_local_leader,
-            ));
+            .map(|m| {
+                let name = local_pod_name.clone().or_else(|| pod_names.get(&m.addr.ip().to_string()).cloned());
+                let snap = live_telemetry.get(&m.node_id.id());
+                MemberInfoResponse::from_member_with_rtt_and_raft(
+                    m,
+                    local_id,
+                    name,
+                    Some(std::time::Duration::ZERO),
+                    &voter_ids,
+                    &learner_ids,
+                    &uuid_to_raft,
+                    current_leader,
+                    is_local_leader,
+                    snap,
+                    Some(&state.ctx.telemetry),
+                )
+            });
 
         let all_with_rtt = handle.all_members_with_rtt().await;
         let active = handle.active_members().await;
 
         let members: Vec<MemberInfoResponse> = all_with_rtt
             .into_iter()
-            .map(|(m, rtt)| MemberInfoResponse::from_member_with_rtt_and_raft(
-                m,
-                local_id,
-                rtt,
-                &voter_ids,
-                &learner_ids,
-                &uuid_to_raft,
-                current_leader,
-                is_local_leader,
-            ))
+            .map(|(m, rtt)| {
+                let is_local = m.node_id.id() == local_id;
+                let name = if is_local && local_pod_name.is_some() {
+                    local_pod_name.clone()
+                } else {
+                    pod_names.get(&m.addr.ip().to_string()).cloned()
+                };
+                let snap = live_telemetry.get(&m.node_id.id());
+                MemberInfoResponse::from_member_with_rtt_and_raft(
+                    m,
+                    local_id,
+                    name,
+                    rtt,
+                    &voter_ids,
+                    &learner_ids,
+                    &uuid_to_raft,
+                    current_leader,
+                    is_local_leader,
+                    snap,
+                    Some(&state.ctx.telemetry),
+                )
+            })
             .collect();
 
         Json(ClusterInfoResponse {
@@ -278,6 +358,7 @@ pub async fn leave_cluster(
 
 #[derive(Deserialize, Default)]
 pub struct StartNodeRequest {
+    pub service_name: Option<String>,
     pub node_id: Option<String>,
     pub addr: Option<String>,
 }
@@ -286,6 +367,12 @@ pub async fn start_node(
     State(state): State<AppState>,
     Json(payload): Json<StartNodeRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+    let service_name = payload
+        .service_name
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| state.ctx.service_name.clone());
+
     let uuid = if let Some(ref nid) = payload.node_id
         && !nid.trim().is_empty()
     {
@@ -305,6 +392,7 @@ pub async fn start_node(
         .ctx
         .event_hub
         .publish(node::NodeEvent::StartNode {
+            service_name: service_name.clone(),
             node_id: uuid,
             addr,
         })

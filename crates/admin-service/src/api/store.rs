@@ -38,6 +38,7 @@ pub async fn get_store_info(State(state): State<AppState>) -> Json<StoreInfoResp
 pub struct ScanQuery {
     pub prefix: Option<String>,
     pub limit: Option<usize>,
+    pub cursor: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -55,6 +56,7 @@ pub struct KeyspaceScanResponse {
     pub entries: Vec<KeyEntryResponse>,
     pub has_more: bool,
     pub total_scanned: usize,
+    pub next_cursor: Option<String>,
 }
 
 pub async fn scan_keyspace(
@@ -72,8 +74,16 @@ pub async fn scan_keyspace(
             .keyspace(&ks_name)
             .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
+        let cursor_bytes = query.cursor.map(|c| {
+            if let Some(hex) = c.strip_prefix("0x") {
+                hex_decode(hex).unwrap_or_else(|_| c.into_bytes())
+            } else {
+                c.into_bytes()
+            }
+        });
+
         let page = ks
-            .scan_prefix(prefix_str.as_bytes(), None::<&[u8]>, limit)
+            .scan_prefix(prefix_str.as_bytes(), cursor_bytes.as_deref(), limit)
             .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, format!("Scan error: {err}")))?;
 
         let entries: Vec<KeyEntryResponse> = page
@@ -83,10 +93,22 @@ pub async fn scan_keyspace(
                 let key_bytes: &[u8] = &item.key;
                 let val_bytes: &[u8] = &item.value;
 
-                let k_str = item
-                    .key_str()
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| format!("0x{}", hex_encode(key_bytes)));
+                let k_str = match item.key_str() {
+                    Some(s) if s.chars().all(|c| !c.is_control() || c == '\n' || c == '\t') => {
+                        s.to_string()
+                    }
+                    _ => {
+                        if key_bytes.len() >= 2
+                            && let Ok(suffix) = std::str::from_utf8(&key_bytes[2..])
+                            && suffix.chars().all(|c| !c.is_control() || c == '\n' || c == '\t')
+                        {
+                            let shard_id = u16::from_be_bytes([key_bytes[0], key_bytes[1]]);
+                            format!("[shard:{shard_id}] {suffix}")
+                        } else {
+                            format!("0x{}", hex_encode(key_bytes))
+                        }
+                    }
+                };
                 let k_hex = hex_encode(key_bytes);
                 let v_str = item.value_str().map(|s| s.to_string());
                 let v_hex = hex_encode(val_bytes);
@@ -103,12 +125,16 @@ pub async fn scan_keyspace(
             .collect();
 
         let total_scanned = entries.len();
+        let next_cursor = page.next_cursor.map(|c| {
+            String::from_utf8(c.to_vec()).unwrap_or_else(|_| format!("0x{}", hex_encode(&c)))
+        });
 
         Ok(KeyspaceScanResponse {
             keyspace: ks_name,
             entries,
             has_more: page.has_more,
             total_scanned,
+            next_cursor,
         })
     })
     .await
@@ -367,4 +393,14 @@ pub async fn run_store_benchmark(
 
 fn hex_encode(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
+fn hex_decode(s: &str) -> Result<Vec<u8>, ()> {
+    if !s.len().is_multiple_of(2) {
+        return Err(());
+    }
+    (0..s.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&s[i..i + 2], 16).map_err(|_| ()))
+        .collect()
 }

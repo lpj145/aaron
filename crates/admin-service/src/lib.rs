@@ -7,6 +7,7 @@
 pub mod api;
 pub mod config;
 pub mod error;
+pub mod k8s;
 pub mod service;
 pub mod state;
 pub mod static_files;

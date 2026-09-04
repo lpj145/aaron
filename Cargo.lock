@@ -1801,6 +1801,7 @@ dependencies = [
  "crossfire",
  "dotenvy",
  "fjall",
+ "futures-util",
  "gethostname",
  "if-addrs",
  "membership-service",
@@ -2811,8 +2812,12 @@ name = "shard-service"
 version = "0.1.0"
 dependencies = [
  "control-plane-service",
+ "criterion",
  "membership-service",
  "node",
+ "planus",
+ "planus-codegen",
+ "planus-translation",
  "serde",
  "serde_json",
  "snafu",
@@ -2821,6 +2826,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "tracing-subscriber",
+ "twox-hash",
 ]
 
 [[package]]
@@ -3393,6 +3399,9 @@ name = "twox-hash"
 version = "2.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5283634e518fe9e82c7b20520bb4bc209009fd16c82077c802f8111ecbb0117a"
+dependencies = [
+ "rand 0.9.5",
+]
 
 [[package]]
 name = "typenum"
