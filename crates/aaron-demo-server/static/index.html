@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aaron — Distributed Systems Runtime for Rust</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            slate: {
+              850: '#111726',
+              925: '#0b0f19',
+              950: '#070a10',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glow-indigo {
+      box-shadow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.2);
+    }
+    .bg-grid {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans selection:bg-brand-500 selection:text-white min-h-screen relative overflow-x-hidden">
+
+  <!-- Background Grids & Radial Lights -->
+  <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-500/15 via-cyan-500/5 to-transparent blur-3xl pointer-events-none z-0"></div>
+
+  <!-- Navigation -->
+  <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-cyan-400 p-[1px] shadow-lg shadow-brand-500/20">
+          <div class="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center font-mono font-bold text-sm text-brand-400">
+            λ
+          </div>
+        </div>
+        <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+          Aaron
+        </span>
+        <span class="px-2 py-0.5 text-[10px] font-mono font-semibold tracking-wider uppercase rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">
+          v0.1.0
+        </span>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm text-slate-400 font-medium">
+        <a href="#features" class="hover:text-white transition">Features</a>
+        <a href="#sandbox" class="hover:text-white transition flex items-center gap-1.5">
+          <span>Live Demo</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        </a>
+        <a href="#architecture" class="hover:text-white transition">Architecture</a>
+        <a href="#crates" class="hover:text-white transition">Modular Crates</a>
+        <a href="#code" class="hover:text-white transition">Examples</a>
+      </nav>
+
+      <div class="flex items-center gap-4">
+        <!-- Live Cluster Slots Badge -->
+        <div id="nav-slots-badge" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-slate-900 border border-white/10 text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="nav-slots-text">Slots: 6 / 6 Free</span>
+        </div>
+
+        <a href="https://crates.io/crates/aaron" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition font-mono flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <span>crates.io</span>
+        </a>
+
+        <a href="https://github.com/lpj145/aaron" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-1.5 font-mono">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-28">
+    <div class="text-center max-w-4xl mx-auto">
+      <!-- Crates announcement badge -->
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono bg-brand-500/10 border border-brand-500/20 text-brand-300 mb-8 backdrop-blur-md">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        <span>Aaron v0.1.0 published on crates.io</span>
+        <span class="text-slate-500">|</span>
+        <span class="text-slate-400">Zero-allocation QUIC + SWIM + Raft</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
+        The Distributed Systems <br class="hidden sm:inline"/>
+        <span class="bg-gradient-to-r from-brand-400 via-cyan-300 to-indigo-200 bg-clip-text text-transparent">
+          Runtime for Rust
+        </span>
+      </h1>
+
+      <p class="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-10">
+        Zero-copy FlatBuffers schemas, native QUIC multi-stream transport, SWIM gossip failure detection, embedded Raft consensus, and disk-backed Fjall LSM storage. High-performance infrastructure in a single binary.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+        <a href="#sandbox" class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2">
+          <span>Launch Live Cluster Sandbox</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </a>
+
+        <!-- Quick Copy Command -->
+        <button onclick="copyInstallCmd()" class="w-full sm:w-auto px-5 py-3.5 rounded-xl font-mono text-xs bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 transition flex items-center justify-between sm:justify-start gap-3">
+          <span class="text-brand-400">$</span>
+          <span id="install-cmd">cargo add aaron --features full</span>
+          <svg id="copy-icon" class="w-4 h-4 text-slate-500 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Metrics Bar -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto text-left">
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 backdrop-blur-sm">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Gossip Protocol</div>
+          <div class="text-xl font-bold text-white">SWIM + Ping-Req</div>
+          <div class="text-[11px] text-emerald-400 mt-1">O(1) Bounded Fanout</div>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 backdrop-blur-sm">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Transport</div>
+          <div class="text-xl font-bold text-white">QUIC Streams</div>
+          <div class="text-[11px] text-cyan-400 mt-1">Zero Head-of-Line</div>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 backdrop-blur-sm">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Serialization</div>
+          <div class="text-xl font-bold text-white">FlatBuffers</div>
+          <div class="text-[11px] text-brand-400 mt-1">Zero Deserialization</div>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 backdrop-blur-sm">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Storage Engine</div>
+          <div class="text-xl font-bold text-white">Fjall LSM Tree</div>
+          <div class="text-[11px] text-amber-400 mt-1">Write-Optimized WAL</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- INTERACTIVE LIVE CLUSTER SANDBOX SECTION   -->
+    <!-- ========================================== -->
+    <section id="sandbox" class="mt-28 scroll-mt-20">
+      <div class="p-8 sm:p-10 rounded-2xl bg-slate-900/90 border border-white/10 glow-indigo relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-white/10">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 mb-3">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              <span>Interactive Live Demo</span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              Try an Isolated Aaron Cluster Live
+            </h2>
+            <p class="text-sm text-slate-400 mt-1 max-w-xl">
+              Spin up a real 3-node cluster in memory. Inject chaos, kill nodes to observe SWIM gossip failure detection, benchmark LSM writes, and open the embedded admin console.
+            </p>
+          </div>
+
+          <!-- Sandbox Slot Status & Trigger -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="text-right">
+              <div class="text-xs font-mono text-slate-400 uppercase tracking-wider">Quota Status</div>
+              <div id="slot-status-label" class="text-base font-bold text-emerald-400">6 of 6 Available</div>
+              <div class="text-[11px] text-slate-500">15 min max session TTL</div>
+            </div>
+
+            <button id="btn-launch-sandbox" onclick="launchDemoCluster()" class="px-6 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white shadow-md shadow-brand-500/20 transition flex items-center gap-2 disabled:opacity-50">
+              <span id="btn-launch-text">Spawn 3-Node Cluster</span>
+              <svg id="btn-launch-spinner" class="hidden animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- IDLE STATE CONTAINER -->
+        <div id="sandbox-idle" class="py-16 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center text-slate-400 mb-4">
+            <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">No Active Sandbox Session</h3>
+          <p class="text-sm text-slate-400 max-w-md mx-auto mb-6">
+            Click "Spawn 3-Node Cluster" above to reserve one of the 6 live sandbox slots and run real Aaron nodes in this session.
+          </p>
+        </div>
+
+        <!-- ACTIVE CLUSTER DASHBOARD -->
+        <div id="sandbox-active" class="hidden pt-8 space-y-6">
+          <!-- Session Header Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/80 border border-white/10">
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="active-session-id" class="font-mono text-sm font-bold text-white">cluster-xxxxxxxx</span>
+              </div>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 font-mono" id="active-cluster-id">
+                UUID: ...
+              </span>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div class="text-xs font-mono text-slate-400">
+                TTL: <span id="active-ttl-timer" class="text-amber-400 font-bold">14:59</span>
+              </div>
+
+              <!-- Open Full Dashboard -->
+              <button onclick="openAdminIframe()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white transition flex items-center gap-1.5 shadow-sm">
+                <span>Open Admin UI</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </button>
+
+              <!-- Destroy Sandbox -->
+              <button onclick="stopDemoCluster()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                Destroy Cluster
+              </button>
+            </div>
+          </div>
+
+          <!-- 3 Node Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="nodes-container">
+            <!-- Node 1 -->
+            <div id="node-card-1" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span id="node-1-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                  <span class="font-bold text-sm text-white">Node 1 (Seed / Admin)</span>
+                </div>
+                <span id="node-1-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  RUNNING
+                </span>
+              </div>
+              <div class="space-y-1.5 text-xs font-mono text-slate-400 mb-5">
+                <div>QUIC: <span id="node-1-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                <div>Admin: <span id="node-1-admin" class="text-cyan-400">127.0.0.1:----</span></div>
+                <div>Role: <span class="text-slate-300">Topology Coordinator</span></div>
+              </div>
+              <div class="flex gap-2">
+                <button id="btn-node-1-action" onclick="toggleNode(1)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                  Kill Node 1
+                </button>
+              </div>
+            </div>
+
+            <!-- Node 2 -->
+            <div id="node-card-2" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span id="node-2-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                  <span class="font-bold text-sm text-white">Node 2 (Worker)</span>
+                </div>
+                <span id="node-2-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  RUNNING
+                </span>
+              </div>
+              <div class="space-y-1.5 text-xs font-mono text-slate-400 mb-5">
+                <div>QUIC: <span id="node-2-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                <div>Seed: <span class="text-slate-400">Node 1</span></div>
+                <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
+              </div>
+              <div class="flex gap-2">
+                <button id="btn-node-2-action" onclick="toggleNode(2)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                  Kill Node 2
+                </button>
+              </div>
+            </div>
+
+            <!-- Node 3 -->
+            <div id="node-card-3" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span id="node-3-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                  <span class="font-bold text-sm text-white">Node 3 (Worker)</span>
+                </div>
+                <span id="node-3-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  RUNNING
+                </span>
+              </div>
+              <div class="space-y-1.5 text-xs font-mono text-slate-400 mb-5">
+                <div>QUIC: <span id="node-3-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                <div>Seed: <span class="text-slate-400">Node 1</span></div>
+                <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
+              </div>
+              <div class="flex gap-2">
+                <button id="btn-node-3-action" onclick="toggleNode(3)" class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                  Kill Node 3
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Benchmark and Chaos Toolbar -->
+          <div class="p-5 rounded-xl bg-slate-950/70 border border-white/10 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <button onclick="runBenchmark(1000)" id="btn-bench" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-2">
+                <span>⚡ Run 1,000 Writes Benchmark</span>
+              </button>
+              <span class="text-xs text-slate-400">Measures Fjall LSM commit latency & throughput live.</span>
+            </div>
+
+            <div id="bench-result" class="hidden text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/30 text-cyan-300">
+              Throughput: <span id="bench-ops" class="font-bold text-white">--</span> ops/sec | Latency: <span id="bench-lat" class="font-bold text-white">--</span> µs
+            </div>
+          </div>
+
+          <!-- Live Cluster Event Logs -->
+          <div class="p-4 rounded-xl bg-slate-950 border border-white/10">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-brand-400"></span>
+                <span class="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider">Cluster Telemetry & Gossip Stream</span>
+              </div>
+              <button onclick="clearLogs()" class="text-[11px] font-mono text-slate-500 hover:text-slate-300">Clear</button>
+            </div>
+            <div id="cluster-logs" class="h-36 overflow-y-auto font-mono text-xs text-slate-400 space-y-1">
+              <div class="text-slate-600">[00:00.000] Cluster session initialized. Ready for operations.</div>
+            </div>
+          </div>
+
+          <!-- Embedded Admin Console Iframe Viewer (Collapsible) -->
+          <div id="iframe-section" class="hidden pt-4">
+            <div class="flex items-center justify-between pb-3">
+              <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Embedded Aaron Admin UI</span>
+              </h4>
+              <a id="iframe-open-tab-link" href="#" target="_blank" class="text-xs font-mono text-brand-400 hover:underline">
+                Open in Full Tab ↗
+              </a>
+            </div>
+            <div class="w-full h-[600px] rounded-xl overflow-hidden border border-white/15 bg-slate-950">
+              <iframe id="admin-iframe" src="about:blank" class="w-full h-full border-0"></iframe>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ARCHITECTURE & FEATURES SECTION            -->
+    <!-- ========================================== -->
+    <section id="features" class="mt-32">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
+          Enterprise Distributed Systems Architecture
+        </h2>
+        <p class="text-slate-400">
+          Engineered for mission-critical low-latency systems requiring strict zero-allocation serialization, predictable tail latency, and autonomous self-healing.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Feature 1 -->
+        <div class="p-6 rounded-2xl bg-slate-900/60 border border-white/10 hover:border-brand-500/30 transition">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">QUIC Multi-Stream Transport</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Independent sub-streams per cluster service completely eradicate TCP Head-of-Line blocking. Built-in TLS 1.3 encryption with automatic mutual node authentication.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="p-6 rounded-2xl bg-slate-900/60 border border-white/10 hover:border-cyan-500/30 transition">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">SWIM Gossip Failure Detection</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Scalable O(1) membership protocol with indirect pinging and suspicion-to-dead exponential decay. Quickly isolates partitioned nodes without overwhelming the network.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="p-6 rounded-2xl bg-slate-900/60 border border-white/10 hover:border-emerald-500/30 transition">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Embedded Raft Consensus</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Native control-plane consensus with automated leader election, write log replication, and compact snapshotting. Zero external dependencies like ZooKeeper or etcd.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="p-6 rounded-2xl bg-slate-900/60 border border-white/10 hover:border-amber-500/30 transition">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Fjall Zero-Copy LSM Storage</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Embedded disk-backed Log-Structured Merge-tree storage. Write-optimized write-ahead logging with isolated keyspace partitioning and sub-millisecond point reads.
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="p-6 rounded-2xl bg-slate-900/60 border border-white/10 hover:border-indigo-500/30 transition">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Planus FlatBuffers Codegen</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Automated schema compilation in build.rs via the <code class="text-brand-400">aaron-build</code> crate. Zero CPU cycles wasted parsing or decoding payloads at runtime.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="p-6 rounded-2xl bg-slate-900/60 border border-white/10 hover:border-rose-500/30 transition">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Embedded Vue 3 Admin UI</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Single-binary management dashboard compiled directly into the binary via <code class="text-rose-400">rust-embed</code>. Real-time topology canvas, keyspace browser, and metric graphs.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- MODULAR CRATES SECTION                     -->
+    <!-- ========================================== -->
+    <section id="crates" class="mt-32">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
+          Published Modular Crates
+        </h2>
+        <p class="text-slate-400">
+          Use the full batteries-included facade or cherry-pick only the specific modules your architecture needs.
+        </p>
+      </div>
+
+      <div class="overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/60">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-950/80 border-b border-white/10 font-mono text-xs uppercase text-slate-400">
+            <tr>
+              <th class="py-4 px-6">Crate Name</th>
+              <th class="py-4 px-6">Description</th>
+              <th class="py-4 px-6">Version</th>
+              <th class="py-4 px-6">Crates.io Link</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5 font-mono text-xs">
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron</td>
+              <td class="py-4 px-6 font-sans text-slate-300">Unified facade with feature-flagged modules (full, tracing, membership, admin)</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron-core</td>
+              <td class="py-4 px-6 font-sans text-slate-300">Runtime container, actor supervision, QUIC engine, EventHub & Fjall LSM Store</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron-core" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron-build</td>
+              <td class="py-4 px-6 font-sans text-slate-300">Build-time FlatBuffers compiler and code generation plugin for build.rs</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron-build" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron-membership</td>
+              <td class="py-4 px-6 font-sans text-slate-300">SWIM protocol cluster membership and suspicion failure detector</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron-membership" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron-control-plane</td>
+              <td class="py-4 px-6 font-sans text-slate-300">Embedded OpenRaft consensus engine with snapshotting and state machine replication</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron-control-plane" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron-shard</td>
+              <td class="py-4 px-6 font-sans text-slate-300">Multi-service shard placement, consistent hashing, and replica groups</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron-shard" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron-tracing</td>
+              <td class="py-4 px-6 font-sans text-slate-300">Dynamic log-level reloading, ring buffer telemetry, and distributed tracing</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron-tracing" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-4 px-6 font-bold text-brand-400">aaron-admin</td>
+              <td class="py-4 px-6 font-sans text-slate-300">Embedded Vue.js 3 single-page management console and REST management API</td>
+              <td class="py-4 px-6 text-slate-400">v0.1.0</td>
+              <td class="py-4 px-6"><a href="https://crates.io/crates/aaron-admin" target="_blank" class="text-cyan-400 hover:underline">view crate ↗</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- CODE EXAMPLES SECTION                      -->
+    <!-- ========================================== -->
+    <section id="code" class="mt-32">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
+          Idiomatic Rust API
+        </h2>
+        <p class="text-slate-400">
+          Build nodes and compose services in a few lines of clean, type-safe async Rust.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
+        <!-- Code Tabs -->
+        <div class="flex items-center gap-2 px-4 py-3 bg-slate-950 border-b border-white/10 font-mono text-xs">
+          <button onclick="setTab(1)" id="tab-btn-1" class="px-3 py-1.5 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold">1. Cluster Node with Admin</button>
+          <button onclick="setTab(2)" id="tab-btn-2" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">2. LSM Keyspace Storage</button>
+          <button onclick="setTab(3)" id="tab-btn-3" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">3. SWIM Gossip Membership</button>
+        </div>
+
+        <div class="p-6 font-mono text-xs overflow-x-auto text-slate-300 bg-slate-950/80">
+          <!-- Snippet 1 -->
+          <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-brand-400">use</span> aaron::{
+    admin::{AdminConfig, AdminService},
+    membership::{MembershipConfig, MembershipService},
+    tracing::TracingService,
+    Context, Node, Uuid, service_fn,
+};
+
+<span class="text-cyan-400">#[tokio::main]</span>
+<span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
+    <span class="text-slate-500">// Configure SWIM gossip membership</span>
+    <span class="text-brand-400">let</span> mem_config = MembershipConfig {
+        bind_addr: <span class="text-amber-300">"127.0.0.1:17946"</span>.to_string(),
+        seeds: <span class="text-brand-400">vec!</span>[<span class="text-amber-300">"127.0.0.1:17940"</span>.to_string()],
+        cluster_id: Some(Uuid::random()),
+        probe_interval: std::time::Duration::from_millis(500),
+        probe_timeout: std::time::Duration::from_millis(150),
+        suspect_timeout: std::time::Duration::from_millis(1000),
+        indirect_ping_targets: 3,
+        gossip_fanout: 3,
+    };
+    <span class="text-brand-400">let</span> (membership, handle) = MembershipService::pair_with_config(mem_config);
+
+    <span class="text-slate-500">// Start Node with tracing, gossip, and embedded Vue.js admin</span>
+    Node::new(<span class="text-amber-300">"worker-node-1"</span>)
+        .with(TracingService::new())
+        .with(membership)
+        .with(AdminService::new().with_membership_handle(handle))
+        .run()
+        .<span class="text-brand-400">await</span>?;
+
+    Ok(())
+}</code></pre>
+
+          <!-- Snippet 2 -->
+          <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-brand-400">use</span> aaron::{Context, Node, service_fn};
+
+<span class="text-slate-500">// Isolated LSM Tree Keyspaces with Write-Ahead Logging</span>
+<span class="text-brand-400">let</span> storage_service = service_fn(<span class="text-amber-300">"order_storage"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
+    <span class="text-brand-400">let</span> ks = ctx.store.keyspace(<span class="text-amber-300">"orders"</span>)?;
+
+    <span class="text-slate-500">// Sequential write into Fjall LSM Engine</span>
+    ks.insert(<span class="text-amber-300">"order:1004"</span>, <span class="text-amber-300">r#"{"id":1004,"amount":99.50,"currency":"USD"}"#</span>)?;
+    ctx.store.persist()?;
+
+    <span class="text-slate-500">// Fast point lookup</span>
+    <span class="text-brand-400">if let</span> Some(bytes) = ks.get(<span class="text-amber-300">"order:1004"</span>)? {
+        println!(<span class="text-amber-300">"Fetched order payload: {:?}"</span>, String::from_utf8_lossy(&amp;bytes));
+    }
+
+    Ok(())
+});</code></pre>
+
+          <!-- Snippet 3 -->
+          <pre id="code-snippet-3" class="hidden leading-relaxed"><code><span class="text-brand-400">use</span> aaron::{membership::MembershipEvent, Context};
+
+<span class="text-slate-500">// Subscribe to real-time cluster membership events via EventHub</span>
+<span class="text-brand-400">let mut</span> sub = ctx.event_hub.subscribe::&lt;MembershipEvent&gt;().<span class="text-brand-400">await</span>;
+
+tokio::spawn(<span class="text-brand-400">async move</span> {
+    <span class="text-brand-400">while let</span> Ok(event) = sub.recv().<span class="text-brand-400">await</span> {
+        <span class="text-brand-400">match</span> event {
+            MembershipEvent::MemberJoined { node_id, addr } =&gt; {
+                println!(<span class="text-amber-300">"Node {node_id} joined at {addr}"</span>);
+            }
+            MembershipEvent::MemberSuspect { node_id } =&gt; {
+                println!(<span class="text-amber-300">"Node {node_id} is suspect! Probing indirectly..."</span>);
+            }
+            MembershipEvent::MemberDead { node_id } =&gt; {
+                println!(<span class="text-amber-300">"Node {node_id} declared DEAD"</span>);
+            }
+        }
+    }
+});</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-32 pt-12 pb-16 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 rounded bg-brand-600/30 flex items-center justify-center font-mono text-xs text-brand-400 font-bold">λ</div>
+        <span>Aaron Distributed Systems Runtime &bull; Licensed under MIT or Apache-2.0</span>
+      </div>
+      <div>
+        Authored by <span class="text-slate-300">Marcos Dantas</span> (<a href="mailto:marcos.adantas@hotmail.com" class="hover:underline">marcos.adantas@hotmail.com</a>)
+      </div>
+    </footer>
+  </main>
+
+  <!-- Interactive Sandbox JavaScript -->
+  <script>
+    let activeSession = null;
+    let pollInterval = null;
+    let ttlInterval = null;
+
+    function copyInstallCmd() {
+      const text = document.getElementById('install-cmd').innerText;
+      navigator.clipboard.writeText(text);
+      const icon = document.getElementById('copy-icon');
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+      setTimeout(() => {
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
+      }, 2000);
+    }
+
+    function setTab(num) {
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById(`code-snippet-${i}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${i}`).className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition';
+      }
+      document.getElementById(`code-snippet-${num}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${num}`).className = 'px-3 py-1.5 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold';
+    }
+
+    async function updateStats() {
+      try {
+        const res = await fetch('/api/demo/stats');
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('nav-slots-text').innerText = `Slots: ${data.available_slots} / ${data.max_clusters} Free`;
+          document.getElementById('slot-status-label').innerText = `${data.available_slots} of ${data.max_clusters} Available`;
+          if (data.available_slots === 0 && !activeSession) {
+            document.getElementById('btn-launch-sandbox').disabled = true;
+            document.getElementById('btn-launch-text').innerText = 'Slots Full (Wait for TTL)';
+          } else if (!activeSession) {
+            document.getElementById('btn-launch-sandbox').disabled = false;
+            document.getElementById('btn-launch-text').innerText = 'Spawn 3-Node Cluster';
+          }
+        }
+      } catch (err) {
+        // silent fallback
+      }
+    }
+
+    function addLog(msg) {
+      const logs = document.getElementById('cluster-logs');
+      const now = new Date();
+      const timeStr = `[${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(now.getMilliseconds()).padStart(3, '0')}]`;
+      const div = document.createElement('div');
+      div.innerHTML = `<span class="text-slate-500">${timeStr}</span> ${msg}`;
+      logs.appendChild(div);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('cluster-logs').innerHTML = '';
+    }
+
+    async function launchDemoCluster() {
+      const btn = document.getElementById('btn-launch-sandbox');
+      const btnText = document.getElementById('btn-launch-text');
+      const spinner = document.getElementById('btn-launch-spinner');
+
+      btn.disabled = true;
+      btnText.innerText = 'Spinning Up 3 Nodes...';
+      spinner.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/demo/start', { method: 'POST' });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          activeSession = data.cluster.session_id;
+          document.getElementById('sandbox-idle').classList.add('hidden');
+          document.getElementById('sandbox-active').classList.remove('hidden');
+          document.getElementById('active-session-id').innerText = data.cluster.session_id;
+          document.getElementById('active-cluster-id').innerText = `UUID: ${data.cluster.cluster_id.substring(0, 16)}...`;
+
+          btnText.innerText = 'Cluster Running';
+          spinner.classList.add('hidden');
+
+          addLog(`Cluster <span class="text-brand-400">${data.cluster.session_id}</span> spawned successfully`);
+          addLog(`Node 1 (Seed / Admin) initialized on QUIC port <span class="text-cyan-400">${data.cluster.nodes[0].quic_port}</span>, Admin port <span class="text-cyan-400">${data.cluster.admin_port}</span>`);
+          addLog(`Node 2 (Worker) joined cluster via seed 127.0.0.1:${data.cluster.nodes[0].quic_port}`);
+          addLog(`Node 3 (Worker) joined cluster via seed 127.0.0.1:${data.cluster.nodes[0].quic_port}`);
+          addLog(`SWIM failure detector online: probing interval 400ms`);
+
+          updateNodesUI(data.cluster.nodes);
+          startPolling(activeSession);
+        } else {
+          alert(`Could not start cluster: ${data.error || 'Server error'}`);
+          btn.disabled = false;
+          btnText.innerText = 'Spawn 3-Node Cluster';
+          spinner.classList.add('hidden');
+        }
+      } catch (err) {
+        alert(`Connection error: ${err.message}`);
+        btn.disabled = false;
+        btnText.innerText = 'Spawn 3-Node Cluster';
+        spinner.classList.add('hidden');
+      }
+      updateStats();
+    }
+
+    function startPolling(sessionId) {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/demo/${sessionId}/status`);
+          if (res.ok) {
+            const data = await res.json();
+            updateNodesUI(data.nodes);
+            
+            // Update TTL
+            const mins = Math.floor(data.ttl_remaining_secs / 60);
+            const secs = data.ttl_remaining_secs % 60;
+            document.getElementById('active-ttl-timer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+          } else {
+            // Cluster was terminated or expired
+            handleClusterExpired();
+          }
+        } catch {
+          // ignore
+        }
+      }, 1500);
+    }
+
+    function updateNodesUI(nodes) {
+      nodes.forEach((n) => {
+        const idx = n.id;
+        const isRunning = n.status === 'running';
+
+        const led = document.getElementById(`node-${idx}-led`);
+        const pill = document.getElementById(`node-${idx}-status-pill`);
+        const quic = document.getElementById(`node-${idx}-quic`);
+        const admin = document.getElementById(`node-${idx}-admin`);
+        const btnAction = document.getElementById(`btn-node-${idx}-action`);
+
+        if (quic) quic.innerText = `127.0.0.1:${n.quic_port}`;
+        if (admin && n.admin_port) admin.innerText = `127.0.0.1:${n.admin_port}`;
+
+        if (isRunning) {
+          led.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+          pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+          pill.innerText = 'RUNNING';
+          btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition';
+          btnAction.innerText = `Kill Node ${idx}`;
+        } else {
+          led.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+          pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
+          pill.innerText = 'KILLED';
+          btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 transition';
+          btnAction.innerText = `Revive Node ${idx}`;
+        }
+      });
+    }
+
+    async function toggleNode(idx) {
+      if (!activeSession) return;
+      const btn = document.getElementById(`btn-node-${idx}-action`);
+      const isKill = btn.innerText.includes('Kill');
+      const action = isKill ? 'kill' : 'revive';
+
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/demo/${activeSession}/${action}/${idx}`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          addLog(`<span class="${isKill ? 'text-rose-400' : 'text-emerald-400'}">${data.message}</span>`);
+        } else {
+          addLog(`Error: ${data.error || 'Action failed'}`);
+        }
+      } catch (err) {
+        addLog(`Network error: ${err.message}`);
+      }
+      btn.disabled = false;
+    }
+
+    async function runBenchmark(operations) {
+      if (!activeSession) return;
+      const btn = document.getElementById('btn-bench');
+      const benchBox = document.getElementById('bench-result');
+      btn.disabled = true;
+      btn.innerText = 'Running LSM Writes...';
+
+      try {
+        const res = await fetch(`/api/demo/${activeSession}/benchmark`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ operations })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          benchBox.classList.remove('hidden');
+          document.getElementById('bench-ops').innerText = Math.round(data.write_ops_sec).toLocaleString();
+          document.getElementById('bench-lat').innerText = data.write_latency_avg_us.toFixed(1);
+
+          addLog(`Benchmark: <span class="text-cyan-400">${data.operations} writes</span> completed in <span class="text-white">${(data.write_duration_ms || data.write_latency_avg_us * data.operations / 1000).toFixed(1)}ms</span> &bull; Throughput: <span class="text-emerald-400 font-bold">${Math.round(data.write_ops_sec).toLocaleString()} ops/sec</span> &bull; Latency: <span class="text-amber-400">${data.write_latency_avg_us.toFixed(1)} µs/op</span>`);
+        } else {
+          addLog(`Benchmark failed: ${data.error || 'Error'}`);
+        }
+      } catch (err) {
+        addLog(`Benchmark request failed: ${err.message}`);
+      }
+
+      btn.disabled = false;
+      btn.innerText = '⚡ Run 1,000 Writes Benchmark';
+    }
+
+    function openAdminIframe() {
+      if (!activeSession) return;
+      const iframeSection = document.getElementById('iframe-section');
+      const iframe = document.getElementById('admin-iframe');
+      const openTabLink = document.getElementById('iframe-open-tab-link');
+
+      const adminUrl = `/demo/${activeSession}/dashboard/`;
+      iframe.src = adminUrl;
+      openTabLink.href = adminUrl;
+      iframeSection.classList.remove('hidden');
+      iframeSection.scrollIntoView({ behavior: 'smooth' });
+      addLog(`Admin Console attached: <a href="${adminUrl}" target="_blank" class="text-cyan-400 underline">Open in dedicated tab</a>`);
+    }
+
+    async function stopDemoCluster() {
+      if (!activeSession) return;
+      if (!confirm('Are you sure you want to shut down this demo cluster?')) return;
+
+      try {
+        await fetch(`/api/demo/${activeSession}/stop`, { method: 'POST' });
+        addLog(`Cluster <span class="text-rose-400">${activeSession}</span> terminated.`);
+      } catch {}
+      handleClusterExpired();
+    }
+
+    function handleClusterExpired() {
+      if (pollInterval) clearInterval(pollInterval);
+      activeSession = null;
+      document.getElementById('sandbox-active').classList.add('hidden');
+      document.getElementById('sandbox-idle').classList.remove('hidden');
+      document.getElementById('iframe-section').classList.add('hidden');
+      document.getElementById('admin-iframe').src = 'about:blank';
+
+      const btn = document.getElementById('btn-launch-sandbox');
+      btn.disabled = false;
+      document.getElementById('btn-launch-text').innerText = 'Spawn 3-Node Cluster';
+      document.getElementById('btn-launch-spinner').classList.add('hidden');
+      updateStats();
+    }
+
+    // Polling stats on load
+    updateStats();
+    setInterval(updateStats, 5000);
+  </script>
+</body>
+</html>
