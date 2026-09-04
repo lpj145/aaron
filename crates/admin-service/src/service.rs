@@ -65,6 +65,10 @@ impl AdminService {
     }
 
     /// Registers service metadata for schema inspection in the admin dashboard.
+    ///
+    /// Note: Explicit registration via this method is optional. The `Node` supervisor
+    /// automatically registers and provides all supervised service schemas directly
+    /// to the admin dashboard via `Context::services()`.
     pub fn with_service_schema<S: Service>(mut self, service: &S) -> Self {
         let schema = S::Config::schema()
             .into_iter()

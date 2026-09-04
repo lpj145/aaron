@@ -89,7 +89,7 @@ impl ShardCoordinator {
                 continue;
             }
 
-            // Caso 2: Partições de serviço estruturadas (ex: "shards/treasurer/0")
+            // Caso 2: Partições de serviço estruturadas (ex: "shards/inventory/0")
             let parts: Vec<&str> = suffix.split('/').collect();
             if parts.len() == 2 && parts[1].parse::<ShardId>().is_ok()
                 && let Ok(mut placement) = ShardPlacement::from_bytes(&v_bytes) {

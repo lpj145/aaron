@@ -7,7 +7,7 @@ A supervised HTTP management service for the Aaron distributed runtime that embe
 ## 1. Dashboard Overview
 
 <p align="center">
-  <img src="../../assets/admin_panel_overview.jpg" alt="Aaron Admin Dashboard Overview" width="100%" />
+  <img src="../../assets/admin_panel_overview.png" alt="Aaron Admin Dashboard Overview" width="100%" />
 </p>
 
 ---
@@ -98,28 +98,29 @@ Declared configuration variables validated before startup:
 ## 5. Usage Example
 
 ```rust
-use aaron::{AdminService, MembershipService, ControlPlaneService, TracingService, Node};
+use aaron::{AdminService, ControlPlaneService, MembershipService, Node, ShardService, TracingService};
 
 #[tokio::main]
-async fn main() -> Result<(), node::Error> {
+async fn main() -> Result<(), aaron::BoxError> {
     let (membership, m_handle) = MembershipService::pair();
-    let (control_plane, cp_handle) = ControlPlaneService::new_with_handle();
+    let (control_plane, cp_handle) = ControlPlaneService::pair();
+    let (shard_svc, shard_handle) = ShardService::coordinator(cp_handle.clone());
     let tracing = TracingService::new();
 
+    // The Node supervisor automatically discovers and passes all service schemas
+    // to the AdminService via Context::services(), eliminating manual schema registration.
     let admin = AdminService::new()
         .with_membership_handle(m_handle)
         .with_control_plane_handle(cp_handle)
-        .with_service_schema(&membership)
-        .with_service_schema(&control_plane)
-        .with_service_schema(&tracing);
+        .with_shard_handle(shard_handle);
 
-    Node::new()
+    Node::new("seed-node")
         .with(tracing)
         .with(membership)
         .with(control_plane)
+        .with(shard_svc)
         .with(admin)
         .run()
         .await
-        .map_err(Into::into)
 }
 ```

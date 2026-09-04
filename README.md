@@ -16,8 +16,8 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 
 - [1. Live Cluster Topology & Management Dashboard](#1-live-cluster-topology--management-dashboard)
 - [2. Forming an Aaron Cluster in Rust](#2-forming-an-aaron-cluster-in-rust)
-  - [Primary Coordinator & Admin Node (bank)](#1-primary-coordinator--admin-node-bank)
-  - [Application Worker Node (treasurer)](#2-application-worker-node-treasurer)
+  - [Primary Coordinator & Admin Node (orders)](#1-primary-coordinator--admin-node-orders)
+  - [Application Worker Node (inventory)](#2-application-worker-node-inventory)
   - [Implementing a Custom Domain Service](#3-implementing-a-custom-domain-service)
 - [3. Architecture & Core Philosophy](#3-architecture--core-philosophy)
   - [System Architecture Overview](#system-architecture-overview)
@@ -25,7 +25,6 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 - [4. Framework vs. User-Space Architectural Boundaries](#4-framework-vs-user-space-architectural-boundaries)
 - [5. Workspace Structure](#5-workspace-structure)
 - [6. Quick Start](#6-quick-start)
-- [7. Documentation Index](#7-documentation-index)
 
 ---
 
@@ -45,7 +44,7 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 
 Composing and launching distributed nodes in Aaron is concise, modular, and declarative. Cluster discovery, QUIC networking, and consensus addresses are driven automatically through standard environment variables (`MEMBERSHIP_SEEDS`, `MEMBERSHIP_BIND_ADDR`, etc.) or Kubernetes ConfigMaps without manual joining loops.
 
-### 1. Primary Coordinator & Admin Node (bank)
+### 1. Primary Coordinator & Admin Node (orders)
 
 The coordinator runs the OpenRaft consensus state machine, the shard placement coordinator, the embedded Vue.js admin dashboard (`http://127.0.0.1:8080`), and domain application services:
 
@@ -60,7 +59,7 @@ pub async fn main() {
     let (control_svc, control_handle) = ControlPlaneService::pair();
     let (shard_svc, shard_handle) = ShardService::coordinator(control_handle.clone());
 
-    Node::new("bank")
+    Node::new("orders")
         .with(membership_svc)
         .with(
             AdminService::new()
@@ -71,14 +70,14 @@ pub async fn main() {
         .with(TracingService::new())
         .with(control_svc)
         .with(shard_svc)
-        .with(BankService)
+        .with(OrderService)
         .run()
         .await
         .unwrap_or_else(|err| eprintln!("{err}"));
 }
 ```
 
-### 2. Application Worker Node (treasurer)
+### 2. Application Worker Node (inventory)
 
 Workers join the cluster mesh via SWIM gossip, receive partition assignments from the coordinator, and execute business logic:
 
@@ -90,11 +89,11 @@ pub async fn main() {
     let (membership_svc, _membership_handle) = MembershipService::pair();
     let (shard_svc, shard_handle) = ShardService::worker();
 
-    Node::new("treasurer")
+    Node::new("inventory")
         .with(membership_svc)
         .with(TracingService::new())
         .with(shard_svc)
-        .with(TreasurerService::new(shard_handle))
+        .with(InventoryService::new(shard_handle))
         .run()
         .await
         .unwrap_or_else(|err| eprintln!("{err}"));
@@ -109,26 +108,26 @@ Any business logic can be packaged into a supervised `Service`. Services get dir
 use aaron::{BoxError, Context, Service, ShardEvent, ShardHandle};
 use tracing::info;
 
-pub struct TreasurerService {
+pub struct InventoryService {
     shard_handle: ShardHandle,
 }
 
-impl TreasurerService {
+impl InventoryService {
     pub fn new(shard_handle: ShardHandle) -> Self {
         Self { shard_handle }
     }
 }
 
-impl Service for TreasurerService {
+impl Service for InventoryService {
     type Config = ();
 
     fn name(&self) -> &str {
-        "treasurer-service"
+        "inventory-service"
     }
 
     async fn run(&self, ctx: Context) -> Result<(), BoxError> {
         let node_id = ctx.identity.id();
-        info!(%node_id, "Treasurer service initialized");
+        info!(%node_id, "Inventory service initialized");
 
         // React reactively to cluster and shard events over EventHub
         let mut shard_events = ctx.event_hub.subscribe::<ShardEvent>().await;
@@ -279,15 +278,3 @@ cargo bench -p node --bench event_hub_bench
 # Run linter
 cargo clippy --all-targets --release
 ```
-
----
-
-## 7. Documentation Index
-
-- [Node Architecture & Service Development Guide](./crates/node/README.md)
-- [SWIM Membership Service & Protocol Specification](./crates/membership-service/README.md)
-- [Control Plane Consensus Service Guide](./crates/control-plane-service/README.md)
-- [Shard Service & Partitioning Roadmap](./crates/shard-service/README.md)
-- [Admin Service & Vue.js Dashboard Guide](./crates/admin-service/README.md)
-- [Tracing Service & Dynamic Reloading](./crates/tracing-service/README.md)
-- [Architectural Conventions & Directives](./CONVENTIONS.md)

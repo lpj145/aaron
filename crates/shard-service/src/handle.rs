@@ -348,51 +348,51 @@ mod tests {
 
         let handle = ShardHandle::new(node_a, 16);
 
-        // Placement for service "treasurer"
-        let p_treasurer = ShardPlacement::with_service(
-            "treasurer",
+        // Placement for service "inventory"
+        let p_inventory = ShardPlacement::with_service(
+            "inventory",
             0,
             node_a,
             vec![node_b, node_c],
             100,
         );
-        handle.update_placement(p_treasurer).await;
+        handle.update_placement(p_inventory).await;
 
-        // Placement for service "bank"
-        let p_bank = ShardPlacement::with_service(
-            "bank",
+        // Placement for service "orders"
+        let p_orders = ShardPlacement::with_service(
+            "orders",
             0,
             node_b,
             vec![node_a, node_c],
             100,
         );
-        handle.update_placement(p_bank).await;
+        handle.update_placement(p_orders).await;
 
         // Check isolation by service
-        let treasurer_shards = handle.my_service_shards("treasurer").await;
-        assert_eq!(treasurer_shards.len(), 1);
-        assert_eq!(treasurer_shards[0].1, crate::types::ShardRole::Primary);
+        let inventory_shards = handle.my_service_shards("inventory").await;
+        assert_eq!(inventory_shards.len(), 1);
+        assert_eq!(inventory_shards[0].1, crate::types::ShardRole::Primary);
 
-        let bank_shards = handle.my_service_shards("bank").await;
-        assert_eq!(bank_shards.len(), 1);
-        assert_eq!(bank_shards[0].1, crate::types::ShardRole::Replica);
+        let orders_shards = handle.my_service_shards("orders").await;
+        assert_eq!(orders_shards.len(), 1);
+        assert_eq!(orders_shards[0].1, crate::types::ShardRole::Replica);
 
         // Check counts
-        assert_eq!(handle.assigned_service_count("treasurer").await, 1);
-        assert_eq!(handle.assigned_service_count("bank").await, 1);
+        assert_eq!(handle.assigned_service_count("inventory").await, 1);
+        assert_eq!(handle.assigned_service_count("orders").await, 1);
         assert_eq!(handle.assigned_count().await, 2);
 
-        // Test leader announcement: node_b becomes leader of treasurer shard 0
-        handle.announce_leader("treasurer", 0, node_b, 2).await;
-        let updated = handle.get_service_placement("treasurer", 0).await.unwrap();
+        // Test leader announcement: node_b becomes leader of inventory shard 0
+        handle.announce_leader("inventory", 0, node_b, 2).await;
+        let updated = handle.get_service_placement("inventory", 0).await.unwrap();
         assert_eq!(updated.primary, node_b);
         assert!(updated.replicas.contains(&node_a));
         assert!(!updated.replicas.contains(&node_b));
 
-        // Node A now sees itself as Replica for treasurer shard 0
-        assert_eq!(handle.my_service_role("treasurer", 0).await, Some(crate::types::ShardRole::Replica));
-        assert!(handle.is_my_service_replica("treasurer", 0).await);
-        assert!(!handle.is_my_service_primary("treasurer", 0).await);
+        // Node A now sees itself as Replica for inventory shard 0
+        assert_eq!(handle.my_service_role("inventory", 0).await, Some(crate::types::ShardRole::Replica));
+        assert!(handle.is_my_service_replica("inventory", 0).await);
+        assert!(!handle.is_my_service_primary("inventory", 0).await);
     }
 
     #[tokio::test]

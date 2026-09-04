@@ -120,7 +120,7 @@ impl Service for MembershipService {
 
         let mut local_tags = Vec::new();
 
-        // 4.1 Primary application service identity (e.g. service:bank, service:treasurer)
+        // 4.1 Primary application service identity (e.g. service:orders, service:inventory)
         let primary_service_tag = format!("service:{}", ctx.service_name);
         if !local_tags.contains(&primary_service_tag) {
             local_tags.push(primary_service_tag);

@@ -248,7 +248,7 @@ mod tests {
         let rep2 = Uuid::random();
 
         let placement = ShardPlacement {
-            service_name: "treasurer".to_string(),
+            service_name: "inventory".to_string(),
             shard_id: 42,
             primary,
             replicas: vec![rep1, rep2],

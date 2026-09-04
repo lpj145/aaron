@@ -68,7 +68,7 @@ export function layoutCanvasNodes(
       if (explicitSvc) {
         serviceName = explicitSvc.replace('service:', '').toUpperCase();
       } else {
-        const namedSvc = tags.find((t) => ['treasurer', 'bank', 'orders', 'users'].includes(t.toLowerCase()));
+        const namedSvc = tags.find((t) => ['orders', 'inventory', 'billing', 'users'].includes(t.toLowerCase()));
         if (namedSvc) {
           serviceName = namedSvc.toUpperCase();
         } else {

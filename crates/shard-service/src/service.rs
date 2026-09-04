@@ -9,7 +9,7 @@ use tracing::info;
 ///
 /// Possui dois modos de operação:
 /// - `Coordinator`: Executado no Control Plane (com `ControlPlaneHandle`), orquestra e persiste atribuições no Raft.
-/// - `Worker`: Executado no Data Plane (workers como `treasurer`), escuta comandos via QUIC e mantém estado local.
+/// - `Worker`: Executado no Data Plane (workers como `inventory`), escuta comandos via QUIC e mantém estado local.
 pub enum ShardService {
     Coordinator {
         config_override: Option<ShardConfig>,

@@ -13,7 +13,7 @@ const emit = defineEmits<{
   (e: 'start-node', serviceName: string): void;
 }>();
 
-const startNodeServiceName = ref<string>('bank');
+const startNodeServiceName = ref<string>('orders');
 const customServiceName = ref<string>('');
 const isCustomService = ref<boolean>(false);
 
@@ -25,7 +25,7 @@ watch(
         startNodeServiceName.value = props.discoveredServices[0];
         isCustomService.value = false;
       } else {
-        startNodeServiceName.value = 'bank';
+        startNodeServiceName.value = 'orders';
         isCustomService.value = false;
       }
       customServiceName.value = '';
@@ -95,7 +95,7 @@ function handleConfirm() {
             <input
               v-model="customServiceName"
               type="text"
-              placeholder="e.g. bank, treasurer, custom-worker"
+              placeholder="e.g. orders, inventory, custom-worker"
               class="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500"
             />
           </div>

@@ -63,7 +63,7 @@ impl Default for Node {
 }
 
 impl Node {
-    /// Creates a new `Node` instance with a mandatory service name (e.g. "bank", "treasurer").
+    /// Creates a new `Node` instance with a mandatory service name (e.g. "orders", "inventory").
     pub fn new(service_name: impl Into<String>) -> Self {
         let dir_path = std::env::var("DATA_DIR")
             .or_else(|_| std::env::var("NODE_DATA_DIR"))

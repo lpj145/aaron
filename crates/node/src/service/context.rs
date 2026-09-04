@@ -26,7 +26,7 @@ pub struct ServiceDescriptor {
 /// node identity, environment configuration, service cancellation token, and node shutdown controller.
 #[derive(Clone)]
 pub struct Context {
-    /// Name of the primary application service running on this node (e.g. "bank", "treasurer").
+    /// Name of the primary application service running on this node (e.g. "orders", "inventory").
     pub service_name: String,
     /// Shared in-memory pub/sub event bus (lockless crossfire queues).
     pub event_hub: EventHub,

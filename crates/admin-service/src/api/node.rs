@@ -28,7 +28,12 @@ pub async fn get_node_info(State(state): State<AppState>) -> Json<NodeInfoRespon
     };
 
     let keyspaces_count = state.ctx.store.list_keyspaces().len();
-    let services_count = state.services.len();
+    let node_services = state.ctx.services().await;
+    let services_count = if node_services.is_empty() {
+        state.services.len()
+    } else {
+        node_services.len()
+    };
 
     Json(NodeInfoResponse {
         id: id_str,

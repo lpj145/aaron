@@ -78,7 +78,7 @@ async fn main() -> Result<(), node::BoxError> {
     let (membership, handle) = MembershipService::pair_with_config(config);
 
     // 2. Register with Node with explicit service identity and tags
-    Node::new("treasurer")
+    Node::new("worker")
         .with_tag("role:worker")
         .with_tag("tier:data-plane")
         .with(membership)

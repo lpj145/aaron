@@ -12,7 +12,7 @@ Distributed partition management, shard allocation, worker frame transport, and 
    Runs on Control Plane nodes. Manages authoritative shard assignments, coordinates partition bootstrapping via the Raft state machine per service group (`service_name`), transparently proxies non-leader mutation requests to the active Raft leader, and pushes assignment commands to remote data workers over QUIC bi-directional streams.
 
 2. **Worker Mode (`ShardService::worker()`)**:
-   Runs on Data Plane worker nodes (e.g. `treasurer`). Listens for incoming QUIC assignment frames on port `18946` (configured via `SHARD_BIND_ADDR`), validates epochs, persists assignments locally to the embedded LSM store via FlatBuffers (`StoredShardPlacement`), publishes reactive `ShardEvent` lifecycle events (`Join`, `RoleChanged`, `Leave`) to `EventHub`, and transmits periodic telemetry heartbeats (`RaftMessage::TelemetryHeartbeat`) every 3 seconds to the Control Plane.
+   Runs on Data Plane worker nodes (e.g. storage workers). Listens for incoming QUIC assignment frames on port `18946` (configured via `SHARD_BIND_ADDR`), validates epochs, persists assignments locally to the embedded LSM store via FlatBuffers (`StoredShardPlacement`), publishes reactive `ShardEvent` lifecycle events (`Join`, `RoleChanged`, `Leave`) to `EventHub`, and transmits periodic telemetry heartbeats (`RaftMessage::TelemetryHeartbeat`) every 3 seconds to the Control Plane.
 
 ---
 
@@ -47,7 +47,7 @@ The Aaron sharding architecture establishes strict, unambiguous boundaries:
 - **Raft Bootstrap (`POST /api/shards/bootstrap`)**: Partition allocation persisted directly to the Raft consensus log per service name (`shards/{service_name}/{shard_id}` and `shards/{service_name}/system/bootstrapped`). Once bootstrapped for a given service, subsequent calls are rejected to preserve cluster consistency.
 - **Manual Assignment (`POST /api/shards/assign`)**: Authoritative assignment of specific shards to designated Primary and Replica nodes.
 - **Topology Rebalancing (`POST /api/shards/rebalance`)**: Calculates target distribution and reallocates shard replicas evenly across available alive worker nodes.
-- **Multi-Service Shard Groups**: Shards are isolated and managed per service name (e.g., `treasurer`, `bank`, or `default`), preventing partition interference between different business services.
+- **Multi-Service Shard Groups**: Shards are isolated and managed per service name (e.g., `orders`, `inventory`, or `default`), preventing partition interference between different business services.
 - **Transparent Leader Proxying**: Coordinator endpoints transparently forward mutation and bootstrap requests to the active Raft leader when received by follower nodes.
 - **QUIC Frame RPC**: Bidirectional QUIC streams dispatch `RaftMessage::ShardCommand` binary frames serialized with FlatBuffers (`schemas/control_plane.fbs`).
 - **Reactive EventHub Pipeline**: Workers emit `ShardEvent::Join`, `ShardEvent::RoleChanged`, and `ShardEvent::Leave` onto the in-memory bus, allowing application services to react immediately.
