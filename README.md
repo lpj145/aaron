@@ -26,6 +26,7 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 - [4. Framework vs. User-Space Architectural Boundaries](#4-framework-vs-user-space-architectural-boundaries)
 - [5. Workspace Structure](#5-workspace-structure)
 - [6. Quick Start](#6-quick-start)
+- [7. Acknowledgments & Credits](#7-acknowledgments--credits)
 
 ### Crate Specifications & Technical Reference
 - [Node Architecture & Runtime Container Guide](./crates/node/README.md)
@@ -269,3 +270,15 @@ cargo bench -p node --bench event_hub_bench
 # Run linter
 cargo clippy --all-targets --release
 ```
+
+---
+
+## 7. Acknowledgments & Credits
+
+Aaron stands on the shoulders of giants. We express our sincere gratitude to the researchers, language designers, and open-source systems engineers whose work laid the theoretical and technical foundation for this framework:
+
+- **Graydon Hoare**: For creating the Rust programming language. Aaron's foundational guarantees of memory safety without garbage collection, zero-cost abstractions, and fearless concurrency stem directly from his vision for modern systems engineering.
+- **Diego Ongaro & John Ousterhout (Stanford University)**: For authoring the Raft consensus paper, *["In Search of an Understandable Consensus Algorithm"](https://raft.github.io/raft.pdf)*. Their work made distributed state machine replication intuitive, formal, and implementable.
+- **Indranil Gupta, Robbert van Renesse, & Kenneth P. Birman (Cornell University)**: For authoring the SWIM protocol paper, *["SWIM: A Scalable Weakly-Consistent Infection-Style Process Group Membership Protocol"](https://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf)*. Their research forms the bedrock of Aaron's decentralized peer discovery, infection-style gossip dissemination, and bounded failure detection.
+- **DatabendLabs ([`databendlabs`](https://github.com/databendlabs))**: For engineering and maintaining [`OpenRaft`](https://github.com/databendlabs/openraft), the modular, async Raft implementation that powers Aaron's linearizable Control Plane consensus engine.
+- **Marvin ([`marvin-j97`](https://github.com/marvin-j97)) & the [`fjall-rs`](https://github.com/fjall-rs/fjall) Team**: For creating [Fjall](https://github.com/fjall-rs/fjall), an embeddable, pure-Rust LSM-tree storage engine that provides Aaron nodes with reliable, zero-external-dependency local persistence and isolated keyspaces.
