@@ -1,0 +1,20 @@
+include "node.fbs";
+
+namespace Aaron.Shard;
+
+enum ShardStatus : uint8 {
+  Healthy = 0,
+  Degraded = 1,
+  Unassigned = 2
+}
+
+table StoredShardPlacement {
+  shard_id: uint32;
+  primary: Aaron.Node.Uuid;
+  replicas: [Aaron.Node.Uuid];
+  status: ShardStatus;
+  epoch: uint64;
+  service_name: string;
+}
+
+root_type StoredShardPlacement;

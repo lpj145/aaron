@@ -1,6 +1,5 @@
 use std::env;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 fn main() {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
@@ -10,34 +9,10 @@ fn main() {
         .expect("failed to find workspace root");
 
     let schema_path = workspace_root.join("schemas/shard.fbs");
-    let node_schema_path = workspace_root.join("schemas/node.fbs");
 
-    println!("cargo:rerun-if-changed={}", schema_path.display());
-    println!("cargo:rerun-if-changed={}", node_schema_path.display());
-
-    let declarations = planus_translation::translate_files(&[&schema_path]).unwrap_or_else(|| {
-        panic!(
-            "failed to translate FlatBuffers schema: {}",
-            schema_path.display()
-        )
-    });
-
-    let generated_code = planus_codegen::generate_rust(&declarations, false)
-        .expect("failed to generate Rust code from FlatBuffers declarations");
-
-    // Strip hardcoded serde derives from planus templates so serde is not required as a dependency
-    let generated_code = generated_code
-        .replace(", ::serde::Serialize, ::serde::Deserialize", "")
-        .replace("::serde::Serialize, ::serde::Deserialize,", "")
-        .replace("::serde::Serialize, ::serde::Deserialize", "");
-
-    let out_dir = env::var("OUT_DIR").expect("OUT_DIR not set");
-    let out_file = PathBuf::from(out_dir).join("shard_generated.rs");
-
-    fs::write(&out_file, generated_code).unwrap_or_else(|e| {
-        panic!(
-            "failed to write generated code to {}: {e}",
-            out_file.display()
-        )
-    });
+    aaron_build::Builder::new()
+        .schema(schema_path)
+        .out_file("shard_generated.rs")
+        .compile()
+        .expect("failed to compile shard.fbs FlatBuffers schema");
 }

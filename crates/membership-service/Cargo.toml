@@ -14,8 +14,7 @@ planus = "1.3.0"
 quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls", "ring"] }
 
 [build-dependencies]
-planus-translation = "1.3.0"
-planus-codegen = "1.3.0"
+aaron-build = { path = "../aaron-build" }
 
 [dev-dependencies]
 node = { path = "../node" }

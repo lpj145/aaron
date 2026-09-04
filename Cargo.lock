@@ -15,6 +15,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aaron-build"
+version = "0.1.0"
+dependencies = [
+ "planus-codegen",
+ "planus-translation",
+ "tempfile",
+]
+
+[[package]]
 name = "admin-service"
 version = "0.1.0"
 dependencies = [
@@ -605,14 +614,13 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 name = "control-plane-service"
 version = "0.1.0"
 dependencies = [
+ "aaron-build",
  "bytes",
  "futures-util",
  "membership-service",
  "node",
  "openraft",
  "planus",
- "planus-codegen",
- "planus-translation",
  "quinn",
  "serde",
  "serde_json",
@@ -1740,10 +1748,9 @@ checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 name = "membership-service"
 version = "0.1.0"
 dependencies = [
+ "aaron-build",
  "node",
  "planus",
- "planus-codegen",
- "planus-translation",
  "quinn",
  "snafu",
  "tempfile",
@@ -1796,6 +1803,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 name = "node"
 version = "0.1.0"
 dependencies = [
+ "aaron-build",
  "admin-service",
  "criterion",
  "crossfire",
@@ -1807,8 +1815,6 @@ dependencies = [
  "membership-service",
  "node",
  "planus",
- "planus-codegen",
- "planus-translation",
  "quinn",
  "rcgen",
  "rustls",
@@ -2811,13 +2817,12 @@ dependencies = [
 name = "shard-service"
 version = "0.1.0"
 dependencies = [
+ "aaron-build",
  "control-plane-service",
  "criterion",
  "membership-service",
  "node",
  "planus",
- "planus-codegen",
- "planus-translation",
  "serde",
  "serde_json",
  "snafu",

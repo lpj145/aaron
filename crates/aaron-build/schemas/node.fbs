@@ -1,0 +1,18 @@
+namespace Aaron.Node;
+
+/// 128-bit (16-byte) unique identifier (UUID / ULID).
+struct Uuid {
+  high: uint64;
+  low: uint64;
+}
+
+/// Node identity containing the node unique identifier,
+/// an incarnation timestamp (epoch/boot instant),
+/// and an optional cluster identifier.
+table NodeId {
+  id: Uuid;
+  incarnation: uint64;
+  cluster_id: Uuid;
+}
+
+root_type NodeId;

@@ -35,6 +35,7 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 - [Shard Service & Partitioning Roadmap](./crates/shard-service/README.md)
 - [Admin Service & Vue.js Dashboard Guide](./crates/admin-service/README.md)
 - [Tracing Service & Dynamic Reloading](./crates/tracing-service/README.md)
+- [Aaron Build-Time FlatBuffers Compiler Guide](./crates/aaron-build/README.md)
 - [Architectural Conventions & Directives](./CONVENTIONS.md)
 
 ---
@@ -216,6 +217,7 @@ aaron/
 │   ├── control-plane-service/  # Linearizable OpenRaft 0.9 consensus engine with FlatBuffers LSM storage
 │   ├── shard-service/          # Multi-service shard assignment, worker RPC, and LSM persistence
 │   ├── admin-service/          # Supervised HTTP dashboard serving embedded Vue.js SPA & REST APIs
+│   ├── aaron-build/            # Build-time FlatBuffers compiler & code generator for build.rs
 │   └── aaron/                  # Workspace facade re-exporting all core and service primitives
 ├── assets/                     # Architecture diagrams and UI preview screenshots
 ├── schemas/
@@ -234,6 +236,7 @@ aaron/
 - **[`shard-service`](./crates/shard-service/README.md)**: Distributed partitioning engine managing primary/replica shard allocations per service, deterministic WyHash 64-bit routing, Big-Endian LSM prefixing, one-time Raft bootstrap, and QUIC worker RPCs.
 - **[`admin-service`](./crates/admin-service/README.md)**: Embedded Vue.js 3 single-page application, 2D Canvas interactive topology ring, shard management drawer, and REST management interface with follower-to-leader transparent proxying.
 - **[`tracing-service`](./crates/tracing-service/README.md)**: Dynamic observability service reacting to `ChangeLogLevel` events via `EventHub` with zero process restarts.
+- **[`aaron-build`](./crates/aaron-build/README.md)**: Build-time FlatBuffers compiler providing zero-copy Rust codegen and core schema provisioning (`node.fbs`) for downstream `build.rs` scripts.
 
 ---
 
