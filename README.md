@@ -2,8 +2,29 @@
 
 An opinionated, high-performance distributed systems runtime and actor-service framework in Rust, designed for resilient peer-to-peer (P2P) networking, embedded LSM-tree persistence, linearizable Raft consensus, lockless event-driven architecture, and supervised service lifecycles.
 
-> **Origins & Vision**:
+<details>
+<summary><b>Origins & Vision (Click to expand)</b></summary>
+<br>
+
 > Aaron represents the culmination of **5 years of research, architectural experiments, and distributed systems engineering**. Not 5 years of experience but a decade of trying to build system that really work's as expected and scale well. I've written many docs, hand papers, diagrams on many tools, a lot of loc's trying make this work's very closest to the vision that I have in mind, to be honest maybe this version is a 52 version of the project but work's and look's very closest to what I thought. Bringing this such system is very difficult for a solo developer and that's why I used Gemini to build and maintain those pieces, but I try hard to architect it and put strong pattern decisions, perfect? not even close, but if you have something please open issue or contact me.
+
+</details>
+
+---
+
+## Table of Contents
+
+- [1. Live Cluster Topology & Management Dashboard](#1-live-cluster-topology--management-dashboard)
+- [2. Forming an Aaron Cluster in Rust](#2-forming-an-aaron-cluster-in-rust)
+  - [Step 1: Control Plane & Admin Seed Node](#step-1-control-plane--admin-seed-node)
+  - [Step 2: Application Worker Node (Joining the Cluster)](#step-2-application-worker-node-joining-the-cluster)
+- [3. Architecture & Core Philosophy](#3-architecture--core-philosophy)
+  - [System Architecture Overview](#system-architecture-overview)
+  - [The 10 Opinionated Architectural Principles](#the-10-opinionated-architectural-principles)
+- [4. Framework vs. User-Space Architectural Boundaries](#4-framework-vs-user-space-architectural-boundaries)
+- [5. Workspace Structure](#5-workspace-structure)
+- [6. Quick Start](#6-quick-start)
+- [7. Documentation Index](#7-documentation-index)
 
 ---
 
@@ -109,6 +130,12 @@ async fn main() -> Result<(), aaron::BoxError> {
   <img src="./assets/aaron_full_architecture.jpg" alt="Aaron Runtime Architecture" width="100%" />
 </p>
 
+### The 10 Opinionated Architectural Principles
+
+<details>
+<summary><b>Click to expand the 10 core architectural principles of Aaron</b></summary>
+<br>
+
 Aaron is built upon 10 core architectural principles that dictate how distributed services should be composed, configured, and run:
 
 1. **Decoupled, Composable Services (`Service` Trait)**:
@@ -140,6 +167,8 @@ Aaron is built upon 10 core architectural principles that dictate how distribute
 
 10. **Erlang/OTP-Style Supervision Tree (`ServiceOpts`)**:
     Each service is isolated in its own task hierarchy with dedicated cancellation tokens, configurable restart policies (`Never`, `Always`, `OnFailure`, `MaxRetries`), and backoff strategies (`Constant`, `Linear`, `Exponential`).
+
+</details>
 
 ---
 
