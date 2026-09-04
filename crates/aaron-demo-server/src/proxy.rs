@@ -18,9 +18,10 @@ pub async fn handle_proxy_admin(
     // 1. Extract session_id from cookie, header, or URL path
     let mut session_id = None;
 
-    // Check URL path: /demo/:session_id/dashboard
-    if path.starts_with("/demo/") {
-        let segments: Vec<&str> = path.trim_start_matches("/demo/").split('/').collect();
+    // Check URL path: /demo/:session_id/...
+    if path.starts_with("/demo") {
+        let trimmed = path.trim_start_matches("/demo").trim_start_matches('/');
+        let segments: Vec<&str> = trimmed.split('/').collect();
         if !segments.is_empty() && !segments[0].is_empty() {
             session_id = Some(segments[0].to_string());
         }
@@ -80,9 +81,10 @@ pub async fn handle_proxy_admin(
     };
 
     // Calculate target path on internal admin server
-    let target_subpath = if path.starts_with("/demo/") {
-        let parts: Vec<&str> = path.trim_start_matches("/demo/").splitn(2, '/').collect();
-        if parts.len() == 2 {
+    let target_subpath = if path.starts_with("/demo") {
+        let trimmed = path.trim_start_matches("/demo").trim_start_matches('/');
+        let parts: Vec<&str> = trimmed.splitn(2, '/').collect();
+        if parts.len() == 2 && !parts[1].is_empty() {
             format!("/{}", parts[1])
         } else {
             "/".to_string()
@@ -126,7 +128,7 @@ pub async fn handle_proxy_admin(
             let mut response_builder = Response::builder().status(status.as_u16());
 
             // If this was a navigation to /demo/:session_id, set the session cookie
-            if path.starts_with("/demo/") {
+            if path.starts_with("/demo") {
                 response_builder = response_builder.header(
                     header::SET_COOKIE,
                     format!("aaron_demo_session={}; Path=/; SameSite=Lax", cluster.session_id),

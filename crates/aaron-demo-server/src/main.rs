@@ -34,9 +34,14 @@ struct Args {
 }
 
 static LANDING_HTML: &str = include_str!("../static/index.html");
+static HERO_WEBP: &[u8] = include_bytes!("../static/hero-mascot.webp");
 
 async fn serve_landing() -> Html<&'static str> {
     Html(LANDING_HTML)
+}
+
+async fn serve_hero_mascot() -> impl axum::response::IntoResponse {
+    ([(axum::http::header::CONTENT_TYPE, "image/webp")], HERO_WEBP)
 }
 
 #[tokio::main]
@@ -84,11 +89,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .route("/", get(serve_landing))
+        .route("/hero-mascot.webp", get(serve_hero_mascot))
         .nest("/api/demo", demo_api)
-        // Proxy routes for Aaron embedded Admin UI and cluster REST endpoints
-        .route("/demo/{*path}", get(proxy::handle_proxy_admin).post(proxy::handle_proxy_admin))
-        .route("/assets/{*path}", get(proxy::handle_proxy_admin))
-        .route("/favicon.svg", get(proxy::handle_proxy_admin))
+        // All other routes (demo subroutes, static assets, internal REST APIs) handled by proxy
         .fallback(proxy::handle_proxy_admin)
         .with_state(manager)
         .layer(CorsLayer::permissive())
