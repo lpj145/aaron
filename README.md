@@ -162,7 +162,7 @@ impl Service for InventoryService {
 ### Comprehensive Multi-Service Runtime Architecture
 
 <p align="center">
-  <img src="./assets/aaron_full_architecture.jpg" alt="Aaron Runtime Architecture" width="100%" />
+  <img src="./assets/aaron_full_architecture.png" alt="Aaron Runtime Architecture" width="100%" />
 </p>
 
 ### The 10 Opinionated Architectural Principles
@@ -171,37 +171,18 @@ impl Service for InventoryService {
 <summary><b>Click to expand the 10 core architectural principles of Aaron</b></summary>
 <br>
 
-Aaron is built upon 10 core architectural principles that dictate how distributed services should be composed, configured, and run:
+Aaron is built upon 10 core architectural principles that dictate how distributed services are composed, configured, and operated:
 
-1. **Decoupled, Composable Services (`Service` Trait)**:
-   Every feature in Aaron (tracing, cluster membership, consensus, discovery, storage, shard routing, web administration) is a first-class, standalone, supervised `Service`. Services declare functional capabilities (`capabilities(&self) -> Vec<&str>`) such as `"control-plane"`, `"shard"`, or `"shard-worker"`, while the `Node` acts as a runtime host and supervisor.
-
-2. **Fail-Fast Declarative Configuration (`ServiceConfig`)**:
-   Services declare their environment variables, types, defaults, and descriptions explicitly. The node inspects and validates the entire configuration schema *before* initializing network listeners or opening disk storage. If a mandatory variable is missing or malformed, startup aborts immediately with actionable error reports.
-
-3. **In-Memory Lockless Event Mesh (`EventHub`)**:
-   Services communicate in-process using strongly-typed pub/sub events over lockless ring buffers ([`crossfire 3`](https://crates.io/crates/crossfire)), achieving multi-million events/sec throughput with zero global lock contention across distinct `TypeId` topics.
-
-4. **Embedded Zero-External-Dependency Storage (`Store`)**:
-   Every Aaron node comes with an embedded, ACID-compliant LSM-tree storage engine ([Fjall 3.1](https://crates.io/crates/fjall)) partitioned into isolated keyspaces (`"node"`, `"membership"`, `"control-plane"`, `"app"`). Features a 256-stripe mutex table for atomic Read-Modify-Write operations and explicit maintenance mode during snapshot swaps.
-
-5. **Linearizable Distributed Consensus (`OpenRaft 0.9` & FlatBuffers)**:
-   Cluster metadata replication and linearizable state machine consensus powered by OpenRaft. All on-disk consensus storage (`meta/vote`, `meta/membership`, `log/{:020index}`) is serialized into binary FlatBuffers schemas (`schemas/control_plane.fbs`), eliminating JSON overhead. Includes automated follower-to-leader HTTP request proxying.
-
-6. **Deterministic WyHash Partitioning (`ShardService`)**:
-   High-speed key distribution calculated via **WyHash 64-bit** (`wyhash_64(key, 0) % total_shards`). Keys on disk are ordered using Big-Endian partition prefixes (`[u16 BE Shard ID] + [Raw Key]`), enabling atomic range scans and zero-copy boundary filtering.
-
-7. **Hardware Micro-Benchmarking & Dynamic Telemetry (`NodeTelemetry`)**:
-   During boot, the node executes a micro-benchmark ([`HardwareBenchmark`](crates/node/src/benchmark.rs)) measuring CPU ALU throughput (MOPS), RAM write bandwidth (MB/s), and disk fsync latency (µs) to calculate baseline nominal Workload Performance Score (WPS). Runtime telemetry continuously tracks live WPS and sliding error rates.
-
-8. **Multiplexed Transport over QUIC (`Network`)**:
-   All inter-node traffic travels over QUIC with native Web-of-Trust P2P TLS certificates authenticated against 128-bit node UUIDs, eliminating head-of-line blocking and connection handshake overhead with singleflight connection pooling.
-
-9. **SWIM Cluster Membership & Failure Detection (`membership-service`)**:
-   Decentralized peer discovery, direct `Ping` probes, indirect `PingReq` across $k$ intermediaries, monotonic incarnation conflict resolution with automatic self-refutation, and cluster token authorization (`MEMBERSHIP_CLUSTER_ID`).
-
-10. **Erlang/OTP-Style Supervision Tree (`ServiceOpts`)**:
-    Each service is isolated in its own task hierarchy with dedicated cancellation tokens, configurable restart policies (`Never`, `Always`, `OnFailure`, `MaxRetries`), and backoff strategies (`Constant`, `Linear`, `Exponential`).
+1. **Decoupled, Composable Services (`Service`)**: Every capability (consensus, membership, sharding, admin, tracing) is an isolated, supervised service declaring its own capabilities, with the `Node` acting as runtime host.
+2. **Fail-Fast Declarative Configuration (`ServiceConfig`)**: Services declare environment variables, types, and defaults upfront; the node validates schemas at boot before binding ports or opening storage.
+3. **In-Memory Lockless Event Mesh (`EventHub`)**: In-process pub/sub over lockless ring buffers with typed topics, enabling high-throughput, non-blocking messaging across local services.
+4. **Embedded Zero-External-Dependency Storage (`Store`)**: Embedded ACID LSM-tree engine (Fjall) partitioned into isolated keyspaces with striped mutexes for atomic Read-Modify-Write.
+5. **Linearizable Consensus (`OpenRaft` & FlatBuffers)**: Cluster metadata and state machines replicate via OpenRaft with zero-copy FlatBuffers binary persistence in the local LSM.
+6. **Deterministic WyHash Partitioning (`ShardService`)**: Uniform key distribution via 64-bit WyHash and Big-Endian partition prefixes (`[u16 BE Shard ID] + [Raw Key]`) for efficient LSM range scans.
+7. **Hardware Micro-Benchmarking & Dynamic Telemetry**: Nodes benchmark CPU, RAM, and fsync at boot to establish nominal capacity, continuously tracking live Workload Performance Scores (WPS).
+8. **Multiplexed Transport over QUIC (`Network`)**: Inter-node traffic runs over singleflight, connection-pooled QUIC streams with mutual P2P TLS authenticated against 128-bit node UUIDs.
+9. **SWIM Cluster Membership & Failure Detection**: Decentralized peer discovery, direct Ping and indirect PingReq probes, and monotonic incarnation conflict resolution with automatic self-refutation.
+10. **Erlang/OTP-Style Supervision Tree (`ServiceOpts`)**: Granular per-service lifecycle supervision with dedicated cancellation tokens, restart policies (`Never`, `Always`, `OnFailure`, `MaxRetries`), and backoff strategies.
 
 </details>
 
@@ -209,17 +190,17 @@ Aaron is built upon 10 core architectural principles that dictate how distribute
 
 ## 4. Framework vs. User-Space Architectural Boundaries
 
-Aaron is strictly an **infrastructure runtime and actor-service framework** for building distributed systems, not an out-of-the-box turnkey database. Its boundaries are explicitly delineated:
+Aaron provides the distributed infrastructure runtime. The boundary between the runtime framework and user-space domain logic is strictly delineated:
 
 | Architectural Concern | Handled by Aaron (Framework Runtime) | Handled by User-Space (Application Domain) |
 | :--- | :--- | :--- |
-| **Node Lifecycle & Supervision** | OTP-style task isolation, restart policies, backoff timers, cancellation tokens, schema-based fail-fast env validation. | Defining domain services, business worker loops, and registering them into the `Node` runtime. |
-| **P2P Transport & Mesh Security** | Multiplexed QUIC streams, singleflight connection pooling, Web-of-Trust P2P identity verified via 128-bit UUID SANs. | Application-level authentication and authorization (JWT, API keys, mTLS, RBAC) on business endpoints. |
-| **Node Discovery & Health** | SWIM gossip protocol, direct `Ping`, indirect `PingReq`, incarnation conflict resolution, false-suspicion self-refutation. | Reacting to node join/leave/dead events to execute domain-specific workflows. |
-| **Metadata Consensus** | Linearizable OpenRaft consensus for cluster state, joint consensus membership changes, zero-copy FlatBuffers LSM persistence, bounded chunked snapshot sync. | Deciding what cluster-wide metadata schemas your application stores in Raft. |
-| **Partition Topology & Routing** | Deterministic route calculation via WyHash 64-bit (`wyhash_64(key, 0) % total_shards`), Big-Endian LSM prefixing (`[u16 BE Shard ID] + [Raw Key]`), multi-service shard assignment, and QUIC command dispatching. | **Data Replication**: Replicating application state across partition replicas (via local Raft, WAL streams, CRDTs, or event sourcing). |
-| **Shard Leadership & Role Feedback** | Authoritative cluster-wide registry of shard assignments, epochs, and replica placements. | **Role State Machine**: Electing or transitioning partition roles within the worker nodes and reporting authoritative role state back to the Control Plane. |
-| **Data Persistence** | Embedded ACID LSM-tree engine (Fjall) with keyspace isolation and 256 striped mutexes for atomic Read-Modify-Write. | Data modeling, indexing, transactions, serialization formats, and query semantics. |
+| **Node Lifecycle & Supervision** | Task supervision trees, backoff retry policies, and fail-fast environment validation. | Registering domain services and executing application business loops. |
+| **P2P Transport & Mesh Security** | Multiplexed QUIC streams, connection pooling, and mutual P2P TLS certificate pinning. | Application-level protocols, user authentication (JWT/OAuth), and business endpoints. |
+| **Cluster Discovery & Health** | SWIM gossip protocol, Ping/PingReq failure detection, and self-refutation. | Reacting to cluster membership events to trigger business workflows. |
+| **Metadata Consensus** | Linearizable OpenRaft consensus for cluster state and FlatBuffers LSM storage. | Designing application metadata schemas stored within the consensus log. |
+| **Partition Routing & Topology** | WyHash key-to-shard mapping, partition allocation, and Big-Endian LSM prefixing. | **Data Replication**: Streaming partition data (via WAL, Raft, or CRDTs) across replicas. |
+| **Shard Leadership Transitions** | Authoritative cluster registry for shard assignments, epochs, and replica placements. | **Role State Machine**: Electing partition leaders and reporting active roles to Control Plane. |
+| **Local Data Persistence** | Embedded ACID LSM engine (Fjall) with keyspace isolation and atomic RMW mutexes. | Domain data schemas, secondary indexes, and transactional query semantics. |
 
 ---
 
