@@ -29,12 +29,12 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 - [7. Acknowledgments & Credits](#7-acknowledgments--credits)
 
 ### Crate Specifications & Technical Reference
-- [Node Architecture & Runtime Container Guide](./crates/node/README.md)
-- [SWIM Membership Service & Protocol Specification](./crates/membership-service/README.md)
-- [Control Plane Consensus Service Guide](./crates/control-plane-service/README.md)
-- [Shard Service & Partitioning Roadmap](./crates/shard-service/README.md)
-- [Admin Service & Vue.js Dashboard Guide](./crates/admin-service/README.md)
-- [Tracing Service & Dynamic Reloading](./crates/tracing-service/README.md)
+- [Core Architecture & Runtime Container Guide](./crates/aaron-core/README.md)
+- [SWIM Membership Service & Protocol Specification](./crates/aaron-membership/README.md)
+- [Control Plane Consensus Service Guide](./crates/aaron-control-plane/README.md)
+- [Shard Service & Partitioning Roadmap](./crates/aaron-shard/README.md)
+- [Admin Service & Vue.js Dashboard Guide](./crates/aaron-admin/README.md)
+- [Tracing Service & Dynamic Reloading](./crates/aaron-tracing/README.md)
 - [Aaron Build-Time FlatBuffers Compiler Guide](./crates/aaron-build/README.md)
 - [Architectural Conventions & Directives](./CONVENTIONS.md)
 
@@ -47,7 +47,7 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 </p>
 
 <p align="center">
-  This is the <a href="./crates/admin-service/README.md">Aaron Admin Dashboard</a>.
+  This is the <a href="./crates/aaron-admin/README.md">Aaron Admin Dashboard</a>.
 </p>
 
 ---
@@ -211,14 +211,14 @@ Aaron provides the distributed infrastructure runtime. The boundary between the 
 ```
 aaron/
 ├── crates/
-│   ├── node/                   # Core runtime host, Context, Supervision, Network, Store, EventHub, Error
-│   ├── tracing-service/        # Structured JSON/Pretty logging with dynamic runtime level reload
-│   ├── membership-service/     # SWIM cluster membership & failure detection over QUIC FlatBuffers
-│   ├── control-plane-service/  # Linearizable OpenRaft 0.9 consensus engine with FlatBuffers LSM storage
-│   ├── shard-service/          # Multi-service shard assignment, worker RPC, and LSM persistence
-│   ├── admin-service/          # Supervised HTTP dashboard serving embedded Vue.js SPA & REST APIs
+│   ├── aaron-core/             # Core runtime host, Context, Supervision, Network, Store, EventHub, Error
+│   ├── aaron-tracing/          # Structured JSON/Pretty logging with dynamic runtime level reload
+│   ├── aaron-membership/       # SWIM cluster membership & failure detection over QUIC FlatBuffers
+│   ├── aaron-control-plane/    # Linearizable OpenRaft 0.9 consensus engine with FlatBuffers LSM storage
+│   ├── aaron-shard/            # Multi-service shard assignment, worker RPC, and LSM persistence
+│   ├── aaron-admin/            # Supervised HTTP dashboard serving embedded Vue.js SPA & REST APIs
 │   ├── aaron-build/            # Build-time FlatBuffers compiler & code generator for build.rs
-│   └── aaron/                  # Workspace facade re-exporting all core and service primitives
+│   └── aaron/                  # Workspace facade re-exporting all core and service primitives (feature-gated)
 ├── assets/                     # Architecture diagrams and UI preview screenshots
 ├── schemas/
 │   ├── node.fbs                # FlatBuffers 128-bit UUID schema
@@ -230,13 +230,14 @@ aaron/
 
 ### Crate Highlights
 
-- **[`node`](./crates/node/README.md)**: Core runtime container providing `Node`, `Context`, `Service`, `ServiceConfig`, `EventHub`, `Network`, `Store`, `HardwareBenchmark`, and unified `Error`/`ErrorKind`.
-- **[`membership-service`](./crates/membership-service/README.md)**: SWIM-based cluster membership, failure detection (Ping + PingReq), hostname and capability tag dissemination over QUIC FlatBuffers.
-- **[`control-plane-service`](./crates/control-plane-service/README.md)**: OpenRaft 0.9 distributed consensus, binary FlatBuffers storage in Fjall, shard command dispatching, and dynamic membership management.
-- **[`shard-service`](./crates/shard-service/README.md)**: Distributed partitioning engine managing primary/replica shard allocations per service, deterministic WyHash 64-bit routing, Big-Endian LSM prefixing, one-time Raft bootstrap, and QUIC worker RPCs.
-- **[`admin-service`](./crates/admin-service/README.md)**: Embedded Vue.js 3 single-page application, 2D Canvas interactive topology ring, shard management drawer, and REST management interface with follower-to-leader transparent proxying.
-- **[`tracing-service`](./crates/tracing-service/README.md)**: Dynamic observability service reacting to `ChangeLogLevel` events via `EventHub` with zero process restarts.
+- **[`aaron-core`](./crates/aaron-core/README.md)**: Core runtime container providing `Node`, `Context`, `Service`, `ServiceConfig`, `EventHub`, `Network`, `Store`, `HardwareBenchmark`, and unified `Error`/`ErrorKind`.
+- **[`aaron-membership`](./crates/aaron-membership/README.md)**: SWIM-based cluster membership, failure detection (Ping + PingReq), hostname and capability tag dissemination over QUIC FlatBuffers.
+- **[`aaron-control-plane`](./crates/aaron-control-plane/README.md)**: OpenRaft 0.9 distributed consensus, binary FlatBuffers storage in Fjall, shard command dispatching, and dynamic membership management.
+- **[`aaron-shard`](./crates/aaron-shard/README.md)**: Distributed partitioning engine managing primary/replica shard allocations per service, deterministic WyHash 64-bit routing, Big-Endian LSM prefixing, one-time Raft bootstrap, and QUIC worker RPCs.
+- **[`aaron-admin`](./crates/aaron-admin/README.md)**: Embedded Vue.js 3 single-page application, 2D Canvas interactive topology ring, shard management drawer, and REST management interface with follower-to-leader transparent proxying.
+- **[`aaron-tracing`](./crates/aaron-tracing/README.md)**: Dynamic observability service reacting to `ChangeLogLevel` events via `EventHub` with zero process restarts.
 - **[`aaron-build`](./crates/aaron-build/README.md)**: Build-time FlatBuffers compiler providing zero-copy Rust codegen and core schema provisioning (`node.fbs`) for downstream `build.rs` scripts.
+- **[`aaron`](./crates/aaron/README.md)**: The umbrella facade crate exposing all modular components behind feature flags (`membership`, `control-plane`, `shard`, `admin`, `tracing`, `full`).
 
 ---
 
@@ -245,17 +246,17 @@ aaron/
 ### Running Examples
 
 ```bash
-# 1. Minimal Worker Node
-cargo run --example basic_node
+# 1. Minimal Worker Node (using aaron-core)
+cargo run -p aaron-core --example basic_node
 
-# 2. Dynamic Log Level Reloading with TracingService
-cargo run --example tracing_node
+# 2. Dynamic Log Level Reloading with TracingService (using aaron facade)
+cargo run -p aaron --example tracing_node
 
-# 3. Cluster Membership with Admin Handle & SWIM Gossip
-cargo run --example cluster_admin
+# 3. Cluster Membership with Admin Handle & SWIM Gossip (using aaron facade)
+cargo run -p aaron --example cluster_admin
 
 # 4. Full Node with Embedded Vue.js Admin Dashboard & Raft Control Plane (http://127.0.0.1:8080)
-cargo run --example admin_node
+cargo run -p aaron --example admin_node
 ```
 
 ### Running Tests and Benchmarks

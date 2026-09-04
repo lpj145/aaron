@@ -70,7 +70,7 @@ This document records the foundational architectural principles, design decision
 
 ## 6. Error Handling Architecture (OpenDAL + Snafu)
 - **Unified `Error` & `ErrorKind`**:
-  - Inspired by OpenDAL, all subsystem errors convert into `node::Error` providing programmatic `ErrorKind` matching, `.operation()` labeling, `.context(key, value)` key-value metadata, and complete `.source()` causal chains.
+  - Inspired by OpenDAL, all subsystem errors convert into `aaron_core::Error` providing programmatic `ErrorKind` matching, `.operation()` labeling, `.context(key, value)` key-value metadata, and complete `.source()` causal chains.
 - **Domain-Specific Errors with `snafu 0.8`**:
   - `StoreError`: `LockedForMaintenance`, `KeyspaceNotFound`, `SnapshotSameDir`, `Fjall`, `Io`, `Utf8`.
   - `NetworkError`: `FrameTooLarge`, `UnexpectedDisconnect`, `AddressResolution`, `QuicConnect`, `QuicConnection`, `QuicWrite`, `QuicRead`, `Tls`, `Io`.

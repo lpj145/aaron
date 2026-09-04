@@ -1,12 +1,30 @@
 [package]
 name = "aaron"
-version = "0.1.0"
-edition = "2024"
+description = "A distributed, zero-allocation runtime and actor framework with SWIM gossip, Raft consensus, and shard partitioning"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
 
 [dependencies]
-node = { path = "../node" }
-membership-service = { path = "../membership-service" }
-tracing-service = { path = "../tracing-service" }
-admin-service = { path = "../admin-service" }
-control-plane-service = { path = "../control-plane-service" }
-shard-service = { path = "../shard-service" }
+aaron-core = { version = "0.1.0", path = "../aaron-core" }
+aaron-tracing = { version = "0.1.0", path = "../aaron-tracing", optional = true }
+aaron-membership = { version = "0.1.0", path = "../aaron-membership", optional = true }
+aaron-control-plane = { version = "0.1.0", path = "../aaron-control-plane", optional = true }
+aaron-shard = { version = "0.1.0", path = "../aaron-shard", optional = true }
+aaron-admin = { version = "0.1.0", path = "../aaron-admin", optional = true }
+
+[features]
+default = ["full"]
+full = ["tracing", "membership", "control-plane", "shard", "admin"]
+tracing = ["dep:aaron-tracing"]
+membership = ["dep:aaron-membership"]
+control-plane = ["dep:aaron-control-plane"]
+shard = ["dep:aaron-shard"]
+admin = ["dep:aaron-admin"]
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["full"] }
+tracing.workspace = true
