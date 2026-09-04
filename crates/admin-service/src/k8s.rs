@@ -31,11 +31,11 @@ impl KubePodResolver {
 
         let namespace = if namespace_path.exists() {
             std::fs::read_to_string(namespace_path)
-                .unwrap_or_else(|_| "bank-cluster".to_string())
+                .unwrap_or_else(|_| "coordinator-cluster".to_string())
                 .trim()
                 .to_string()
         } else {
-            std::env::var("KUBERNETES_NAMESPACE").unwrap_or_else(|_| "bank-cluster".to_string())
+            std::env::var("KUBERNETES_NAMESPACE").unwrap_or_else(|_| "coordinator-cluster".to_string())
         };
 
         let host = std::env::var("KUBERNETES_SERVICE_HOST")

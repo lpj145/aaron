@@ -86,7 +86,7 @@ use std::time::Duration;
 async fn main() -> Result<(), node::BoxError> {
     let (cp_svc, cp_handle) = ControlPlaneService::pair();
 
-    let node = Node::new("bank")
+    let node = Node::new("coordinator")
         .with_tag("role:control-plane")
         .with(cp_svc);
 
