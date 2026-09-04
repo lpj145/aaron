@@ -12,8 +12,9 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 
 ---
 
-## Table of Contents
+## Documentation Index
 
+### Guides & Overview
 - [1. Live Cluster Topology & Management Dashboard](#1-live-cluster-topology--management-dashboard)
 - [2. Forming an Aaron Cluster in Rust](#2-forming-an-aaron-cluster-in-rust)
   - [Primary Coordinator & Admin Node (orders)](#1-primary-coordinator--admin-node-orders)
@@ -25,6 +26,15 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 - [4. Framework vs. User-Space Architectural Boundaries](#4-framework-vs-user-space-architectural-boundaries)
 - [5. Workspace Structure](#5-workspace-structure)
 - [6. Quick Start](#6-quick-start)
+
+### Crate Specifications & Technical Reference
+- [Node Architecture & Runtime Container Guide](./crates/node/README.md)
+- [SWIM Membership Service & Protocol Specification](./crates/membership-service/README.md)
+- [Control Plane Consensus Service Guide](./crates/control-plane-service/README.md)
+- [Shard Service & Partitioning Roadmap](./crates/shard-service/README.md)
+- [Admin Service & Vue.js Dashboard Guide](./crates/admin-service/README.md)
+- [Tracing Service & Dynamic Reloading](./crates/tracing-service/README.md)
+- [Architectural Conventions & Directives](./CONVENTIONS.md)
 
 ---
 
