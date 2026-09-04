@@ -16,8 +16,9 @@ An opinionated, high-performance distributed systems runtime and actor-service f
 
 - [1. Live Cluster Topology & Management Dashboard](#1-live-cluster-topology--management-dashboard)
 - [2. Forming an Aaron Cluster in Rust](#2-forming-an-aaron-cluster-in-rust)
-  - [Step 1: Control Plane & Admin Seed Node](#step-1-control-plane--admin-seed-node)
-  - [Step 2: Application Worker Node (Joining the Cluster)](#step-2-application-worker-node-joining-the-cluster)
+  - [Primary Coordinator & Admin Node (bank)](#1-primary-coordinator--admin-node-bank)
+  - [Application Worker Node (treasurer)](#2-application-worker-node-treasurer)
+  - [Implementing a Custom Domain Service](#3-implementing-a-custom-domain-service)
 - [3. Architecture & Core Philosophy](#3-architecture--core-philosophy)
   - [System Architecture Overview](#system-architecture-overview)
   - [The 10 Opinionated Architectural Principles](#the-10-opinionated-architectural-principles)
@@ -47,9 +48,11 @@ Aaron ships with an embedded single-page application dashboard (`admin-service`)
 
 ## 2. Forming an Aaron Cluster in Rust
 
-Building and forming an Aaron cluster is declarative and composable. Here is how to create a Control Plane seed node with the embedded Admin UI, and spin up an application worker node that joins the cluster:
+Composing and launching distributed nodes in Aaron is concise, modular, and declarative. Cluster discovery, QUIC networking, and consensus addresses are driven automatically through standard environment variables (`MEMBERSHIP_SEEDS`, `MEMBERSHIP_BIND_ADDR`, etc.) or Kubernetes ConfigMaps without manual joining loops.
 
-### Step 1: Control Plane & Admin Seed Node
+### 1. Primary Coordinator & Admin Node (bank)
+
+The coordinator runs the OpenRaft consensus state machine, the shard placement coordinator, the embedded Vue.js admin dashboard (`http://127.0.0.1:8080`), and domain application services:
 
 ```rust
 use aaron::{
@@ -57,66 +60,94 @@ use aaron::{
 };
 
 #[tokio::main]
-async fn main() -> Result<(), aaron::BoxError> {
-    // 1. Initialize services and operational handles
+pub async fn main() {
     let (membership_svc, membership_handle) = MembershipService::pair();
-    let (control_plane_svc, cp_handle) = ControlPlaneService::pair();
-    let (shard_svc, shard_handle) = ShardService::coordinator(cp_handle.clone());
-    let tracing_svc = TracingService::new();
+    let (control_svc, control_handle) = ControlPlaneService::pair();
+    let (shard_svc, shard_handle) = ShardService::coordinator(control_handle.clone());
 
-    // 2. Attach operational handles and schemas to the Admin Dashboard
-    let admin_svc = AdminService::new()
-        .with_membership_handle(membership_handle.clone())
-        .with_control_plane_handle(cp_handle.clone())
-        .with_shard_handle(shard_handle.clone())
-        .with_service_schema(&membership_svc)
-        .with_service_schema(&control_plane_svc)
-        .with_service_schema(&tracing_svc);
-
-    // 3. Run the supervised node (Admin Dashboard ready at http://127.0.0.1:8080)
-    Node::new("control-plane-01")
-        .with_tag("role:control-plane")
-        .with(tracing_svc)
+    Node::new("bank")
         .with(membership_svc)
-        .with(control_plane_svc)
+        .with(
+            AdminService::new()
+                .with_membership_handle(membership_handle)
+                .with_control_plane_handle(control_handle)
+                .with_shard_handle(shard_handle),
+        )
+        .with(TracingService::new())
+        .with(control_svc)
         .with(shard_svc)
-        .with(admin_svc)
+        .with(BankService)
         .run()
         .await
+        .unwrap_or_else(|err| eprintln!("{err}"));
 }
 ```
 
-### Step 2: Application Worker Node (Joining the Cluster)
+### 2. Application Worker Node (treasurer)
+
+Workers join the cluster mesh via SWIM gossip, receive partition assignments from the coordinator, and execute business logic:
 
 ```rust
 use aaron::{MembershipService, Node, ShardService, TracingService};
-use std::time::Duration;
 
 #[tokio::main]
-async fn main() -> Result<(), aaron::BoxError> {
-    // 1. Initialize membership and shard worker service
-    let (membership_svc, membership_handle) = MembershipService::pair();
-    let shard_svc = ShardService::worker();
-    let tracing_svc = TracingService::new();
+pub async fn main() {
+    let (membership_svc, _membership_handle) = MembershipService::pair();
+    let (shard_svc, shard_handle) = ShardService::worker();
 
-    // 2. Connect to the Control Plane seed asynchronously via SWIM gossip
-    tokio::spawn(async move {
-        tokio::time::sleep(Duration::from_millis(150)).await;
-        let seed_addr = "127.0.0.1:7946".parse().unwrap();
-        match membership_handle.join(seed_addr).await {
-            Ok(peers) => println!("Connected to cluster! Discovered {} peer(s)", peers.len()),
-            Err(err) => eprintln!("Failed to join cluster: {err}"),
-        }
-    });
-
-    // 3. Run the worker node tagged with its domain service
-    Node::new("bank-worker-01")
-        .with_tag("service:bank")
-        .with(tracing_svc)
+    Node::new("treasurer")
         .with(membership_svc)
+        .with(TracingService::new())
         .with(shard_svc)
+        .with(TreasurerService::new(shard_handle))
         .run()
         .await
+        .unwrap_or_else(|err| eprintln!("{err}"));
+}
+```
+
+### 3. Implementing a Custom Domain Service
+
+Any business logic can be packaged into a supervised `Service`. Services get direct access to the lockless `EventHub`, embedded LSM `Store`, and graceful cancellation tokens:
+
+```rust
+use aaron::{BoxError, Context, Service, ShardEvent, ShardHandle};
+use tracing::info;
+
+pub struct TreasurerService {
+    shard_handle: ShardHandle,
+}
+
+impl TreasurerService {
+    pub fn new(shard_handle: ShardHandle) -> Self {
+        Self { shard_handle }
+    }
+}
+
+impl Service for TreasurerService {
+    type Config = ();
+
+    fn name(&self) -> &str {
+        "treasurer-service"
+    }
+
+    async fn run(&self, ctx: Context) -> Result<(), BoxError> {
+        let node_id = ctx.identity.id();
+        info!(%node_id, "Treasurer service initialized");
+
+        // React reactively to cluster and shard events over EventHub
+        let mut shard_events = ctx.event_hub.subscribe::<ShardEvent>().await;
+
+        loop {
+            tokio::select! {
+                _ = ctx.token.cancelled() => break,
+                Ok(event) = shard_events.recv() => {
+                    info!("Received shard assignment event: {event:?}");
+                }
+            }
+        }
+        Ok(())
+    }
 }
 ```
 
