@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark scroll-smooth">
+<html lang="en" class="dark scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aaron — Estrutura Opinativa para Clusters em Rust (Alpha)</title>
+  <title>Aaron — Opinionated Distributed Cluster Runtime for Rust (Alpha)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -77,11 +77,11 @@
       </div>
 
       <nav class="hidden md:flex items-center gap-7 text-xs font-mono uppercase tracking-wider text-slate-400">
-        <a href="#code" class="hover:text-white transition">Código</a>
-        <a href="#anatomy" class="hover:text-white transition">Anatomia do Nó</a>
-        <a href="#lifecycle" class="hover:text-white transition">Ciclo de Vida</a>
+        <a href="#code" class="hover:text-white transition">Code Models</a>
+        <a href="#anatomy" class="hover:text-white transition">Node Anatomy</a>
+        <a href="#lifecycle" class="hover:text-white transition">Lifecycle</a>
         <a href="#sandbox" class="hover:text-white transition flex items-center gap-1.5 text-cyan-400">
-          <span>Sandbox ao Vivo</span>
+          <span>Live Sandbox</span>
           <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
         </a>
         <a href="#crates" class="hover:text-white transition">Crates</a>
@@ -91,7 +91,7 @@
         <!-- Live Cluster Slots Badge -->
         <div id="nav-slots-badge" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-slate-900 border border-white/10 text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span id="nav-slots-text">Slots: 6 / 6 Livres</span>
+          <span id="nav-slots-text">Slots: 6 / 6 Free</span>
         </div>
 
         <a href="https://crates.io/crates/aaron" target="_blank" rel="noopener noreferrer" class="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition font-mono flex items-center gap-1.5">
@@ -117,26 +117,26 @@
       <div class="lg:col-span-7 space-y-6">
         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono bg-amber-500/10 border border-amber-500/20 text-amber-300">
           <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span>Projeto em Estágio Alpha</span>
+          <span>Alpha Release</span>
           <span class="text-slate-600">&bull;</span>
-          <span class="text-slate-400">APIs em Evolução & Aberto a Feedback</span>
+          <span class="text-slate-400">APIs Evolving & Feedback Welcome</span>
         </div>
 
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] text-white">
-          Estrutura Opinativa para <br/>
+          Opinionated Cluster <br/>
           <span class="bg-gradient-to-r from-cyan-300 via-indigo-300 to-brand-400 bg-clip-text text-transparent">
-            Construção de Clusters
+            Runtime for Rust
           </span>
         </h1>
 
         <p class="text-base sm:text-lg text-slate-300 leading-relaxed max-w-xl">
-          O Aaron propõe uma arquitetura coesa para sistemas distribuídos em Rust: cada nó é uma unidade autônoma que supervisiona seus serviços, mantém seu próprio estado persistente, descobre seus pares via fofoca descentralizada e comunica-se por streams multiplexados sem alocações.
+          Aaron provides a cohesive architecture for distributed clusters in Rust: each node is an autonomous runtime unit that supervises its own services, manages disk-backed embedded state, discovers peers through decentralized gossip, and communicates over encrypted multiplexed streams without heap allocations.
         </p>
 
         <!-- CTA Action Buttons -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
           <a href="#sandbox" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 hover:opacity-90 text-white shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2">
-            <span>Testar Sandbox ao Vivo (3 Nós)</span>
+            <span>Test Live Sandbox (3 Nodes)</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </a>
 
@@ -151,16 +151,16 @@
         <!-- Design Principles Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/10 text-xs">
           <div class="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-            <div class="font-mono font-semibold text-cyan-300 mb-1">Nós Autônomos</div>
-            <div class="text-slate-400">Cada instância gerencia seus atores, storage e ciclo de vida sem acoplamento externo.</div>
+            <div class="font-mono font-semibold text-cyan-300 mb-1">Autonomous Nodes</div>
+            <div class="text-slate-400">Each node manages its own actors, storage, and lifecycle without external service orchestration dependencies.</div>
           </div>
           <div class="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-            <div class="font-mono font-semibold text-indigo-300 mb-1">Topologia Descentralizada</div>
-            <div class="text-slate-400">Adesão e detecção de falhas O(1) via fofoca probabilística SWIM sobre QUIC.</div>
+            <div class="font-mono font-semibold text-indigo-300 mb-1">Decentralized Mesh</div>
+            <div class="text-slate-400">O(1) bounded membership and failure detection via SWIM gossip over QUIC.</div>
           </div>
           <div class="p-3 rounded-lg bg-white/[0.02] border border-white/5">
             <div class="font-mono font-semibold text-emerald-300 mb-1">Zero-Copy Fabric</div>
-            <div class="text-slate-400">Mensageria em FlatBuffers tipados e banco LSM embutido em um único binário.</div>
+            <div class="text-slate-400">Type-safe FlatBuffers messaging and disk-backed Fjall LSM tree in a single unified binary.</div>
           </div>
         </div>
       </div>
@@ -187,7 +187,7 @@
           <!-- Floating Orbit Status Badge 2: Bottom Left -->
           <div class="absolute -bottom-3 -left-3 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-xs font-mono text-emerald-300 shadow-xl backdrop-blur-md flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Fjall LSM Integrado</span>
+            <span>Integrated Fjall LSM</span>
           </div>
         </div>
       </div>
@@ -199,13 +199,13 @@
     <section id="code" class="mt-20 scroll-mt-20">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
-          <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-1">Modelos de Uso</div>
+          <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-1">Usage Models</div>
           <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Como Escrever um Nó com o Aaron
+            Composing an Aaron Node
           </h2>
         </div>
         <p class="text-xs text-slate-400 max-w-md">
-          A API do Aaron é projetada para ser composable. Você pode iniciar um nó simples em 15 linhas ou compor um membro de cluster resiliente com fofoca, métricas e admin.
+          Aaron provides a composable API. Start with a lightweight single-node service in 15 lines, or scale up to a resilient cluster member with gossip, telemetry, and an admin console.
         </p>
       </div>
 
@@ -213,48 +213,48 @@
         <!-- Tabs Header -->
         <div class="flex flex-wrap items-center gap-2 p-3 bg-slate-950 border-b border-white/10 font-mono text-xs">
           <button onclick="setTab(1)" id="tab-btn-1" class="px-4 py-2 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-semibold transition">
-            1. Modelo Simples (Comece em 15 Linhas)
+            1. Minimal Model (Get Started in 15 Lines)
           </button>
           <button onclick="setTab(2)" id="tab-btn-2" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-            2. Modelo Completo (Cluster em Produção + Gossip + Admin)
+            2. Production Cluster (SWIM Gossip + Admin + EventHub)
           </button>
           <button onclick="setTab(3)" id="tab-btn-3" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-            3. Zero-Copy RPC com FlatBuffers
+            3. Zero-Copy FlatBuffers RPC
           </button>
         </div>
 
         <div class="p-6 font-mono text-xs overflow-x-auto text-slate-300 bg-[#070a10]">
-          <!-- Snippet 1: Simple Model -->
-          <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-slate-500">// Modelo Simples: Um nó leve com armazenamento persistente embutido</span>
+          <!-- Snippet 1: Minimal Model -->
+          <pre id="code-snippet-1" class="leading-relaxed"><code><span class="text-slate-500">// Minimal Model: A lightweight node with embedded persistent storage</span>
 <span class="text-brand-400">use</span> aaron::{Context, Node, service_fn};
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// 1. Cria a unidade de execução do nó</span>
+    <span class="text-slate-500">// 1. Create the runtime execution container</span>
     <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"order-service"</span>)
-        <span class="text-slate-500">// 2. Registra um micro-serviço assíncrono supervisionado</span>
+        <span class="text-slate-500">// 2. Register a supervised async microservice</span>
         .with(service_fn(<span class="text-amber-300">"orders"</span>, |ctx: Context| <span class="text-brand-400">async move</span> {
-            <span class="text-slate-500">// Acessa keyspace isolado no engine Fjall LSM</span>
+            <span class="text-slate-500">// Access isolated keyspace in the Fjall LSM engine</span>
             <span class="text-brand-400">let</span> orders = ctx.store.keyspace(<span class="text-amber-300">"orders"</span>)?;
 
-            <span class="text-slate-500">// Gravação com WAL em disco e latência de ~6 microssegundos</span>
+            <span class="text-slate-500">// Disk write with WAL and ~6 microsecond latency</span>
             orders.insert(<span class="text-amber-300">"order:1001"</span>, <span class="text-amber-300">br#"{"customer":"alice","amount":99.50}"#</span>)?;
             ctx.store.persist()?;
 
-            <span class="text-slate-500">// Leitura pontual sub-milissegundo</span>
+            <span class="text-slate-500">// Sub-millisecond point lookup</span>
             <span class="text-brand-400">if let</span> Some(payload) = orders.get(<span class="text-amber-300">"order:1001"</span>)? {
-                println!(<span class="text-amber-300">"Pedido gravado: {}"</span>, String::from_utf8_lossy(&amp;payload));
+                println!(<span class="text-amber-300">"Order stored: {}"</span>, String::from_utf8_lossy(&amp;payload));
             }
             Ok(())
         }));
 
-    println!(<span class="text-amber-300">"Aaron Node ativo e supervisionando serviços."</span>);
+    println!(<span class="text-amber-300">"Aaron Node active and supervising services."</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
           <!-- Snippet 2: Full Production Model -->
-          <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-slate-500">// Modelo Completo: Nó de cluster distribuído com protocolo SWIM e Admin UI</span>
+          <pre id="code-snippet-2" class="hidden leading-relaxed"><code><span class="text-slate-500">// Production Model: Distributed cluster node with SWIM gossip and Admin UI</span>
 <span class="text-brand-400">use</span> aaron::{
     admin::AdminService,
     membership::{MembershipConfig, MembershipEvent, MembershipService},
@@ -265,10 +265,10 @@
 
 <span class="text-cyan-400">#[tokio::main]</span>
 <span class="text-brand-400">async fn</span> <span class="text-emerald-400">main</span>() -> Result&lt;(), Box&lt;<span class="text-brand-400">dyn</span> std::error::Error&gt;&gt; {
-    <span class="text-slate-500">// 1. Configuração do protocolo de fofoca (SWIM) e detecção de falhas O(1)</span>
+    <span class="text-slate-500">// 1. Configure SWIM gossip protocol and O(1) failure detection</span>
     <span class="text-brand-400">let</span> mem_cfg = MembershipConfig {
         bind_addr: <span class="text-amber-300">"0.0.0.0:18100"</span>.to_string(),
-        seeds: <span class="text-brand-400">vec!</span>[<span class="text-amber-300">"10.0.0.1:18100"</span>.to_string()], <span class="text-slate-500">// Nó semente para descoberta inicial</span>
+        seeds: <span class="text-brand-400">vec!</span>[<span class="text-amber-300">"10.0.0.1:18100"</span>.to_string()], <span class="text-slate-500">// Seed node for initial bootstrap</span>
         cluster_id: Some(Uuid::random()),
         probe_interval: Duration::from_millis(400),
         probe_timeout: Duration::from_millis(150),
@@ -278,47 +278,47 @@
     };
     <span class="text-brand-400">let</span> (membership, handle) = MembershipService::pair_with_config(mem_cfg);
 
-    <span class="text-slate-500">// 2. Composição do nó com observabilidade, clustering e Admin UI Vue 3</span>
+    <span class="text-slate-500">// 2. Compose the node with observability, clustering, and Vue 3 Admin UI</span>
     <span class="text-brand-400">let</span> node = Node::new(<span class="text-amber-300">"worker-01"</span>)
-        .with(TracingService::new())                                <span class="text-slate-500">// Recarga dinâmica de nível de logs</span>
-        .with(membership)                                          <span class="text-slate-500">// Protocolo SWIM sobre transporte QUIC</span>
-        .with(AdminService::new().with_membership_handle(handle)); <span class="text-slate-500">// Painel web na porta 28100</span>
+        .with(TracingService::new())                                <span class="text-slate-500">// Dynamic log level reload</span>
+        .with(membership)                                          <span class="text-slate-500">// SWIM protocol over QUIC transport</span>
+        .with(AdminService::new().with_membership_handle(handle)); <span class="text-slate-500">// Embedded web console on port 28100</span>
 
-    <span class="text-slate-500">// 3. Escuta reativa de eventos de topologia em tempo real (EventHub interno)</span>
+    <span class="text-slate-500">// 3. React to cluster topology events in real time (internal EventHub)</span>
     <span class="text-brand-400">let mut</span> sub = node.context().event_hub.subscribe::&lt;MembershipEvent&gt;().<span class="text-brand-400">await</span>;
     tokio::spawn(<span class="text-brand-400">async move</span> {
         <span class="text-brand-400">while let</span> Ok(event) = sub.recv().<span class="text-brand-400">await</span> {
             <span class="text-brand-400">match</span> event {
                 MembershipEvent::MemberJoined { node_id, addr } =&gt; {
-                    println!(<span class="text-amber-300">"Nó {node_id} ingressou no cluster via {addr}"</span>);
+                    println!(<span class="text-amber-300">"Node {node_id} joined cluster via {addr}"</span>);
                 }
                 MembershipEvent::MemberSuspect { node_id } =&gt; {
-                    println!(<span class="text-amber-300">"Nó {node_id} suspeito de falha. Disparando sondagens indiretas..."</span>);
+                    println!(<span class="text-amber-300">"Node {node_id} suspected faulty. Dispatching indirect probes..."</span>);
                 }
                 MembershipEvent::MemberDead { node_id } =&gt; {
-                    println!(<span class="text-amber-300">"Nó {node_id} confirmado morto pela malha."</span>);
+                    println!(<span class="text-amber-300">"Node {node_id} confirmed DEAD by the mesh."</span>);
                 }
             }
         }
     });
 
-    println!(<span class="text-amber-300">"Nó iniciado. Console de gerenciamento em http://localhost:28100"</span>);
+    println!(<span class="text-amber-300">"Node active. Management console available at http://localhost:28100"</span>);
     node.run().<span class="text-brand-400">await</span>?;
     Ok(())
 }</code></pre>
 
           <!-- Snippet 3: FlatBuffers Zero-Copy -->
-          <pre id="code-snippet-3" class="hidden leading-relaxed"><code><span class="text-slate-500">// Schemas FlatBuffers compilados em build-time pelo aaron-build</span>
-<span class="text-slate-500">// RPC de alta performance sem alocação ou parsing dinâmico de strings</span>
+          <pre id="code-snippet-3" class="hidden leading-relaxed"><code><span class="text-slate-500">// FlatBuffers schemas compiled at build-time with aaron-build</span>
+<span class="text-slate-500">// High-speed RPC without heap allocation or dynamic string parsing</span>
 <span class="text-brand-400">use</span> my_schemas::transaction_generated::Transaction;
 
-<span class="text-slate-500">// Leitura direta do buffer de rede QUIC</span>
+<span class="text-slate-500">// Direct read from the QUIC network stream buffer</span>
 <span class="text-brand-400">let</span> packet_bytes: &amp;[u8] = quic_stream.read_chunk().<span class="text-brand-400">await</span>?;
 
-<span class="text-slate-500">// Acesso a campos por ponteiros com verificação de limites em O(1)</span>
+<span class="text-slate-500">// Pointer-based field access with O(1) bounds verification</span>
 <span class="text-brand-400">let</span> tx = Transaction::from_buffer(packet_bytes)?;
 
-println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, tx.id(), tx.account()?, tx.amount());</code></pre>
+println!(<span class="text-amber-300">"ID: {} | Account: {} | Amount: ${}"</span>, tx.id(), tx.account()?, tx.amount());</code></pre>
         </div>
       </div>
     </section>
@@ -328,12 +328,12 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
     <!-- ========================================== -->
     <section id="anatomy" class="mt-32 scroll-mt-20">
       <div class="text-center max-w-3xl mx-auto mb-16">
-        <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Estrutura Opinativa</div>
+        <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Opinionated Architecture</div>
         <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
-          Anatomia de um Nó Aaron
+          Anatomy of an Aaron Node
         </h2>
         <p class="text-slate-400 text-sm sm:text-base">
-          Em vez de depender de serviços externos complexos para cada aspecto da infraestrutura, cada nó do Aaron é um contêiner fechado com os blocos fundamentais de um nó distribuído moderno.
+          Instead of relying on sprawling external infrastructure, each Aaron node is a self-contained runtime unit providing the fundamental building blocks of a modern distributed system.
         </p>
       </div>
 
@@ -345,7 +345,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           <div class="flex items-center justify-between pb-6 mb-6 border-b border-white/10">
             <div class="flex items-center gap-3">
               <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="font-mono font-bold text-sm text-white">Aaron Node Instance (Processo Único em Rust)</span>
+              <span class="font-mono font-bold text-sm text-white">Aaron Node Instance (Single Rust Process)</span>
             </div>
             <div class="text-xs font-mono text-slate-400">
               Identity: <span class="text-cyan-400">Cluster UUID + Node ID + Incarnation</span>
@@ -359,10 +359,10 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
             <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-brand-500/40 transition">
               <div class="flex items-center gap-2 mb-2">
                 <span class="w-2 h-2 rounded-full bg-brand-400"></span>
-                <h3 class="font-bold text-sm text-white">Supervisor de Serviços</h3>
+                <h3 class="font-bold text-sm text-white">Service Supervisor</h3>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Gerencia o ciclo de vida de atores e micro-serviços assíncronos via Tokio. Injeta o <code>Context</code> compartilhado e orquestra shutdown gracioso via CancellationToken.
+                Manages the lifecycle of async actors and microservices via Tokio. Injects shared <code>Context</code> and orchestrates graceful shutdown via CancellationToken.
               </p>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">Tokio Supervision</span>
             </div>
@@ -374,7 +374,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
                 <h3 class="font-bold text-sm text-white">Fjall LSM Storage Engine</h3>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Armazenamento embutido persistente em disco com Write-Ahead Log (WAL), segmentação lógica por keyspaces isolados e latência de escrita na ordem de 6 microssegundos.
+                Embedded disk persistence with Write-Ahead Logging (WAL), logical keyspace partitioning, and write latency in the ~6 microsecond range.
               </p>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">Disk-backed LSM Tree</span>
             </div>
@@ -386,7 +386,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
                 <h3 class="font-bold text-sm text-white">QUIC Multi-Stream Fabric</h3>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Comunicação segura via UDP com TLS 1.3 nativo e certificados auto-gerados. Multiplexação de streams que elimina o bloqueio Head-of-Line entre serviços concorrentes.
+                Secure UDP transport with mutual TLS 1.3 and auto-generated certificates. Stream multiplexing eliminates Head-of-Line blocking across concurrent services.
               </p>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Quinn / Rustls TLS 1.3</span>
             </div>
@@ -398,7 +398,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
                 <h3 class="font-bold text-sm text-white">SWIM Gossip Membership</h3>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Descoberta e monitoramento de nós descentralizado em O(1). Utiliza sondagens diretas e indiretas (ping-req) com estados Alive &rarr; Suspect &rarr; Dead e refutação por encarnação.
+                Decentralized O(1) node discovery and health monitoring. Employs direct and indirect (ping-req) probing with Alive &rarr; Suspect &rarr; Dead states and incarnation refutation.
               </p>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">O(1) Bounded Probing</span>
             </div>
@@ -410,7 +410,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
                 <h3 class="font-bold text-sm text-white">Internal EventHub Bus</h3>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                Barramento assíncrono pub/sub em memória para desacoplamento interno. Permite que serviços assinem mudanças de topologia, alertas de partição e métricas locais.
+                In-memory async pub/sub bus for local decoupling. Allows services to subscribe to topology transitions, partition warnings, and telemetry events.
               </p>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">Type-safe Event Bus</span>
             </div>
@@ -419,10 +419,10 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
             <div class="p-5 rounded-xl bg-slate-900 border border-white/10 hover:border-rose-500/40 transition">
               <div class="flex items-center gap-2 mb-2">
                 <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-                <h3 class="font-bold text-sm text-white">Admin & Observabilidade</h3>
+                <h3 class="font-bold text-sm text-white">Admin & Observability</h3>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed mb-3">
-                API REST de gerenciamento e console web em Vue.js 3 embutidos diretamente no binário com <code>rust-embed</code>. Recarga dinâmica de nível de logs sem reiniciar o nó.
+                Embedded REST management API and Vue 3 web dashboard packaged into the binary via <code>rust-embed</code>. Dynamic log level reload without process restarts.
               </p>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">Single-binary SPA UI</span>
             </div>
@@ -437,12 +437,12 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
     <!-- ========================================== -->
     <section id="lifecycle" class="mt-32 scroll-mt-20">
       <div class="text-center max-w-3xl mx-auto mb-16">
-        <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Resiliência e Estados</div>
+        <div class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold mb-2">Resilience & State Transitions</div>
         <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
-          Ciclo de Vida de um Nó no Cluster
+          Cluster Node Lifecycle
         </h2>
         <p class="text-slate-400 text-sm sm:text-base">
-          Como os nós ingressam, convergem a visão da malha, detectam partições de rede e recuperam-se de forma transparente sem intervenção humana.
+          How nodes join the mesh, converge topology state, detect network partitions, and autonomously self-heal without manual intervention.
         </p>
       </div>
 
@@ -456,11 +456,11 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           </div>
           <div class="space-y-1">
             <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Bootstrap e Descoberta Inicial</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300">Inicialização</span>
+              <span>Bootstrap & Initial Discovery</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300">Initialization</span>
             </div>
             <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              O nó aloca sua porta QUIC, abre o diretório de dados do Fjall LSM e gera seu <code>Uuid</code> único. Se houver sementes (seeds) configuradas, ele envia sondagens de handshake para a semente; caso contrário, assume a liderança inicial como semente para futuros membros.
+              The node allocates its QUIC port, initializes local Fjall LSM storage, and assigns its unique <code>Uuid</code>. If seed addresses are configured, it performs handshake probes against the seed; otherwise, it operates as the initial seed for subsequent peers.
             </p>
           </div>
         </div>
@@ -472,11 +472,11 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           </div>
           <div class="space-y-1">
             <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Convergência de Fofoca (SWIM Gossip)</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300">Propagação O(log N)</span>
+              <span>SWIM Gossip Convergence</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-300">O(log N) Dissemination</span>
             </div>
             <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              O protocolo de fofoca propaga o novo membro para a malha em passos aleatórios delimitados. Cada nó mantém uma tabela de membros locais ordenada e envia piggybacked updates em datagramas QUIC de forma probabilística e contínua.
+              The gossip engine propagates the new node across the mesh in bounded random steps. Each node maintains an ordered local membership table and disseminates updates probabilistically via QUIC datagrams.
             </p>
           </div>
         </div>
@@ -488,11 +488,11 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           </div>
           <div class="space-y-1">
             <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Detecção de Falha: Direta e Indireta (Ping-Req)</span>
+              <span>Failure Detection: Direct & Indirect (Ping-Req)</span>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">Suspect State</span>
             </div>
             <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              A cada intervalo (ex: 400ms), um nó sonda um par aleatório. Se não houver resposta dentro do timeout (150ms), ele recruta 3 nós vizinhos para fazerem <code>ping-req</code> indireto. Se a falha persistir, o nó é transicionado para <code>Suspect</code> com um temporizador de decaimento.
+              At configured probe intervals (e.g. 400ms), a node pings a random peer. Upon probe timeout (150ms), it recruits 3 neighboring peers to execute indirect <code>ping-req</code> probes. If unanswered, the target enters the <code>Suspect</code> state with a decay timer.
             </p>
           </div>
         </div>
@@ -504,11 +504,11 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           </div>
           <div class="space-y-1">
             <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Declaração de Morte ou Refutação com Auto-Cura</span>
+              <span>Dead Declaration or Incarnation Self-Healing</span>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-300">Self-Healing</span>
             </div>
             <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              Se o temporizador de suspeita expirar sem refutação, o nó é declarado <code>Dead</code> e removido da topologia. Porém, se o nó estava apenas sob alta carga ou reiniciou de um crash, ele refuta a suspeita incrementando seu número de <code>incarnation</code>, restaurando seu status <code>Alive</code> instantaneamente sem reiniciar o cluster.
+              If the suspicion timer expires without refutation, the node is declared <code>Dead</code> and evicted from active routing. However, if the node was temporarily delayed or crashed and restarted, it refutes the suspicion by incrementing its <code>incarnation</code> counter, immediately restoring <code>Alive</code> status without cluster restarts.
             </p>
           </div>
         </div>
@@ -520,11 +520,11 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           </div>
           <div class="space-y-1">
             <div class="text-sm font-bold text-white font-sans flex items-center gap-2">
-              <span>Drenagem Graciosa e Encerramento</span>
+              <span>Graceful Drain & Shutdown</span>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Graceful Drain</span>
             </div>
             <p class="text-slate-400 font-sans text-xs leading-relaxed">
-              Em paradas planejadas (SIGTERM / CancellationToken), os serviços assíncronos concluem requisições em trânsito, as tabelas LSM do Fjall gravam commits pendentes no disco e o nó notifica seus pares para desvinculação imediata sem disparar alarmes falsos de suspeita.
+              During planned termination (SIGTERM / CancellationToken), async services drain in-flight requests, Fjall LSM tables flush pending commits to disk, and the node dispatches departure notifications to peers to prevent false suspect alarms.
             </p>
           </div>
         </div>
@@ -543,21 +543,21 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 mb-2">
               <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>Demonstração Interativa ao Vivo</span>
+              <span>Interactive Live Sandbox</span>
             </div>
             <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Suba um Cluster Real de 3 Nós Agora
+              Launch a Genuine 3-Node Cluster
             </h2>
             <p class="text-sm text-slate-400 mt-1 max-w-xl">
-              Cada sessão cria 3 nós genuínos em memória com portas QUIC alocadas dinamicamente. Teste a injeção de falhas (Kill/Revive), veja o detector SWIM reagir, faça benchmarks de gravação no LSM e abra o console admin em uma nova rota.
+              Each sandbox session launches 3 genuine in-process Aaron nodes with dynamically allocated QUIC ports. Test chaos injection (Kill/Revive), observe SWIM gossip detection, benchmark LSM writes, and explore the admin dashboard on a dedicated route.
             </p>
           </div>
 
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div class="text-right">
-              <div class="text-xs font-mono text-slate-400 uppercase tracking-wider">Cota de Clusters</div>
-              <div id="slot-status-label" class="text-base font-bold text-emerald-400">6 de 6 Livres</div>
-              <div class="text-[11px] text-slate-500">15 min de TTL por sessão</div>
+              <div class="text-xs font-mono text-slate-400 uppercase tracking-wider">Cluster Quota</div>
+              <div id="slot-status-label" class="text-base font-bold text-emerald-400">6 of 6 Available</div>
+              <div class="text-[11px] text-slate-500">15 min session TTL</div>
             </div>
 
             <button id="btn-launch-sandbox" onclick="launchDemoCluster()" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-600 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white shadow-lg shadow-brand-500/20 transition flex items-center gap-2 disabled:opacity-50">
@@ -572,9 +572,9 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center text-slate-400 mb-4">
             <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-1">Nenhum Cluster Ativo Nesta Sessão</h3>
+          <h3 class="text-lg font-semibold text-white mb-1">No Active Sandbox Session</h3>
           <p class="text-sm text-slate-400 max-w-md mx-auto mb-6">
-            Clique em "Spawn 3-Node Cluster" acima para reservar um dos 6 slots e inicializar os nós em tempo real.
+            Click "Spawn 3-Node Cluster" above to reserve a sandbox slot and launch 3 live Aaron nodes in this session.
           </p>
         </div>
 
@@ -598,12 +598,12 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
 
               <!-- Open Dedicated Route Button -->
               <button onclick="openAdminDedicatedRoute()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-1.5 shadow-md">
-                <span>Abrir Admin Console em Nova Rota ↗</span>
+                <span>Open Admin Console in New Route ↗</span>
               </button>
 
               <!-- Destroy Cluster -->
               <button onclick="stopDemoCluster()" class="px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                Encerrar Cluster
+                Destroy Cluster
               </button>
             </div>
           </div>
@@ -686,11 +686,11 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
               <button onclick="runBenchmark(1000)" id="btn-bench" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-2">
                 <span>⚡ Run 1,000 Writes Benchmark</span>
               </button>
-              <span class="text-xs text-slate-400">Mede latência e vazão do engine Fjall LSM em microssegundos.</span>
+              <span class="text-xs text-slate-400">Measures Fjall LSM write throughput and latency in microseconds.</span>
             </div>
 
             <div id="bench-result" class="hidden text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/30 text-cyan-300">
-              Throughput: <span id="bench-ops" class="font-bold text-white">--</span> ops/sec | Latência: <span id="bench-lat" class="font-bold text-white">--</span> µs/op
+              Throughput: <span id="bench-ops" class="font-bold text-white">--</span> ops/sec | Latency: <span id="bench-lat" class="font-bold text-white">--</span> µs/op
             </div>
           </div>
 
@@ -701,7 +701,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
                 <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
                 <span class="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider">Cluster Telemetry & Gossip Stream</span>
               </div>
-              <button onclick="clearLogs()" class="text-[11px] font-mono text-slate-500 hover:text-slate-300">Limpar</button>
+              <button onclick="clearLogs()" class="text-[11px] font-mono text-slate-500 hover:text-slate-300">Clear</button>
             </div>
             <div id="cluster-logs" class="h-32 overflow-y-auto font-mono text-xs text-slate-400 space-y-1">
               <div class="text-slate-600">[00:00.000] Cluster session ready.</div>
@@ -724,10 +724,10 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
             </div>
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <span>Crates Oficiais do Ecossistema Aaron</span>
-                <span class="text-xs font-mono font-normal text-slate-400">(8 pacotes no crates.io)</span>
+                <span>Official Aaron Ecosystem Crates</span>
+                <span class="text-xs font-mono font-normal text-slate-400">(8 published crates on crates.io)</span>
               </h3>
-              <p class="text-xs text-slate-400">Clique para expandir a lista de módulos independentes publicados.</p>
+              <p class="text-xs text-slate-400">Click to expand the published modular crates table.</p>
             </div>
           </div>
           <div class="text-slate-400 group-open:rotate-180 transition-transform duration-200">
@@ -740,57 +740,57 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
             <thead class="bg-slate-950/80 border-b border-white/10 font-mono text-xs uppercase text-slate-400">
               <tr>
                 <th class="py-3 px-6">Crate</th>
-                <th class="py-3 px-6">Papel Arquitetural</th>
-                <th class="py-3 px-6">Versão</th>
+                <th class="py-3 px-6">Architectural Role</th>
+                <th class="py-3 px-6">Version</th>
                 <th class="py-3 px-6">Link</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-white/5 font-mono text-xs">
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Facade com re-exports e features opcionais (full, admin, membership, tracing)</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Unified facade with re-exports and optional features (full, admin, membership, tracing)</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron-core</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Runtime container, supervisão de atores, QUIC engine e banco Fjall LSM</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Runtime container, actor supervision, QUIC engine, and embedded Fjall LSM storage</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-core" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron-build</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Gerador de código FlatBuffers para compilação em build-time via build.rs</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Build-time FlatBuffers schema code generator for build.rs workflows</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-build" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron-membership</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Protocolo de adesão SWIM e detector probabilístico de suspeita e falha</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Decentralized SWIM gossip membership protocol and probabilistic failure detector</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-membership" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron-control-plane</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Mecanismo de consenso OpenRaft embutido para controle e sincronização</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Embedded OpenRaft consensus engine for distributed state synchronization</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-control-plane" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron-shard</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Posicionamento de shards, consistent hashing e partições de réplicas</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Shard placement, consistent hashing rings, and replica partitioning</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-shard" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron-tracing</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Recarga dinâmica de nível de logs sem reiniciar e telemetria em ring buffer</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Dynamic runtime log level reconfiguration and ring buffer telemetry</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-tracing" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
               <tr class="hover:bg-white/5 transition">
                 <td class="py-3 px-6 font-bold text-cyan-400">aaron-admin</td>
-                <td class="py-3 px-6 font-sans text-slate-300">Console web Vue.js 3 single-binary e API REST de gerenciamento</td>
+                <td class="py-3 px-6 font-sans text-slate-300">Single-binary Vue 3 web console and REST administrative API</td>
                 <td class="py-3 px-6 text-slate-400">v0.1.0</td>
                 <td class="py-3 px-6"><a href="https://crates.io/crates/aaron-admin" target="_blank" class="text-cyan-400 hover:underline">crates.io ↗</a></td>
               </tr>
@@ -804,10 +804,10 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
     <footer class="mt-32 pt-12 pb-16 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
       <div class="flex items-center gap-3">
         <div class="w-6 h-6 rounded bg-brand-600/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold">λ</div>
-        <span>Aaron Distributed Systems Runtime &bull; Licença MIT ou Apache-2.0</span>
+        <span>Aaron Distributed Systems Runtime &bull; Licensed under MIT or Apache-2.0</span>
       </div>
       <div>
-        Autoria de <span class="text-slate-300 font-medium">Marcos Dantas</span> (<a href="mailto:marcos.adantas@hotmail.com" class="hover:underline">marcos.adantas@hotmail.com</a>)
+        Authored by <span class="text-slate-300 font-medium">Marcos Dantas</span> (<a href="mailto:marcos.adantas@hotmail.com" class="hover:underline">marcos.adantas@hotmail.com</a>)
       </div>
     </footer>
   </main>
@@ -841,11 +841,11 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
         const res = await fetch('/api/demo/stats');
         if (res.ok) {
           const data = await res.json();
-          document.getElementById('nav-slots-text').innerText = `Slots: ${data.available_slots} / ${data.max_clusters} Livres`;
-          document.getElementById('slot-status-label').innerText = `${data.available_slots} de ${data.max_clusters} Livres`;
+          document.getElementById('nav-slots-text').innerText = `Slots: ${data.available_slots} / ${data.max_clusters} Free`;
+          document.getElementById('slot-status-label').innerText = `${data.available_slots} of ${data.max_clusters} Available`;
           if (data.available_slots === 0 && !activeSession) {
             document.getElementById('btn-launch-sandbox').disabled = true;
-            document.getElementById('btn-launch-text').innerText = 'Slots Lotados (Aguarde TTL)';
+            document.getElementById('btn-launch-text').innerText = 'Slots Full (Wait for TTL)';
           } else if (!activeSession) {
             document.getElementById('btn-launch-sandbox').disabled = false;
             document.getElementById('btn-launch-text').innerText = 'Spawn 3-Node Cluster';
@@ -874,7 +874,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
       const spinner = document.getElementById('btn-launch-spinner');
 
       btn.disabled = true;
-      btnText.innerText = 'Iniciando 3 Nós...';
+      btnText.innerText = 'Spawning 3 Nodes...';
       spinner.classList.remove('hidden');
 
       try {
@@ -888,25 +888,25 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           document.getElementById('active-session-id').innerText = data.cluster.session_id;
           document.getElementById('active-cluster-id').innerText = `UUID: ${data.cluster.cluster_id.substring(0, 16)}...`;
 
-          btnText.innerText = 'Cluster em Execução';
+          btnText.innerText = 'Cluster Running';
           spinner.classList.add('hidden');
 
-          addLog(`Cluster <span class="text-cyan-400">${data.cluster.session_id}</span> iniciado.`);
-          addLog(`Node 1 (Seed / Admin) ativo em QUIC <span class="text-cyan-400">127.0.0.1:${data.cluster.nodes[0].quic_port}</span>, Admin <span class="text-cyan-400">${data.cluster.admin_port}</span>`);
-          addLog(`Node 2 (Worker) conectado ao cluster via seed.`);
-          addLog(`Node 3 (Worker) conectado ao cluster via seed.`);
-          addLog(`Topologia SWIM convergida: 3 nós ativos.`);
+          addLog(`Cluster <span class="text-cyan-400">${data.cluster.session_id}</span> spawned.`);
+          addLog(`Node 1 (Seed / Admin) active on QUIC <span class="text-cyan-400">127.0.0.1:${data.cluster.nodes[0].quic_port}</span>, Admin <span class="text-cyan-400">${data.cluster.admin_port}</span>`);
+          addLog(`Node 2 (Worker) joined cluster via seed.`);
+          addLog(`Node 3 (Worker) joined cluster via seed.`);
+          addLog(`SWIM topology converged: 3 nodes active.`);
 
           updateNodesUI(data.cluster.nodes);
           startPolling(activeSession);
         } else {
-          alert(`Erro ao iniciar cluster: ${data.error || 'Erro no servidor'}`);
+          alert(`Error spawning cluster: ${data.error || 'Server error'}`);
           btn.disabled = false;
           btnText.innerText = 'Spawn 3-Node Cluster';
           spinner.classList.add('hidden');
         }
       } catch (err) {
-        alert(`Erro de conexão: ${err.message}`);
+        alert(`Connection error: ${err.message}`);
         btn.disabled = false;
         btnText.innerText = 'Spawn 3-Node Cluster';
         spinner.classList.add('hidden');
@@ -976,10 +976,10 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
         if (res.ok && data.success) {
           addLog(`<span class="${isKill ? 'text-rose-400' : 'text-emerald-400'}">${data.message}</span>`);
         } else {
-          addLog(`Erro: ${data.error || 'Ação falhou'}`);
+          addLog(`Error: ${data.error || 'Action failed'}`);
         }
       } catch (err) {
-        addLog(`Erro de rede: ${err.message}`);
+        addLog(`Network error: ${err.message}`);
       }
       btn.disabled = false;
     }
@@ -989,7 +989,7 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
       const btn = document.getElementById('btn-bench');
       const benchBox = document.getElementById('bench-result');
       btn.disabled = true;
-      btn.innerText = 'Gravando no LSM...';
+      btn.innerText = 'Writing to LSM...';
 
       try {
         const res = await fetch(`/api/demo/${activeSession}/benchmark`, {
@@ -1003,12 +1003,12 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
           document.getElementById('bench-ops').innerText = Math.round(data.write_ops_sec).toLocaleString();
           document.getElementById('bench-lat').innerText = data.write_latency_avg_us.toFixed(1);
 
-          addLog(`Benchmark: <span class="text-cyan-400">${data.operations} gravações</span> concluídas &bull; Vazão: <span class="text-emerald-400 font-bold">${Math.round(data.write_ops_sec).toLocaleString()} ops/s</span> &bull; Latência: <span class="text-amber-400">${data.write_latency_avg_us.toFixed(1)} µs/op</span>`);
+          addLog(`Benchmark: <span class="text-cyan-400">${data.operations} writes</span> completed &bull; Throughput: <span class="text-emerald-400 font-bold">${Math.round(data.write_ops_sec).toLocaleString()} ops/s</span> &bull; Latency: <span class="text-amber-400">${data.write_latency_avg_us.toFixed(1)} µs/op</span>`);
         } else {
-          addLog(`Falha no benchmark: ${data.error || 'Erro'}`);
+          addLog(`Benchmark failed: ${data.error || 'Error'}`);
         }
       } catch (err) {
-        addLog(`Falha de requisição: ${err.message}`);
+        addLog(`Request failed: ${err.message}`);
       }
 
       btn.disabled = false;
@@ -1020,16 +1020,16 @@ println!(<span class="text-amber-300">"ID: {} | Conta: {} | Valor: ${}"</span>, 
       if (!activeSession) return;
       const adminUrl = `/demo/${activeSession}/`;
       window.open(adminUrl, '_blank');
-      addLog(`Console Admin aberto em nova aba na rota: <a href="${adminUrl}" target="_blank" class="text-cyan-400 underline font-bold">${adminUrl}</a>`);
+      addLog(`Admin Console opened in new tab at route: <a href="${adminUrl}" target="_blank" class="text-cyan-400 underline font-bold">${adminUrl}</a>`);
     }
 
     async function stopDemoCluster() {
       if (!activeSession) return;
-      if (!confirm('Deseja realmente encerrar este cluster e liberar os recursos?')) return;
+      if (!confirm('Are you sure you want to terminate this cluster and release resources?')) return;
 
       try {
         await fetch(`/api/demo/${activeSession}/stop`, { method: 'POST' });
-        addLog(`Cluster <span class="text-rose-400">${activeSession}</span> encerrado.`);
+        addLog(`Cluster <span class="text-rose-400">${activeSession}</span> terminated.`);
       } catch {}
       handleClusterExpired();
     }
