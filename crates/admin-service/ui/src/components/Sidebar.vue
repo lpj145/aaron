@@ -22,7 +22,6 @@ const route = useRoute();
 const navItems = [
   { name: 'Overview', path: '/', icon: LayoutDashboard },
   { name: 'Cluster', path: '/cluster', icon: Network },
-  { name: 'Shards', path: '/shards', icon: Layers },
   { name: 'Configuration', path: '/config', icon: Sliders },
   { name: 'Services', path: '/services', icon: Layers },
   { name: 'Storage', path: '/store', icon: Database },

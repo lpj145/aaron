@@ -24,9 +24,7 @@ const router = createRouter({
     },
     {
       path: '/shards',
-      name: 'shards',
-      component: ShardsView,
-      meta: { layout: 'default' },
+      redirect: '/cluster',
     },
     {
       path: '/control-plane',

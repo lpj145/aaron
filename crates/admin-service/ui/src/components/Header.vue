@@ -1,29 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Copy, Check, RefreshCw, Power } from 'lucide-vue-next';
+import { Power } from 'lucide-vue-next';
 import { api } from '../api';
 import type { NodeInfo } from '../types';
 
 const props = defineProps<{
   nodeInfo: NodeInfo | null;
-  loading: boolean;
+  loading?: boolean;
 }>();
 
-const emit = defineEmits<{
-  (e: 'refresh'): void;
-}>();
-
-const copied = ref(false);
 const isShuttingDown = ref(false);
-
-const copyId = async () => {
-  if (!props.nodeInfo?.id) return;
-  await navigator.clipboard.writeText(props.nodeInfo.id);
-  copied.value = true;
-  setTimeout(() => {
-    copied.value = false;
-  }, 2000);
-};
 
 const handleShutdown = async () => {
   if (!confirm('Are you sure you want to stop this Node? All services will be terminated.')) {
@@ -74,17 +60,6 @@ const formatUptime = computed(() => {
     </div>
 
     <div class="flex items-center gap-3">
-      <!-- Copy UUID Button -->
-      <button
-        @click="copyId"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition"
-        title="Copy Node UUID"
-      >
-        <Check v-if="copied" class="w-3.5 h-3.5 text-emerald-400" />
-        <Copy v-else class="w-3.5 h-3.5 text-slate-400" />
-        <span>{{ copied ? 'UUID Copied' : 'Copy UUID' }}</span>
-      </button>
-
       <!-- Shutdown Node Button -->
       <button
         @click="handleShutdown"
@@ -94,16 +69,6 @@ const formatUptime = computed(() => {
       >
         <Power class="w-3.5 h-3.5" />
         <span>{{ isShuttingDown ? 'Stopping...' : 'Shutdown' }}</span>
-      </button>
-
-      <!-- Refresh Button -->
-      <button
-        @click="emit('refresh')"
-        :disabled="loading"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-medium transition shadow-lg shadow-indigo-600/20"
-      >
-        <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
-        <span>Refresh</span>
       </button>
     </div>
   </header>

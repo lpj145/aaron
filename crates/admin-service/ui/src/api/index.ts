@@ -8,6 +8,7 @@ import type {
   EnvVarInfo,
   SwimConfig,
   ConfigUpdateResult,
+  BenchmarkResult,
 } from '../types';
 
 const API_BASE = '/api';
@@ -55,10 +56,10 @@ export const api = {
     request<{ success: boolean; message: string }>('/cluster/leave', {
       method: 'POST',
     }),
-  startClusterNode: (node_id?: string, addr?: string) =>
+  startClusterNode: (service_name?: string, node_id?: string, addr?: string) =>
     request<{ success: boolean; node_id?: string; message: string }>('/cluster/nodes/start', {
       method: 'POST',
-      body: JSON.stringify({ node_id, addr }),
+      body: JSON.stringify({ service_name, node_id, addr }),
     }),
   removeClusterNode: (node_id: string) =>
     request<{ success: boolean; message: string }>('/cluster/nodes/remove', {
@@ -184,14 +185,14 @@ export const api = {
 
   // Shards (Stage 1: Assignment)
   getShardsOverview: () => request<import('../types').ShardsOverviewResponse>('/shards'),
-  bootstrapShards: (nodes?: string[]) =>
+  bootstrapShards: (nodes?: string[], service?: string, total_shards?: number) =>
     request<{ success: boolean; assigned_count: number; total_shards: number; nodes: string[] }>('/shards/bootstrap', {
       method: 'POST',
-      body: JSON.stringify({ nodes }),
+      body: JSON.stringify({ nodes, service, total_shards }),
     }),
-  assignShard: (shard_id: number, primary: string, replicas: string[]) =>
+  assignShard: (shard_id: number, primary: string, replicas: string[], service?: string) =>
     request<{ success: boolean; placement: import('../types').ShardPlacement }>('/shards/assign', {
       method: 'POST',
-      body: JSON.stringify({ shard_id, primary, replicas }),
+      body: JSON.stringify({ shard_id, primary, replicas, service }),
     }),
 };

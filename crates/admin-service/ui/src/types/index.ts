@@ -16,6 +16,8 @@ export type MemberStatus = 'Alive' | 'Suspect' | 'Dead' | 'Left';
 export interface MemberInfo {
   id: string;
   addr: string;
+  hostname?: string | null;
+  tags?: string[];
   status: MemberStatus;
   incarnation: number;
   is_local: boolean;
@@ -24,6 +26,9 @@ export interface MemberInfo {
   raft_node_id?: number | null;
   raft_role?: 'leader' | 'voter' | 'learner' | 'member';
   raft_addr?: string;
+  wps?: number | null;
+  nominal_wps?: number | null;
+  error_rate?: number | null;
 }
 
 export interface ClusterInfo {
@@ -91,6 +96,7 @@ export interface EnvResponse {
 }
 
 export interface ShardPlacement {
+  service_name?: string;
   shard_id: number;
   primary: string;
   replicas: string[];
@@ -156,4 +162,50 @@ export interface ControlPlaneStatus {
   current_leader_str?: string | null;
   voters?: number[];
   learners?: number[];
+}
+
+export interface CanvasNode {
+  id: string; // UUID
+  node_id: number; // Raft u64 id
+  shortIndex: string; // hostname, e.g. "node-1", or "N1"
+  hostname: string | null;
+  tags: string[];
+  isControlPlane: boolean;
+  isWorker: boolean;
+  serviceName: string;
+  roleType: 'control-plane' | 'worker' | 'generic';
+  label: string;
+  swimAddr: string;
+  cpAddr: string;
+  status: 'Alive' | 'Suspect' | 'Dead' | 'Left';
+  isLocal: boolean;
+  role: 'leader' | 'voter' | 'learner' | 'member';
+  rttMs: number | null;
+  incarnation: number;
+  x: number;
+  y: number;
+  targetX: number;
+  targetY: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  isDragging?: boolean;
+  maxWPS?: number;
+  currentWPS?: number;
+  errorRate?: number;
+  isSimDegraded?: boolean;
+}
+
+export interface SimEvent {
+  id: number;
+  time: string;
+  type: 'load' | 'error' | 'heal' | 'info';
+  text: string;
+}
+
+export interface ActiveMigration {
+  fromId: string;
+  toId: string;
+  shardId: number;
+  progress: number;
 }
