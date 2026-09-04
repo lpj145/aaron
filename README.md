@@ -35,14 +35,9 @@ An opinionated, high-performance distributed systems runtime and actor-service f
   <img src="./assets/admin_panel_overview.png" alt="Aaron Admin Dashboard" width="100%" />
 </p>
 
-Aaron ships with an embedded single-page application dashboard (`admin-service`) compiled directly into the binary via `rust-embed`. It requires zero external dependencies, CDNs, or separate web server processes:
-
-- **Interactive 2D Canvas Topology**: Real-time rendering of cluster nodes with camera pan and zoom, force-directed orbital layout, and animated particle streams reflecting SWIM gossip heartbeats and Raft consensus log replication.
-- **Strict Consensus Isolation**: Dedicated upper ring for the Control Plane Raft quorum (Leader, Voters, Learners). The Control Plane manages cluster metadata, state machine transitions, and partition assignment tables without holding or serving application data shards.
-- **WyHash Partition Rings**: Application worker services (e.g., `BANK`, `TREASURER`, `ORDERS`) operate in independent orbital rings below the Control Plane, routed through deterministic 64-bit WyHash partition rings.
-- **Live Node Telemetry**: Real-time tracking of Workload Performance Scores (WPS, 0-1000) calculated via startup hardware micro-benchmarks and sliding window error rate metrics.
-- **Fault Simulation Sandbox**: Interactive testing sandbox to inject artificial node load, trigger partition network anomalies, and observe automated shard failovers.
-- **Embedded LSM Storage Explorer**: Inspect keyspaces, query key-value pairs, and execute live disk read/write throughput benchmarks directly from the browser.
+<p align="center">
+  This is the <a href="./crates/admin-service/README.md">Aaron Admin Dashboard</a>.
+</p>
 
 ---
 
