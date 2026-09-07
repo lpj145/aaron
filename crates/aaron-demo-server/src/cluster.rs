@@ -93,7 +93,23 @@ impl DemoNode {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct ClientSessionRecord {
+    pub client_id: String,
+    pub active_session_id: Option<String>,
+    pub created_at: Instant,
+    pub expires_at: Instant,
+}
+
+pub enum ClusterError {
+    AlreadyActive(Arc<DemoCluster>),
+    Cooldown { remaining_secs: u64 },
+    SlotsFull(usize),
+    Other(String),
+}
+
 pub struct DemoCluster {
+    pub client_id: String,
     pub session_id: String,
     pub cluster_id: Uuid,
     pub admin_port: u16,
@@ -142,6 +158,7 @@ impl DemoCluster {
 #[derive(Clone)]
 pub struct DemoClusterManager {
     clusters: Arc<RwLock<HashMap<String, Arc<DemoCluster>>>>,
+    client_records: Arc<RwLock<HashMap<String, ClientSessionRecord>>>,
     used_ports: Arc<RwLock<HashSet<u16>>>,
     max_clusters: usize,
     ttl: Duration,
@@ -152,6 +169,7 @@ impl DemoClusterManager {
     pub fn new(max_clusters: usize, ttl: Duration) -> Self {
         Self {
             clusters: Arc::new(RwLock::new(HashMap::new())),
+            client_records: Arc::new(RwLock::new(HashMap::new())),
             used_ports: Arc::new(RwLock::new(HashSet::new())),
             max_clusters,
             ttl,
@@ -188,30 +206,46 @@ impl DemoClusterManager {
         None
     }
 
-    pub async fn create_cluster(&self) -> Result<Arc<DemoCluster>, String> {
+    pub async fn create_cluster_for_client(&self, client_id: &str) -> Result<Arc<DemoCluster>, ClusterError> {
+        let now = Instant::now();
+
+        // 1. Check if this client already has an active cluster or is still in the 15-min cooldown
+        {
+            let records = self.client_records.read().await;
+            if let Some(record) = records.get(client_id) {
+                if now < record.expires_at {
+                    let remaining_secs = record.expires_at.saturating_duration_since(now).as_secs();
+                    if let Some(ref sid) = record.active_session_id {
+                        let clusters = self.clusters.read().await;
+                        if let Some(c) = clusters.get(sid) {
+                            return Err(ClusterError::AlreadyActive(c.clone()));
+                        }
+                    }
+                    return Err(ClusterError::Cooldown { remaining_secs });
+                }
+            }
+        }
+
         let mut clusters = self.clusters.write().await;
         if clusters.len() >= self.max_clusters {
-            return Err(format!(
-                "Maximum number of concurrent demo clusters ({}) reached. Please wait for an existing session to finish.",
-                self.max_clusters
-            ));
+            return Err(ClusterError::SlotsFull(self.max_clusters));
         }
 
         let mut used = self.used_ports.write().await;
         let u1 = Self::find_available_port(&used, 18100, 25000, true)
-            .ok_or_else(|| "Failed to allocate UDP port for Node 1".to_string())?;
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Node 1".to_string()))?;
         used.insert(u1);
 
         let u2 = Self::find_available_port(&used, 18100, 25000, true)
-            .ok_or_else(|| "Failed to allocate UDP port for Node 2".to_string())?;
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Node 2".to_string()))?;
         used.insert(u2);
 
         let u3 = Self::find_available_port(&used, 18100, 25000, true)
-            .ok_or_else(|| "Failed to allocate UDP port for Node 3".to_string())?;
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Node 3".to_string()))?;
         used.insert(u3);
 
         let admin_port = Self::find_available_port(&used, 28100, 35000, false)
-            .ok_or_else(|| "Failed to allocate TCP port for Admin Console".to_string())?;
+            .ok_or_else(|| ClusterError::Other("Failed to allocate TCP port for Admin Console".to_string()))?;
         used.insert(admin_port);
 
         let session_id = format!("cluster-{}", &uuid::Uuid::new_v4().to_string()[..8]);
@@ -264,20 +298,37 @@ impl DemoClusterManager {
         node3.start().await;
 
         let cluster = Arc::new(DemoCluster {
+            client_id: client_id.to_string(),
             session_id: session_id.clone(),
             cluster_id,
             admin_port,
             nodes: vec![node1, node2, node3],
-            created_at: Instant::now(),
-            expires_at: Instant::now() + self.ttl,
+            created_at: now,
+            expires_at: now + self.ttl,
             root_dir,
         });
 
         clusters.insert(session_id.clone(), cluster.clone());
+
+        // Save client session record
+        {
+            let mut records = self.client_records.write().await;
+            records.insert(
+                client_id.to_string(),
+                ClientSessionRecord {
+                    client_id: client_id.to_string(),
+                    active_session_id: Some(session_id.clone()),
+                    created_at: now,
+                    expires_at: now + self.ttl,
+                },
+            );
+        }
+
         info!(
+            client_id = %client_id,
             session_id = %session_id,
             admin_port = %admin_port,
-            "Spawned 3-node Aaron demo cluster"
+            "Spawned 3-node Aaron demo cluster bound to client session"
         );
 
         Ok(cluster)
@@ -286,6 +337,22 @@ impl DemoClusterManager {
     pub async fn get_cluster(&self, session_id: &str) -> Option<Arc<DemoCluster>> {
         let clusters = self.clusters.read().await;
         clusters.get(session_id).cloned()
+    }
+
+    pub async fn get_cluster_for_client(&self, client_id: &str) -> Option<Arc<DemoCluster>> {
+        let records = self.client_records.read().await;
+        if let Some(record) = records.get(client_id) {
+            if let Some(ref sid) = record.active_session_id {
+                let clusters = self.clusters.read().await;
+                return clusters.get(sid).cloned();
+            }
+        }
+        None
+    }
+
+    pub async fn get_client_record(&self, client_id: &str) -> Option<ClientSessionRecord> {
+        let records = self.client_records.read().await;
+        records.get(client_id).cloned()
     }
 
     pub async fn get_any_cluster(&self) -> Option<Arc<DemoCluster>> {
@@ -335,6 +402,14 @@ impl DemoClusterManager {
         };
 
         if let Some(cluster) = cluster_opt {
+            // Update client record to clear active_session_id while maintaining cooldown expires_at
+            {
+                let mut records = self.client_records.write().await;
+                if let Some(rec) = records.get_mut(&cluster.client_id) {
+                    rec.active_session_id = None;
+                }
+            }
+
             let mut used = self.used_ports.write().await;
             for n in &cluster.nodes {
                 used.remove(&n.quic_port);
@@ -342,7 +417,7 @@ impl DemoClusterManager {
             used.remove(&cluster.admin_port);
 
             cluster.shutdown().await;
-            info!(session_id = %session_id, "Cleaned up and shut down Aaron demo cluster");
+            info!(session_id = %session_id, client_id = %cluster.client_id, "Cleaned up and shut down Aaron demo cluster");
             Ok(())
         } else {
             Err("Session not found".to_string())
@@ -363,6 +438,12 @@ impl DemoClusterManager {
         for id in expired_ids {
             info!(session_id = %id, "Demo cluster TTL expired, reaping...");
             let _ = self.terminate_cluster(&id).await;
+        }
+
+        // Clean up client records where cooldown has completely expired
+        {
+            let mut records = self.client_records.write().await;
+            records.retain(|_, rec| now < rec.expires_at);
         }
     }
 }
