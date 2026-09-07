@@ -288,3 +288,19 @@ pub async fn stop_demo_cluster(
         )),
     }
 }
+
+pub async fn init_demo_control_plane(
+    State(manager): State<Arc<DemoClusterManager>>,
+    Path(session_id): Path<String>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+    match manager.init_control_plane(&session_id).await {
+        Ok(result) => Ok(Json(result)),
+        Err(err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "success": false,
+                "error": err,
+            })),
+        )),
+    }
+}

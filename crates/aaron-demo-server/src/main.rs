@@ -80,6 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/{session_id}/kill/{node_idx}", post(api::kill_cluster_node))
         .route("/{session_id}/revive/{node_idx}", post(api::revive_cluster_node))
         .route("/{session_id}/benchmark", post(api::run_cluster_benchmark))
+        .route("/{session_id}/init-control-plane", post(api::init_demo_control_plane))
         .route("/{session_id}/stop", post(api::stop_demo_cluster))
         .with_state(manager.clone());
 

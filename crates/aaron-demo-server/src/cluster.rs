@@ -1,12 +1,12 @@
 use aaron::{
     admin::{AdminConfig, AdminService},
-    control_plane::{ControlPlaneConfig, ControlPlaneNode, ControlPlaneService},
+    control_plane::{ControlPlaneConfig, ControlPlaneService},
     membership::{MembershipConfig, MembershipService},
     shard::{ShardConfig, ShardService},
     tracing::TracingService,
     Context, Node, Uuid, service_fn,
 };
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::net::{TcpListener, UdpSocket};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -28,6 +28,7 @@ pub struct DemoNode {
     pub cancel_token: Arc<RwLock<CancellationToken>>,
     pub cluster_id: Uuid,
     pub seed_port: Option<u16>,
+    pub tags: Vec<String>,
 }
 
 impl DemoNode {
@@ -58,42 +59,33 @@ impl DemoNode {
         let mut node = Node::new(&self.name)
             .with_dir_path(&self.dir_path)
             .with_cancel_token(token)
+            .with_tags(self.tags.clone())
             .with(TracingService::new())
             .with(membership);
 
         if self.is_control_plane {
-            let raft_p = self.raft_port.unwrap_or(self.quic_port + 50);
+            let raft_p = self.raft_port.unwrap_or(self.quic_port + 1000);
             let raft_bind_addr = format!("127.0.0.1:{}", raft_p);
             let cp_config = ControlPlaneConfig {
                 bind_addr: raft_bind_addr.parse().unwrap(),
-                node_id: Some(self.id as u64),
+                node_id: None,
                 election_timeout_min_ms: 150,
                 election_timeout_max_ms: 300,
-                heartbeat_interval_ms: 50,
+                heartbeat_interval_ms: 40,
                 snapshot_threshold: 500,
             };
             let (cp_svc, cp_handle) = ControlPlaneService::pair_with_config(cp_config);
             let (shard_svc, shard_handle) = ShardService::coordinator(cp_handle.clone());
             let shard_svc = shard_svc.with_config(ShardConfig {
                 total_shards: 16,
-                replication_factor: 2,
+                replication_factor: 3,
                 is_coordinator: true,
             });
 
             node = node.with(cp_svc).with(shard_svc);
 
-            // Bootstrap single-node Raft leader for the control plane
-            let cp_handle_clone = cp_handle.clone();
-            let cluster_uuid = self.cluster_id;
-            tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_millis(250)).await;
-                let mut voters = BTreeMap::new();
-                voters.insert(
-                    1,
-                    ControlPlaneNode::new(raft_bind_addr, cluster_uuid),
-                );
-                let _ = cp_handle_clone.initialize(voters).await;
-            });
+            // Notice: Control Plane nodes start UNINITIALIZED.
+            // Quorum bootstrap is initiated via the Admin Console or initialization API.
 
             if let Some(admin_p) = self.admin_port {
                 let admin_config = AdminConfig {
@@ -109,11 +101,11 @@ impl DemoNode {
                 node = node.with(admin_svc).with(service_fn("demo-seeder", |ctx: Context| async move {
                     let ks = ctx.store.keyspace("demo")?;
                     ks.insert("cluster/name", "Aaron Live Demo")?;
-                    ks.insert("cluster/role", "Control Plane (Raft Leader)")?;
+                    ks.insert("cluster/topology", "3 Control Plane Nodes + 2 Worker Nodes")?;
                     ks.insert("cluster/protocol", "SWIM Gossip + QUIC Multi-Stream")?;
                     ks.insert("cluster/storage", "Fjall LSM Tree")?;
-                    ks.insert("cluster/consensus", "Raft State Machine Active")?;
-                    ks.insert("stats/state", "Control Plane coordinating 2 Worker Nodes")?;
+                    ks.insert("cluster/consensus", "Awaiting Quorum Bootstrap via Admin Console")?;
+                    ks.insert("stats/state", "3 Control Plane Nodes & 2 Workers online")?;
                     ctx.store.persist()?;
                     info!("Seeded demo keyspace in Aaron Store");
                     Ok(())
@@ -172,9 +164,56 @@ pub struct DemoCluster {
 
 impl DemoCluster {
     pub async fn status_summary(&self) -> serde_json::Value {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_millis(350))
+            .build()
+            .unwrap_or_default();
+
+        let cp_info: Option<serde_json::Value> = match client
+            .get(format!("http://127.0.0.1:{}/api/control-plane/status", self.admin_port))
+            .send()
+            .await
+        {
+            Ok(resp) => resp.json::<serde_json::Value>().await.ok(),
+            Err(_) => None,
+        };
+
+        let is_raft_initialized = cp_info.as_ref().map(|cp| {
+            let has_voters = cp.get("voters").and_then(|v| v.as_array()).map(|a| !a.is_empty()).unwrap_or(false);
+            let term = cp.get("current_term").and_then(|t| t.as_u64()).unwrap_or(0);
+            has_voters || term > 0
+        }).unwrap_or(false);
+
+        let current_leader = cp_info.as_ref().and_then(|cp| cp.get("current_leader").and_then(|l| l.as_u64()));
+
+        let leader_raft_port = cp_info.as_ref().and_then(|cp| {
+            let leader_id = cp.get("current_leader").and_then(|l| l.as_u64())?;
+            let nodes = cp.get("nodes")?.as_object()?;
+            for (_, v) in nodes {
+                if v.get("node_id")?.as_u64() == Some(leader_id) {
+                    let addr = v.get("addr")?.as_str()?;
+                    let port = addr.split(':').last()?.parse::<u16>().ok()?;
+                    return Some(port);
+                }
+            }
+            None
+        });
+
         let mut node_summaries = Vec::new();
         for n in &self.nodes {
             let status = n.status.read().await.clone();
+            let raft_role = if n.is_control_plane {
+                if !is_raft_initialized {
+                    "Uninitialized".to_string()
+                } else if n.raft_port.is_some() && n.raft_port == leader_raft_port {
+                    "Leader".to_string()
+                } else {
+                    "Follower".to_string()
+                }
+            } else {
+                "Worker".to_string()
+            };
+
             node_summaries.push(serde_json::json!({
                 "id": n.id,
                 "name": n.name,
@@ -182,6 +221,7 @@ impl DemoCluster {
                 "raft_port": n.raft_port,
                 "admin_port": n.admin_port,
                 "role": n.role,
+                "raft_role": raft_role,
                 "is_control_plane": n.is_control_plane,
                 "status": status,
             }));
@@ -194,6 +234,9 @@ impl DemoCluster {
             "cluster_id": self.cluster_id.to_string(),
             "admin_port": self.admin_port,
             "nodes": node_summaries,
+            "is_raft_initialized": is_raft_initialized,
+            "current_leader": current_leader,
+            "control_plane_status": cp_info,
             "ttl_remaining_secs": remaining_secs,
             "created_secs_ago": self.created_at.elapsed().as_secs(),
         })
@@ -259,6 +302,28 @@ impl DemoClusterManager {
         None
     }
 
+    fn find_available_port_pair(
+        used: &HashSet<u16>,
+        start: u16,
+        end: u16,
+        offset: u16,
+    ) -> Option<(u16, u16)> {
+        for p in start..end {
+            let p2 = p + offset;
+            if used.contains(&p) || used.contains(&p2) {
+                continue;
+            }
+            if let Ok(sock1) = UdpSocket::bind(("127.0.0.1", p)) {
+                drop(sock1);
+                if let Ok(sock2) = UdpSocket::bind(("127.0.0.1", p2)) {
+                    drop(sock2);
+                    return Some((p, p2));
+                }
+            }
+        }
+        None
+    }
+
     pub async fn create_cluster_for_client(&self, client_id: &str) -> Result<Arc<DemoCluster>, ClusterError> {
         let now = Instant::now();
 
@@ -285,22 +350,34 @@ impl DemoClusterManager {
         }
 
         let mut used = self.used_ports.write().await;
-        let u1 = Self::find_available_port(&used, 18100, 25000, true)
-            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Control Plane QUIC".to_string()))?;
+
+        // Allocate ports for 3 Control Plane nodes (CP-1, CP-2, CP-3)
+        // Raft port MUST be swim_port + 1000 to match aaron-admin's derive_cp_port()
+        let (u1, raft1) = Self::find_available_port_pair(&used, 18100, 23000, 1000)
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP ports for CP-1".to_string()))?;
         used.insert(u1);
+        used.insert(raft1);
 
-        let raft_port = Self::find_available_port(&used, 18100, 25000, true)
-            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Raft Control Plane".to_string()))?;
-        used.insert(raft_port);
-
-        let u2 = Self::find_available_port(&used, 18100, 25000, true)
-            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Worker 1".to_string()))?;
+        let (u2, raft2) = Self::find_available_port_pair(&used, 18100, 23000, 1000)
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP ports for CP-2".to_string()))?;
         used.insert(u2);
+        used.insert(raft2);
 
-        let u3 = Self::find_available_port(&used, 18100, 25000, true)
-            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Worker 2".to_string()))?;
+        let (u3, raft3) = Self::find_available_port_pair(&used, 18100, 23000, 1000)
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP ports for CP-3".to_string()))?;
         used.insert(u3);
+        used.insert(raft3);
 
+        // Allocate UDP ports for 2 Worker nodes (Worker 1, Worker 2)
+        let u4 = Self::find_available_port(&used, 18100, 25000, true)
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Worker 1".to_string()))?;
+        used.insert(u4);
+
+        let u5 = Self::find_available_port(&used, 18100, 25000, true)
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Worker 2".to_string()))?;
+        used.insert(u5);
+
+        // Allocate TCP port for CP-1 Admin Console
         let admin_port = Self::find_available_port(&used, 28100, 35000, false)
             .ok_or_else(|| ClusterError::Other("Failed to allocate TCP port for Admin Console".to_string()))?;
         used.insert(admin_port);
@@ -310,25 +387,61 @@ impl DemoClusterManager {
         let root_dir = std::env::temp_dir().join(format!("aaron-demo-{}", session_id));
         let _ = std::fs::create_dir_all(&root_dir);
 
-        let cp_node = Arc::new(DemoNode {
+        let cp_tags = vec!["role:control-plane".into(), "control-plane".into()];
+        let worker_tags = vec!["role:worker".into(), "worker".into()];
+
+        let cp1 = Arc::new(DemoNode {
             id: 1,
             name: "aaron-cp-1 (Control Plane)".to_string(),
             quic_port: u1,
-            raft_port: Some(raft_port),
+            raft_port: Some(raft1),
             admin_port: Some(admin_port),
             role: "Control Plane".to_string(),
             is_control_plane: true,
             status: Arc::new(RwLock::new("starting".to_string())),
-            dir_path: root_dir.join("control-plane"),
+            dir_path: root_dir.join("control-plane-1"),
             cancel_token: Arc::new(RwLock::new(CancellationToken::new())),
             cluster_id,
             seed_port: None,
+            tags: cp_tags.clone(),
+        });
+
+        let cp2 = Arc::new(DemoNode {
+            id: 2,
+            name: "aaron-cp-2 (Control Plane)".to_string(),
+            quic_port: u2,
+            raft_port: Some(raft2),
+            admin_port: None,
+            role: "Control Plane".to_string(),
+            is_control_plane: true,
+            status: Arc::new(RwLock::new("starting".to_string())),
+            dir_path: root_dir.join("control-plane-2"),
+            cancel_token: Arc::new(RwLock::new(CancellationToken::new())),
+            cluster_id,
+            seed_port: Some(u1),
+            tags: cp_tags.clone(),
+        });
+
+        let cp3 = Arc::new(DemoNode {
+            id: 3,
+            name: "aaron-cp-3 (Control Plane)".to_string(),
+            quic_port: u3,
+            raft_port: Some(raft3),
+            admin_port: None,
+            role: "Control Plane".to_string(),
+            is_control_plane: true,
+            status: Arc::new(RwLock::new("starting".to_string())),
+            dir_path: root_dir.join("control-plane-3"),
+            cancel_token: Arc::new(RwLock::new(CancellationToken::new())),
+            cluster_id,
+            seed_port: Some(u1),
+            tags: cp_tags,
         });
 
         let worker1 = Arc::new(DemoNode {
-            id: 2,
+            id: 4,
             name: "aaron-worker-1 (Worker)".to_string(),
-            quic_port: u2,
+            quic_port: u4,
             raft_port: None,
             admin_port: None,
             role: "Worker".to_string(),
@@ -338,12 +451,13 @@ impl DemoClusterManager {
             cancel_token: Arc::new(RwLock::new(CancellationToken::new())),
             cluster_id,
             seed_port: Some(u1),
+            tags: worker_tags.clone(),
         });
 
         let worker2 = Arc::new(DemoNode {
-            id: 3,
+            id: 5,
             name: "aaron-worker-2 (Worker)".to_string(),
-            quic_port: u3,
+            quic_port: u5,
             raft_port: None,
             admin_port: None,
             role: "Worker".to_string(),
@@ -353,10 +467,13 @@ impl DemoClusterManager {
             cancel_token: Arc::new(RwLock::new(CancellationToken::new())),
             cluster_id,
             seed_port: Some(u1),
+            tags: worker_tags,
         });
 
-        // Start Control Plane and Worker nodes
-        cp_node.start().await;
+        // Start 3 Control Plane nodes and 2 Worker nodes
+        cp1.start().await;
+        cp2.start().await;
+        cp3.start().await;
         worker1.start().await;
         worker2.start().await;
 
@@ -365,7 +482,7 @@ impl DemoClusterManager {
             session_id: session_id.clone(),
             cluster_id,
             admin_port,
-            nodes: vec![cp_node, worker1, worker2],
+            nodes: vec![cp1, cp2, cp3, worker1, worker2],
             created_at: now,
             expires_at: now + self.ttl,
             root_dir,
@@ -391,8 +508,7 @@ impl DemoClusterManager {
             client_id = %client_id,
             session_id = %session_id,
             admin_port = %admin_port,
-            raft_port = %raft_port,
-            "Spawned Aaron demo topology: 1 Control Plane (Raft + Admin) & 2 Worker Nodes"
+            "Spawned Aaron demo topology: 3 Control Plane nodes (CP-1, CP-2, CP-3) & 2 Worker nodes (W-1, W-2)"
         );
 
         Ok(cluster)
@@ -429,9 +545,9 @@ impl DemoClusterManager {
         let node = cluster.nodes.iter().find(|n| n.id == node_idx).ok_or_else(|| "Node not found".to_string())?;
         node.kill().await;
         if node.is_control_plane {
-            Ok(format!("Control Plane (Node 1) shut down. Raft consensus & Admin coordinator suspended."))
+            Ok(format!("{} shut down. Raft consensus quorum adapting.", node.name))
         } else {
-            Ok(format!("Worker Node {} shut down. SWIM gossip failure detector will mark it Suspect then Dead.", node.id - 1))
+            Ok(format!("{} shut down. SWIM gossip failure detector will mark it Suspect then Dead.", node.name))
         }
     }
 
@@ -440,10 +556,30 @@ impl DemoClusterManager {
         let node = cluster.nodes.iter().find(|n| n.id == node_idx).ok_or_else(|| "Node not found".to_string())?;
         node.start().await;
         if node.is_control_plane {
-            Ok(format!("Control Plane (Node 1) revived. Re-electing Raft leader and resuming cluster coordination."))
+            Ok(format!("{} revived. Rejoining Raft consensus quorum.", node.name))
         } else {
-            Ok(format!("Worker Node {} revived with incremented incarnation. Rejoining cluster via SWIM gossip.", node.id - 1))
+            Ok(format!("{} revived with incremented incarnation. Rejoining cluster via SWIM gossip.", node.name))
         }
+    }
+
+    pub async fn init_control_plane(&self, session_id: &str) -> Result<serde_json::Value, String> {
+        let cluster = self.get_cluster(session_id).await.ok_or_else(|| "Session not found".to_string())?;
+        let url = format!("http://127.0.0.1:{}/api/control-plane/init", cluster.admin_port);
+        let resp = self.http_client
+            .post(&url)
+            .json(&serde_json::json!({
+                "voters": []
+            }))
+            .send()
+            .await
+            .map_err(|e| format!("Init Control Plane HTTP error: {e}"))?;
+
+        if !resp.status().is_success() {
+            let body = resp.text().await.unwrap_or_default();
+            return Err(format!("Init Control Plane failed: {body}"));
+        }
+
+        resp.json().await.map_err(|e| format!("Failed to parse init json: {e}"))
     }
 
     pub async fn run_benchmark(&self, session_id: &str, operations: usize) -> Result<serde_json::Value, String> {

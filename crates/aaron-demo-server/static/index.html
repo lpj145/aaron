@@ -2505,12 +2505,10 @@
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
             <div>
               <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                Launch a Genuine 3-Node Cluster
+                Launch a Genuine 5-Node Cluster
               </h2>
               <p class="text-sm text-slate-400 mt-1 max-w-xl">
-                Each sandbox session launches 3 genuine in-process Aaron nodes with dynamically allocated QUIC ports.
-                Test chaos injection (Kill/Revive), observe SWIM gossip detection, benchmark LSM writes, and explore the
-                admin dashboard on a dedicated route.
+                Each sandbox session launches 5 genuine in-process Aaron nodes: 3 Control Plane nodes (CP-1, CP-2, CP-3) ready for Raft consensus quorum & 2 Worker nodes (W-1, W-2) for distributed sharding. Start uninitialized, bootstrap quorum dynamically, test consensus election, chaos injection (Kill/Revive), observe SWIM gossip failure detection, and explore the admin dashboard on a dedicated route.
               </p>
             </div>
 
@@ -2523,7 +2521,7 @@
 
               <button id="btn-launch-sandbox" onclick="launchDemoCluster()"
                 class="px-5 py-2.5 rounded-lg font-semibold text-sm bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span id="btn-launch-text">Spawn 3-Node Cluster</span>
+                <span id="btn-launch-text">Spawn 5-Node Cluster</span>
                 <svg id="btn-launch-spinner" class="hidden animate-spin w-4 h-4 text-white" viewBox="0 0 24 24"
                   fill="none">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2544,8 +2542,7 @@
             </div>
             <h3 class="text-lg font-semibold text-white mb-1">No Active Sandbox Session</h3>
             <p class="text-sm text-slate-400 max-w-md mx-auto mb-6">
-              Click "Spawn 3-Node Cluster" above to reserve a sandbox slot and launch 3 live Aaron nodes in this
-              session.
+              Click "Spawn 5-Node Cluster" above to reserve a sandbox slot and launch 3 Control Plane + 2 Worker Aaron nodes in this session.
             </p>
           </div>
 
@@ -2584,90 +2581,176 @@
               </div>
             </div>
 
-            <!-- 3 Node Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="nodes-container">
-              <!-- Node 1: Control Plane -->
-              <div id="node-card-1" class="p-5 rounded-xl bg-slate-950/70 border border-cyan-500/30 transition relative shadow-lg shadow-cyan-950/20">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <span id="node-1-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                    <span class="font-bold text-sm text-white">Control Plane (CP-1)</span>
-                    <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                      CONTROL PLANE
-                    </span>
-                  </div>
-                  <span id="node-1-status-pill"
-                    class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    RUNNING
+            <!-- CONTROL PLANE SECTION -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200">Control Plane Quorum (3 Raft Nodes)</h3>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span id="cp-quorum-badge" class="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    AWAITING QUORUM BOOTSTRAP
                   </span>
-                </div>
-                <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                  <div>QUIC (SWIM): <span id="node-1-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                  <div>Raft Consensus: <span id="node-1-raft" class="text-indigo-400">127.0.0.1:----</span></div>
-                  <div>Admin Console: <span id="node-1-admin" class="text-cyan-400 font-semibold">127.0.0.1:----</span></div>
-                  <div>Role: <span class="text-slate-300">Raft Leader & Coordinator</span></div>
-                </div>
-                <div class="flex gap-2">
-                  <button id="btn-node-1-action" onclick="toggleNode(1)"
-                    class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                    Kill Control Plane
+                  <button id="btn-bootstrap-cp" onclick="bootstrapControlPlane()"
+                    class="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-amber-600 hover:bg-amber-500 text-white transition shadow-sm">
+                    ⚡ Bootstrap Quorum
                   </button>
                 </div>
               </div>
 
-              <!-- Node 2: Worker 1 -->
-              <div id="node-card-2" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <span id="node-2-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                    <span class="font-bold text-sm text-white">Worker Node 1 (W-1)</span>
-                    <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      WORKER
+              <!-- 3 Control Plane Node Cards -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- CP-1 -->
+                <div id="node-card-1" class="p-5 rounded-xl bg-slate-950/70 border border-cyan-500/30 transition relative shadow-lg shadow-cyan-950/20">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span id="node-1-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                      <span class="font-bold text-sm text-white">CP-1 (Root / Admin)</span>
+                      <span id="node-1-raft-badge" class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        UNINITIALIZED
+                      </span>
+                    </div>
+                    <span id="node-1-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      RUNNING
                     </span>
                   </div>
-                  <span id="node-2-status-pill"
-                    class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    RUNNING
-                  </span>
+                  <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                    <div>SWIM (QUIC): <span id="node-1-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                    <div>Raft Port: <span id="node-1-raft" class="text-indigo-400">127.0.0.1:----</span></div>
+                    <div>Admin UI: <span id="node-1-admin" class="text-cyan-400 font-semibold">127.0.0.1:----</span></div>
+                    <div>Role: <span id="node-1-role-desc" class="text-slate-300">Control Plane & Admin Host</span></div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button id="btn-node-1-action" onclick="toggleNode(1)"
+                      class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                      Kill CP-1
+                    </button>
+                  </div>
                 </div>
-                <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                  <div>QUIC (SWIM): <span id="node-2-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                  <div>Seed / CP: <span class="text-slate-400">Control Plane (CP-1)</span></div>
-                  <div>Role: <span class="text-slate-300">Workload & Shard Execution</span></div>
+
+                <!-- CP-2 -->
+                <div id="node-card-2" class="p-5 rounded-xl bg-slate-950/70 border border-cyan-500/20 transition relative">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span id="node-2-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                      <span class="font-bold text-sm text-white">CP-2 (Consensus Peer)</span>
+                      <span id="node-2-raft-badge" class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        UNINITIALIZED
+                      </span>
+                    </div>
+                    <span id="node-2-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      RUNNING
+                    </span>
+                  </div>
+                  <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                    <div>SWIM (QUIC): <span id="node-2-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                    <div>Raft Port: <span id="node-2-raft" class="text-indigo-400">127.0.0.1:----</span></div>
+                    <div>Seed Node: <span class="text-slate-400">CP-1</span></div>
+                    <div>Role: <span id="node-2-role-desc" class="text-slate-300">Control Plane Quorum Peer</span></div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button id="btn-node-2-action" onclick="toggleNode(2)"
+                      class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                      Kill CP-2
+                    </button>
+                  </div>
                 </div>
-                <div class="flex gap-2">
-                  <button id="btn-node-2-action" onclick="toggleNode(2)"
-                    class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                    Kill Worker 1
-                  </button>
+
+                <!-- CP-3 -->
+                <div id="node-card-3" class="p-5 rounded-xl bg-slate-950/70 border border-cyan-500/20 transition relative">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span id="node-3-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                      <span class="font-bold text-sm text-white">CP-3 (Consensus Peer)</span>
+                      <span id="node-3-raft-badge" class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        UNINITIALIZED
+                      </span>
+                    </div>
+                    <span id="node-3-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      RUNNING
+                    </span>
+                  </div>
+                  <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                    <div>SWIM (QUIC): <span id="node-3-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                    <div>Raft Port: <span id="node-3-raft" class="text-indigo-400">127.0.0.1:----</span></div>
+                    <div>Seed Node: <span class="text-slate-400">CP-1</span></div>
+                    <div>Role: <span id="node-3-role-desc" class="text-slate-300">Control Plane Quorum Peer</span></div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button id="btn-node-3-action" onclick="toggleNode(3)"
+                      class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                      Kill CP-3
+                    </button>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <!-- Node 3: Worker 2 -->
-              <div id="node-card-3" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <span id="node-3-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                    <span class="font-bold text-sm text-white">Worker Node 2 (W-2)</span>
-                    <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      WORKER
+            <!-- DATA WORKERS SECTION -->
+            <div class="space-y-3 pt-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200">Data & Shard Workers (2 Nodes)</h3>
+                </div>
+                <span class="text-[11px] font-mono text-slate-400">SWIM GOSSIP MESH ACTIVE</span>
+              </div>
+
+              <!-- 2 Worker Cards -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- W-1 (Node ID 4) -->
+                <div id="node-card-4" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span id="node-4-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                      <span class="font-bold text-sm text-white">Worker Node 1 (W-1)</span>
+                      <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        WORKER
+                      </span>
+                    </div>
+                    <span id="node-4-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      RUNNING
                     </span>
                   </div>
-                  <span id="node-3-status-pill"
-                    class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    RUNNING
-                  </span>
+                  <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                    <div>SWIM (QUIC): <span id="node-4-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                    <div>Seed Node: <span class="text-slate-400">CP-1</span></div>
+                    <div>Role: <span class="text-slate-300">Workload & Shard Execution</span></div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button id="btn-node-4-action" onclick="toggleNode(4)"
+                      class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                      Kill W-1
+                    </button>
+                  </div>
                 </div>
-                <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                  <div>QUIC (SWIM): <span id="node-3-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                  <div>Seed / CP: <span class="text-slate-400">Control Plane (CP-1)</span></div>
-                  <div>Role: <span class="text-slate-300">Workload & Shard Execution</span></div>
-                </div>
-                <div class="flex gap-2">
-                  <button id="btn-node-3-action" onclick="toggleNode(3)"
-                    class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                    Kill Worker 2
-                  </button>
+
+                <!-- W-2 (Node ID 5) -->
+                <div id="node-card-5" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span id="node-5-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                      <span class="font-bold text-sm text-white">Worker Node 2 (W-2)</span>
+                      <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        WORKER
+                      </span>
+                    </div>
+                    <span id="node-5-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      RUNNING
+                    </span>
+                  </div>
+                  <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                    <div>SWIM (QUIC): <span id="node-5-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                    <div>Seed Node: <span class="text-slate-400">CP-1</span></div>
+                    <div>Role: <span class="text-slate-300">Workload & Shard Execution</span></div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button id="btn-node-5-action" onclick="toggleNode(5)"
+                      class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                      Kill W-2
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2866,7 +2949,7 @@
             document.getElementById('btn-launch-text').innerText = 'Slots Full (Wait for TTL)';
           } else if (!activeSession) {
             document.getElementById('btn-launch-sandbox').disabled = false;
-            document.getElementById('btn-launch-text').innerText = 'Spawn 3-Node Cluster';
+            document.getElementById('btn-launch-text').innerText = 'Spawn 5-Node Cluster';
           }
         }
       } catch (err) { }
@@ -2892,7 +2975,7 @@
       const spinner = document.getElementById('btn-launch-spinner');
 
       btn.disabled = true;
-      btnText.innerText = 'Spawning 3 Nodes...';
+      btnText.innerText = 'Spawning 5 Nodes...';
       spinner.classList.remove('hidden');
 
       try {
@@ -2912,25 +2995,25 @@
           if (data.already_active) {
             addLog(`Reconnected to active cluster <span class="text-cyan-400">${data.cluster.session_id}</span> (${data.message || ''})`);
           } else {
-            addLog(`Cluster <span class="text-cyan-400 font-bold">${data.cluster.session_id}</span> spawned successfully.`);
-            addLog(`Control Plane <span class="text-cyan-400 font-bold">aaron-cp-1</span> online (Raft Leader & Shard Coordinator) with Admin Console at <span class="text-cyan-400 font-mono">127.0.0.1:${data.cluster.admin_port}</span>.`);
-            addLog(`Worker Node 1 <span class="text-emerald-400">aaron-worker-1</span> joined cluster via SWIM gossip.`);
-            addLog(`Worker Node 2 <span class="text-emerald-400">aaron-worker-2</span> joined cluster via SWIM gossip.`);
-            addLog(`Topology converged: 1 Control Plane + 2 Workers active.`);
+            addLog(`Cluster <span class="text-cyan-400 font-bold">${data.cluster.session_id}</span> spawned successfully with 5 genuine nodes.`);
+            addLog(`Control Plane nodes <span class="text-cyan-400 font-bold">CP-1, CP-2, CP-3</span> online (Raft awaiting Quorum Bootstrap).`);
+            addLog(`Admin Console ready on CP-1 at <span class="text-cyan-400 font-mono">127.0.0.1:${data.cluster.admin_port}</span>.`);
+            addLog(`Worker nodes <span class="text-emerald-400">W-1 (id: 4)</span> and <span class="text-emerald-400">W-2 (id: 5)</span> joined via SWIM gossip.`);
+            addLog(`<span class="text-amber-400 font-semibold">Tip: Click "Bootstrap Quorum" above or visit the Admin Console to form the 3-node Raft consensus quorum.</span>`);
           }
 
-          updateNodesUI(data.cluster.nodes);
+          updateNodesUI(data.cluster.nodes, data.cluster.is_raft_initialized);
           startPolling(activeSession);
         } else {
           alert(`Cluster Notice: ${data.error || 'Server error'}`);
           btn.disabled = false;
-          btnText.innerText = 'Spawn 3-Node Cluster';
+          btnText.innerText = 'Spawn 5-Node Cluster';
           spinner.classList.add('hidden');
         }
       } catch (err) {
         alert(`Connection error: ${err.message}`);
         btn.disabled = false;
-        btnText.innerText = 'Spawn 3-Node Cluster';
+        btnText.innerText = 'Spawn 5-Node Cluster';
         spinner.classList.add('hidden');
       }
       updateStats();
@@ -2943,7 +3026,7 @@
           const res = await fetch(`/api/demo/${sessionId}/status`);
           if (res.ok) {
             const data = await res.json();
-            updateNodesUI(data.nodes);
+            updateNodesUI(data.nodes, data.is_raft_initialized);
 
             const mins = Math.floor(data.ttl_remaining_secs / 60);
             const secs = data.ttl_remaining_secs % 60;
@@ -2955,7 +3038,22 @@
       }, 1500);
     }
 
-    function updateNodesUI(nodes) {
+    function updateNodesUI(nodes, isRaftInit) {
+      const cpBadge = document.getElementById('cp-quorum-badge');
+      const btnBootstrap = document.getElementById('btn-bootstrap-cp');
+
+      if (cpBadge) {
+        if (isRaftInit) {
+          cpBadge.className = 'text-[11px] font-mono font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+          cpBadge.innerText = 'RAFT QUORUM ACTIVE (3 VOTERS)';
+          if (btnBootstrap) btnBootstrap.classList.add('hidden');
+        } else {
+          cpBadge.className = 'text-[11px] font-mono font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20';
+          cpBadge.innerText = 'AWAITING QUORUM BOOTSTRAP';
+          if (btnBootstrap) btnBootstrap.classList.remove('hidden');
+        }
+      }
+
       nodes.forEach((n) => {
         const idx = n.id;
         const isRunning = n.status === 'running';
@@ -2965,27 +3063,85 @@
         const quic = document.getElementById(`node-${idx}-quic`);
         const raft = document.getElementById(`node-${idx}-raft`);
         const admin = document.getElementById(`node-${idx}-admin`);
+        const raftBadge = document.getElementById(`node-${idx}-raft-badge`);
+        const roleDesc = document.getElementById(`node-${idx}-role-desc`);
         const btnAction = document.getElementById(`btn-node-${idx}-action`);
 
         if (quic) quic.innerText = `127.0.0.1:${n.quic_port}`;
         if (raft && n.raft_port) raft.innerText = `127.0.0.1:${n.raft_port}`;
         if (admin && n.admin_port) admin.innerText = `127.0.0.1:${n.admin_port}`;
 
-        const nodeLabel = idx === 1 ? 'Control Plane' : `Worker ${idx - 1}`;
+        if (raftBadge && n.is_control_plane) {
+          if (!isRaftInit || n.raft_role === 'Uninitialized') {
+            raftBadge.className = 'text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
+            raftBadge.innerText = 'UNINITIALIZED';
+            if (roleDesc) roleDesc.innerText = 'Control Plane (Awaiting Quorum)';
+          } else if (n.raft_role === 'Leader') {
+            raftBadge.className = 'text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+            raftBadge.innerText = 'RAFT LEADER';
+            if (roleDesc) roleDesc.innerText = 'Raft Leader & Shard Coordinator';
+          } else {
+            raftBadge.className = 'text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+            raftBadge.innerText = 'RAFT FOLLOWER';
+            if (roleDesc) roleDesc.innerText = 'Consensus Voter (Raft Follower)';
+          }
+        }
+
+        const nodeLabel = idx <= 3 ? `CP-${idx}` : `W-${idx - 3}`;
         if (isRunning) {
-          led.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-          pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-          pill.innerText = 'RUNNING';
-          btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition';
-          btnAction.innerText = `Kill ${nodeLabel}`;
+          if (led) led.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+          if (pill) {
+            pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            pill.innerText = 'RUNNING';
+          }
+          if (btnAction) {
+            btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition';
+            btnAction.innerText = `Kill ${nodeLabel}`;
+          }
         } else {
-          led.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-          pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
-          pill.innerText = 'KILLED';
-          btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 transition';
-          btnAction.innerText = `Revive ${nodeLabel}`;
+          if (led) led.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+          if (pill) {
+            pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
+            pill.innerText = 'KILLED';
+          }
+          if (btnAction) {
+            btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 transition';
+            btnAction.innerText = `Revive ${nodeLabel}`;
+          }
         }
       });
+    }
+
+    async function bootstrapControlPlane() {
+      if (!activeSession) return;
+      const btn = document.getElementById('btn-bootstrap-cp');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Bootstrapping...';
+      }
+      addLog('Initiating Raft consensus bootstrap across 3 Control Plane nodes (CP-1, CP-2, CP-3)...');
+      try {
+        const res = await fetch(`/api/demo/${activeSession}/init-control-plane`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          addLog('<span class="text-emerald-400 font-bold">Raft Consensus Quorum successfully bootstrapped with 3 Control Plane voters!</span>');
+        } else {
+          addLog(`<span class="text-amber-400">Notice: ${data.message || data.error || 'Check admin console'}</span>`);
+        }
+      } catch (err) {
+        addLog(`Bootstrap error: ${err.message}`);
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = '⚡ Bootstrap Quorum';
+      }
+      try {
+        const res = await fetch(`/api/demo/${activeSession}/status`);
+        if (res.ok) {
+          const data = await res.json();
+          updateNodesUI(data.nodes, data.is_raft_initialized);
+        }
+      } catch {}
     }
 
     async function toggleNode(idx) {
@@ -3066,7 +3222,7 @@
 
       const btn = document.getElementById('btn-launch-sandbox');
       btn.disabled = false;
-      document.getElementById('btn-launch-text').innerText = 'Spawn 3-Node Cluster';
+      document.getElementById('btn-launch-text').innerText = 'Spawn 5-Node Cluster';
       document.getElementById('btn-launch-spinner').classList.add('hidden');
       updateStats();
     }
@@ -3084,7 +3240,7 @@
           document.getElementById('active-cluster-id').innerText = `UUID: ${data.cluster.cluster_id.substring(0, 16)}...`;
           document.getElementById('btn-launch-text').innerText = 'Cluster Running';
           addLog(`Reconnected to your active cluster <span class="text-cyan-400">${data.cluster.session_id}</span>.`);
-          updateNodesUI(data.cluster.nodes);
+          updateNodesUI(data.cluster.nodes, data.cluster.is_raft_initialized);
           startPolling(activeSession);
         } else if (data.in_cooldown && data.cooldown_remaining_secs > 0) {
           const btn = document.getElementById('btn-launch-sandbox');
@@ -3093,7 +3249,7 @@
           const updateCooldownBtn = () => {
             if (remaining <= 0) {
               btn.disabled = false;
-              document.getElementById('btn-launch-text').innerText = 'Spawn 3-Node Cluster';
+              document.getElementById('btn-launch-text').innerText = 'Spawn 5-Node Cluster';
               return;
             }
             const mins = Math.floor(remaining / 60);
@@ -3106,7 +3262,7 @@
             if (remaining <= 0) {
               clearInterval(cooldownInterval);
               btn.disabled = false;
-              document.getElementById('btn-launch-text').innerText = 'Spawn 3-Node Cluster';
+              document.getElementById('btn-launch-text').innerText = 'Spawn 5-Node Cluster';
             } else {
               updateCooldownBtn();
             }

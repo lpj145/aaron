@@ -183,10 +183,16 @@ pub async fn init_control_plane_cluster(
     let mut voters_map = BTreeMap::new();
 
     if payload.voters.is_empty() {
-        // Auto-bootstrap cluster with all active discovered SWIM members
+        // Auto-bootstrap cluster with active discovered SWIM members tagged as control-plane
         if let Some(ref membership) = state.membership {
             let active_members = membership.active_members().await;
+            let has_tagged_cp = active_members.iter().any(|m| {
+                m.tags.iter().any(|t| t == "control-plane" || t == "role:control-plane" || t == "service:control-plane-service")
+            });
             for m in active_members {
+                if has_tagged_cp && !m.tags.iter().any(|t| t == "control-plane" || t == "role:control-plane" || t == "service:control-plane-service") {
+                    continue;
+                }
                 let nid = m.node_id.id().low;
                 let cp_port = crate::api::cluster::derive_cp_port(m.addr.port());
                 let cp_addr = format!("{}:{}", m.addr.ip(), cp_port);
