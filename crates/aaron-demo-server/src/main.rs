@@ -82,10 +82,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/{session_id}/benchmark", post(api::run_cluster_benchmark))
         .route("/{session_id}/init-control-plane", post(api::init_demo_control_plane))
         .route("/{session_id}/stop", post(api::stop_demo_cluster))
+        .route("/metrics-4f8a7d2b1c9e", get(api::get_internal_metrics_dashboard))
         .with_state(manager.clone());
 
     let app = Router::new()
         .route("/", get(serve_landing))
+        .route("/metrics-4f8a7d2b1c9e", get(api::get_internal_metrics_dashboard))
         .nest("/api/demo", demo_api)
         // All other routes (demo subroutes, static assets, internal REST APIs) handled by proxy
         .fallback(proxy::handle_proxy_admin)

@@ -259,6 +259,10 @@ pub struct DemoClusterManager {
     max_clusters: usize,
     ttl: Duration,
     http_client: reqwest::Client,
+    start_time: Instant,
+    total_clusters_created: Arc<std::sync::atomic::AtomicU64>,
+    total_clusters_reaped: Arc<std::sync::atomic::AtomicU64>,
+    total_benchmarks_run: Arc<std::sync::atomic::AtomicU64>,
 }
 
 impl DemoClusterManager {
@@ -273,6 +277,10 @@ impl DemoClusterManager {
                 .timeout(Duration::from_secs(10))
                 .build()
                 .unwrap_or_default(),
+            start_time: Instant::now(),
+            total_clusters_created: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+            total_clusters_reaped: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+            total_benchmarks_run: Arc::new(std::sync::atomic::AtomicU64::new(0)),
         }
     }
 
@@ -532,6 +540,7 @@ impl DemoClusterManager {
             "Spawned Aaron demo topology: 3 Control Plane nodes (CP-1, CP-2, CP-3) & 3 Worker nodes (W-1, W-2, W-3)"
         );
 
+        self.total_clusters_created.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         Ok(cluster)
     }
 
@@ -621,6 +630,7 @@ impl DemoClusterManager {
             return Err(format!("Benchmark failed: {body}"));
         }
 
+        self.total_benchmarks_run.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         resp.json().await.map_err(|e| format!("Failed to parse benchmark json: {e}"))
     }
 
@@ -631,6 +641,8 @@ impl DemoClusterManager {
         };
 
         if let Some(cluster) = cluster_opt {
+            self.total_clusters_reaped.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
             // Update client record to clear active_session_id while maintaining cooldown expires_at
             {
                 let mut records = self.client_records.write().await;
@@ -678,4 +690,100 @@ impl DemoClusterManager {
             records.retain(|_, rec| now < rec.expires_at);
         }
     }
+
+    pub async fn get_metrics_summary(&self) -> serde_json::Value {
+        let uptime_secs = self.start_time.elapsed().as_secs();
+        let days = uptime_secs / 86400;
+        let hours = (uptime_secs % 86400) / 3600;
+        let mins = (uptime_secs % 3600) / 60;
+        let secs = uptime_secs % 60;
+        let uptime_human = if days > 0 {
+            format!("{days}d {hours}h {mins}m {secs}s")
+        } else if hours > 0 {
+            format!("{hours}h {mins}m {secs}s")
+        } else {
+            format!("{mins}m {secs}s")
+        };
+
+        let total_created = self.total_clusters_created.load(std::sync::atomic::Ordering::Relaxed);
+        let total_reaped = self.total_clusters_reaped.load(std::sync::atomic::Ordering::Relaxed);
+        let total_benchmarks = self.total_benchmarks_run.load(std::sync::atomic::Ordering::Relaxed);
+
+        let active_clusters_map = self.clusters.read().await.clone();
+        let active_count = active_clusters_map.len();
+        let max_clusters = self.max_clusters;
+        let available_slots = max_clusters.saturating_sub(active_count);
+
+        let used_ports_count = self.used_ports.read().await.len();
+        let unique_clients_count = self.client_records.read().await.len();
+
+        let memory_rss_mb = get_memory_rss_mb().unwrap_or(0.0);
+
+        let now = Instant::now();
+        let mut active_list = Vec::new();
+        for (_, cluster) in active_clusters_map {
+            let summary = cluster.status_summary().await;
+            let remaining = cluster.expires_at.saturating_duration_since(now).as_secs();
+            let rem_mins = remaining / 60;
+            let rem_secs = remaining % 60;
+            let deadline_human = format!("{rem_mins:02}m {rem_secs:02}s");
+
+            let nodes = summary.get("nodes").and_then(|n| n.as_array()).cloned().unwrap_or_default();
+            let alive_nodes_count = nodes
+                .iter()
+                .filter(|n| n.get("status").and_then(|s| s.as_str()) == Some("running"))
+                .count();
+
+            active_list.push(serde_json::json!({
+                "session_id": cluster.session_id,
+                "client_id": cluster.client_id,
+                "cluster_id": cluster.cluster_id.to_string(),
+                "admin_port": cluster.admin_port,
+                "created_secs_ago": cluster.created_at.elapsed().as_secs(),
+                "ttl_remaining_secs": remaining,
+                "ttl_remaining_human": deadline_human,
+                "is_raft_initialized": summary.get("is_raft_initialized").and_then(|b| b.as_bool()).unwrap_or(false),
+                "current_leader": summary.get("current_leader"),
+                "alive_nodes_count": alive_nodes_count,
+                "total_nodes_count": nodes.len(),
+                "nodes": nodes,
+            }));
+        }
+
+        serde_json::json!({
+            "status": "online",
+            "server": {
+                "uptime_secs": uptime_secs,
+                "uptime_human": uptime_human,
+                "memory_rss_mb": (memory_rss_mb * 100.0).round() / 100.0,
+                "active_ports_count": used_ports_count,
+                "unique_clients_seen": unique_clients_count,
+            },
+            "clusters": {
+                "total_created": total_created,
+                "total_reaped": total_reaped,
+                "active_count": active_count,
+                "max_capacity": max_clusters,
+                "available_slots": available_slots,
+                "total_benchmarks_run": total_benchmarks,
+                "active": active_list,
+            }
+        })
+    }
+}
+
+pub fn get_memory_rss_mb() -> Option<f64> {
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(statm) = std::fs::read_to_string("/proc/self/statm") {
+            let parts: Vec<&str> = statm.split_whitespace().collect();
+            if parts.len() >= 2 {
+                if let Ok(pages) = parts[1].parse::<u64>() {
+                    let bytes = pages * 4096;
+                    return Some((bytes as f64) / (1024.0 * 1024.0));
+                }
+            }
+        }
+    }
+    None
 }
