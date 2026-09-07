@@ -101,11 +101,11 @@ impl DemoNode {
                 node = node.with(admin_svc).with(service_fn("demo-seeder", |ctx: Context| async move {
                     let ks = ctx.store.keyspace("demo")?;
                     ks.insert("cluster/name", "Aaron Live Demo")?;
-                    ks.insert("cluster/topology", "3 Control Plane Nodes + 2 Worker Nodes")?;
+                    ks.insert("cluster/topology", "3 Control Plane Nodes + 3 Worker Nodes")?;
                     ks.insert("cluster/protocol", "SWIM Gossip + QUIC Multi-Stream")?;
                     ks.insert("cluster/storage", "Fjall LSM Tree")?;
                     ks.insert("cluster/consensus", "Awaiting Quorum Bootstrap via Admin Console")?;
-                    ks.insert("stats/state", "3 Control Plane Nodes & 2 Workers online")?;
+                    ks.insert("stats/state", "3 Control Plane Nodes & 3 Workers online")?;
                     ctx.store.persist()?;
                     info!("Seeded demo keyspace in Aaron Store");
                     Ok(())
@@ -368,7 +368,7 @@ impl DemoClusterManager {
         used.insert(u3);
         used.insert(raft3);
 
-        // Allocate UDP ports for 2 Worker nodes (Worker 1, Worker 2)
+        // Allocate UDP ports for 3 Worker nodes (Worker 1, Worker 2, Worker 3)
         let u4 = Self::find_available_port(&used, 18100, 25000, true)
             .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Worker 1".to_string()))?;
         used.insert(u4);
@@ -376,6 +376,10 @@ impl DemoClusterManager {
         let u5 = Self::find_available_port(&used, 18100, 25000, true)
             .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Worker 2".to_string()))?;
         used.insert(u5);
+
+        let u6 = Self::find_available_port(&used, 18100, 25000, true)
+            .ok_or_else(|| ClusterError::Other("Failed to allocate UDP port for Worker 3".to_string()))?;
+        used.insert(u6);
 
         // Allocate TCP port for CP-1 Admin Console
         let admin_port = Self::find_available_port(&used, 28100, 35000, false)
@@ -467,22 +471,39 @@ impl DemoClusterManager {
             cancel_token: Arc::new(RwLock::new(CancellationToken::new())),
             cluster_id,
             seed_port: Some(u1),
+            tags: worker_tags.clone(),
+        });
+
+        let worker3 = Arc::new(DemoNode {
+            id: 6,
+            name: "aaron-worker-3 (Worker)".to_string(),
+            quic_port: u6,
+            raft_port: None,
+            admin_port: None,
+            role: "Worker".to_string(),
+            is_control_plane: false,
+            status: Arc::new(RwLock::new("starting".to_string())),
+            dir_path: root_dir.join("worker-3"),
+            cancel_token: Arc::new(RwLock::new(CancellationToken::new())),
+            cluster_id,
+            seed_port: Some(u1),
             tags: worker_tags,
         });
 
-        // Start 3 Control Plane nodes and 2 Worker nodes
+        // Start 3 Control Plane nodes and 3 Worker nodes
         cp1.start().await;
         cp2.start().await;
         cp3.start().await;
         worker1.start().await;
         worker2.start().await;
+        worker3.start().await;
 
         let cluster = Arc::new(DemoCluster {
             client_id: client_id.to_string(),
             session_id: session_id.clone(),
             cluster_id,
             admin_port,
-            nodes: vec![cp1, cp2, cp3, worker1, worker2],
+            nodes: vec![cp1, cp2, cp3, worker1, worker2, worker3],
             created_at: now,
             expires_at: now + self.ttl,
             root_dir,
@@ -508,7 +529,7 @@ impl DemoClusterManager {
             client_id = %client_id,
             session_id = %session_id,
             admin_port = %admin_port,
-            "Spawned Aaron demo topology: 3 Control Plane nodes (CP-1, CP-2, CP-3) & 2 Worker nodes (W-1, W-2)"
+            "Spawned Aaron demo topology: 3 Control Plane nodes (CP-1, CP-2, CP-3) & 3 Worker nodes (W-1, W-2, W-3)"
         );
 
         Ok(cluster)

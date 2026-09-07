@@ -235,21 +235,24 @@ impl ShardCoordinator {
             self.handle.set_bootstrapped(true).await;
         }
 
-        // Dispatches partition commands via Control Plane channel to Primary and Replica nodes
-        for shard_id in 0..total_shards {
-            if let Some(p) = self.handle.get_service_placement(service_name, shard_id).await {
-                let _ = self
-                    .control_plane
-                    .dispatch_shard_command(p.primary, shard_id, 0, p.primary, &p.replicas, epoch)
-                    .await;
-                for rep in &p.replicas {
-                    let _ = self
-                        .control_plane
-                        .dispatch_shard_command(*rep, shard_id, 1, p.primary, &p.replicas, epoch)
+        // Dispatches partition commands via Control Plane channel to Primary and Replica nodes asynchronously in background
+        let cp = self.control_plane.clone();
+        let handle = self.handle.clone();
+        let svc = service_name.to_string();
+        tokio::spawn(async move {
+            for shard_id in 0..total_shards {
+                if let Some(p) = handle.get_service_placement(&svc, shard_id).await {
+                    let _ = cp
+                        .dispatch_shard_command(p.primary, shard_id, 0, p.primary, &p.replicas, epoch)
                         .await;
+                    for rep in &p.replicas {
+                        let _ = cp
+                            .dispatch_shard_command(*rep, shard_id, 1, p.primary, &p.replicas, epoch)
+                            .await;
+                    }
                 }
             }
-        }
+        });
 
         info!(
             target: "shard_coordinator",
@@ -344,19 +347,19 @@ impl ShardCoordinator {
 
         self.handle.update_placement(placement.clone()).await;
 
-        // Dispara comando via canal do Control Plane para o Primary
-        let _ = self
-            .control_plane
-            .dispatch_shard_command(primary, shard_id, 0, primary, &replicas, epoch)
-            .await;
-
-        // Dispara comando via canal do Control Plane para cada Réplica
-        for rep in &replicas {
-            let _ = self
-                .control_plane
-                .dispatch_shard_command(*rep, shard_id, 1, primary, &replicas, epoch)
+        // Dispara comando via canal do Control Plane para o Primary e Réplicas em segundo plano
+        let cp = self.control_plane.clone();
+        let reps = replicas.clone();
+        tokio::spawn(async move {
+            let _ = cp
+                .dispatch_shard_command(primary, shard_id, 0, primary, &reps, epoch)
                 .await;
-        }
+            for rep in reps {
+                let _ = cp
+                    .dispatch_shard_command(rep, shard_id, 1, primary, &[], epoch)
+                    .await;
+            }
+        });
 
         info!(
             target: "shard_coordinator",

@@ -68,12 +68,14 @@ async function triggerRefresh() {
 }
 
 const eligibleShardMembers = computed(() => {
-  return members.value.filter((m) => {
+  const active = members.value.filter((m) => m.status === 'Alive');
+  const workers = active.filter((m) => {
     const isControlPlane = m.tags?.some(
       (t) => t === 'control-plane' || t === 'role:control-plane' || t === 'service:control-plane-service'
     );
     return !isControlPlane;
   });
+  return workers.length >= 3 ? workers : active;
 });
 
 async function handleExecuteBootstrap(selectedNodeIds: string[]) {

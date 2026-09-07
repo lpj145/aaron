@@ -39,12 +39,29 @@ function toggleEditReplica(nodeId: string) {
   }
 }
 
+const validReplicas = computed(() => {
+  return editReplicaNodes.value.filter((r) => r && r !== editPrimaryNode.value);
+});
+
+const distinctCount = computed(() => {
+  const set = new Set<string>();
+  if (editPrimaryNode.value) set.add(editPrimaryNode.value);
+  for (const r of validReplicas.value) {
+    set.add(r);
+  }
+  return set.size;
+});
+
+const canSave = computed(() => {
+  return !!props.shard && !!editPrimaryNode.value && validReplicas.value.length >= 2 && distinctCount.value >= 3;
+});
+
 function handleSave() {
-  if (!props.shard || !editPrimaryNode.value || editReplicaNodes.value.length < 2) return;
+  if (!canSave.value || !props.shard) return;
   emit('save', {
     shardId: props.shard.shard_id,
     primary: editPrimaryNode.value,
-    replicas: editReplicaNodes.value.filter((r) => r !== editPrimaryNode.value),
+    replicas: validReplicas.value,
     serviceName: props.shard.service_name || 'DEFAULT',
   });
 }
@@ -121,9 +138,9 @@ function handleSave() {
       </div>
 
       <!-- Quorum validation info -->
-      <div class="text-[11px] font-mono p-2.5 rounded-xl border" :class="editReplicaNodes.length >= 2 ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-amber-950/20 border-amber-800/40 text-amber-300'">
-        Total Quorum Nodes: <strong>{{ 1 + editReplicaNodes.length }}</strong> (1 Primary + {{ editReplicaNodes.length }} Replicas).
-        <span v-if="editReplicaNodes.length < 2" class="block text-amber-400 mt-0.5">Need at least 2 replica voters.</span>
+      <div class="text-[11px] font-mono p-2.5 rounded-xl border" :class="canSave ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-amber-950/20 border-amber-800/40 text-amber-300'">
+        Total Distinct Nodes: <strong>{{ distinctCount }}</strong> (1 Primary + {{ validReplicas.length }} Replicas).
+        <span v-if="!canSave" class="block text-amber-400 mt-0.5">Requires at least 3 distinct nodes (1 Primary + >= 2 Replicas).</span>
       </div>
 
       <!-- Action Buttons -->
@@ -136,7 +153,7 @@ function handleSave() {
         </button>
         <button
           @click="handleSave"
-          :disabled="isSaving || editReplicaNodes.length < 2 || !editPrimaryNode"
+          :disabled="isSaving || !canSave"
           class="px-4 py-2 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-50 transition-colors flex items-center gap-1.5 shadow-lg"
         >
           <span>{{ isSaving ? 'Applying...' : 'Apply Quorum Changes' }}</span>

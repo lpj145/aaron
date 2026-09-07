@@ -88,7 +88,9 @@ export function useClusterData(
     const matched = workerNodes.filter((m) =>
       m.tags?.some((t) => t === `service:${svc.toLowerCase()}` || t.toLowerCase() === svc.toLowerCase())
     );
-    return matched.length > 0 ? matched : workerNodes;
+    if (matched.length >= 3) return matched;
+    if (workerNodes.length >= 3) return workerNodes;
+    return active;
   }
 
   async function loadAllData() {

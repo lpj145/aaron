@@ -2505,10 +2505,10 @@
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
             <div>
               <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                Launch a Genuine 5-Node Cluster
+                Launch a Genuine 6-Node Cluster
               </h2>
               <p class="text-sm text-slate-400 mt-1 max-w-xl">
-                Each sandbox session launches 5 genuine in-process Aaron nodes: 3 Control Plane nodes (CP-1, CP-2, CP-3) ready for Raft consensus quorum & 2 Worker nodes (W-1, W-2) for distributed sharding. Start uninitialized, bootstrap quorum dynamically, test consensus election, chaos injection (Kill/Revive), observe SWIM gossip failure detection, and explore the admin dashboard on a dedicated route.
+                Each sandbox session launches 6 genuine in-process Aaron nodes: 3 Control Plane nodes (CP-1, CP-2, CP-3) ready for Raft consensus quorum & 3 Worker nodes (W-1, W-2, W-3) for distributed sharding. Start uninitialized, bootstrap quorum dynamically, test consensus election, chaos injection (Kill/Revive), observe SWIM gossip failure detection, and explore the admin dashboard on a dedicated route.
               </p>
             </div>
 
@@ -2521,7 +2521,7 @@
 
               <button id="btn-launch-sandbox" onclick="launchDemoCluster()"
                 class="px-5 py-2.5 rounded-lg font-semibold text-sm bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span id="btn-launch-text">Spawn 5-Node Cluster</span>
+                <span id="btn-launch-text">Spawn 6-Node Cluster</span>
                 <svg id="btn-launch-spinner" class="hidden animate-spin w-4 h-4 text-white" viewBox="0 0 24 24"
                   fill="none">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2542,7 +2542,7 @@
             </div>
             <h3 class="text-lg font-semibold text-white mb-1">No Active Sandbox Session</h3>
             <p class="text-sm text-slate-400 max-w-md mx-auto mb-6">
-              Click "Spawn 5-Node Cluster" above to reserve a sandbox slot and launch 3 Control Plane + 2 Worker Aaron nodes in this session.
+              Click "Spawn 6-Node Cluster" above to reserve a sandbox slot and launch 3 Control Plane + 3 Worker Aaron nodes in this session.
             </p>
           </div>
 
@@ -2692,13 +2692,13 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200">Data & Shard Workers (2 Nodes)</h3>
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200">Data & Shard Workers (3 Nodes)</h3>
                 </div>
                 <span class="text-[11px] font-mono text-slate-400">SWIM GOSSIP MESH ACTIVE</span>
               </div>
 
-              <!-- 2 Worker Cards -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- 3 Worker Cards -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- W-1 (Node ID 4) -->
                 <div id="node-card-4" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
                   <div class="flex items-center justify-between mb-3">
@@ -2749,6 +2749,33 @@
                     <button id="btn-node-5-action" onclick="toggleNode(5)"
                       class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
                       Kill W-2
+                    </button>
+                  </div>
+                </div>
+
+                <!-- W-3 (Node ID 6) -->
+                <div id="node-card-6" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span id="node-6-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                      <span class="font-bold text-sm text-white">Worker Node 3 (W-3)</span>
+                      <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        WORKER
+                      </span>
+                    </div>
+                    <span id="node-6-status-pill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      RUNNING
+                    </span>
+                  </div>
+                  <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
+                    <div>SWIM (QUIC): <span id="node-6-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                    <div>Seed Node: <span class="text-slate-400">CP-1</span></div>
+                    <div>Role: <span class="text-slate-300">Workload & Shard Execution</span></div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button id="btn-node-6-action" onclick="toggleNode(6)"
+                      class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
+                      Kill W-3
                     </button>
                   </div>
                 </div>
@@ -2995,10 +3022,10 @@
           if (data.already_active) {
             addLog(`Reconnected to active cluster <span class="text-cyan-400">${data.cluster.session_id}</span> (${data.message || ''})`);
           } else {
-            addLog(`Cluster <span class="text-cyan-400 font-bold">${data.cluster.session_id}</span> spawned successfully with 5 genuine nodes.`);
+            addLog(`Cluster <span class="text-cyan-400 font-bold">${data.cluster.session_id}</span> spawned successfully with 6 genuine nodes.`);
             addLog(`Control Plane nodes <span class="text-cyan-400 font-bold">CP-1, CP-2, CP-3</span> online (Raft awaiting Quorum Bootstrap).`);
             addLog(`Admin Console ready on CP-1 at <span class="text-cyan-400 font-mono">127.0.0.1:${data.cluster.admin_port}</span>.`);
-            addLog(`Worker nodes <span class="text-emerald-400">W-1 (id: 4)</span> and <span class="text-emerald-400">W-2 (id: 5)</span> joined via SWIM gossip.`);
+            addLog(`Worker nodes <span class="text-emerald-400">W-1 (id: 4)</span>, <span class="text-emerald-400">W-2 (id: 5)</span>, and <span class="text-emerald-400">W-3 (id: 6)</span> joined via SWIM gossip.`);
             addLog(`<span class="text-amber-400 font-semibold">Tip: Click "Bootstrap Quorum" above or visit the Admin Console to form the 3-node Raft consensus quorum.</span>`);
           }
 
@@ -3007,13 +3034,13 @@
         } else {
           alert(`Cluster Notice: ${data.error || 'Server error'}`);
           btn.disabled = false;
-          btnText.innerText = 'Spawn 5-Node Cluster';
+          btnText.innerText = 'Spawn 6-Node Cluster';
           spinner.classList.add('hidden');
         }
       } catch (err) {
         alert(`Connection error: ${err.message}`);
         btn.disabled = false;
-        btnText.innerText = 'Spawn 5-Node Cluster';
+        btnText.innerText = 'Spawn 6-Node Cluster';
         spinner.classList.add('hidden');
       }
       updateStats();
