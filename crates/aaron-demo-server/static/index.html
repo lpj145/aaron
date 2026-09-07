@@ -2586,12 +2586,15 @@
 
             <!-- 3 Node Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="nodes-container">
-              <!-- Node 1 -->
-              <div id="node-card-1" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
+              <!-- Node 1: Control Plane -->
+              <div id="node-card-1" class="p-5 rounded-xl bg-slate-950/70 border border-cyan-500/30 transition relative shadow-lg shadow-cyan-950/20">
                 <div class="flex items-center justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <span id="node-1-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                    <span class="font-bold text-sm text-white">Node 1 (Seed / Admin)</span>
+                    <span class="font-bold text-sm text-white">Control Plane (CP-1)</span>
+                    <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                      CONTROL PLANE
+                    </span>
                   </div>
                   <span id="node-1-status-pill"
                     class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -2599,24 +2602,28 @@
                   </span>
                 </div>
                 <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                  <div>QUIC: <span id="node-1-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                  <div>Admin: <span id="node-1-admin" class="text-cyan-400">127.0.0.1:----</span></div>
-                  <div>Role: <span class="text-slate-300">Topology Coordinator</span></div>
+                  <div>QUIC (SWIM): <span id="node-1-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                  <div>Raft Consensus: <span id="node-1-raft" class="text-indigo-400">127.0.0.1:----</span></div>
+                  <div>Admin Console: <span id="node-1-admin" class="text-cyan-400 font-semibold">127.0.0.1:----</span></div>
+                  <div>Role: <span class="text-slate-300">Raft Leader & Coordinator</span></div>
                 </div>
                 <div class="flex gap-2">
                   <button id="btn-node-1-action" onclick="toggleNode(1)"
                     class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                    Kill Node 1
+                    Kill Control Plane
                   </button>
                 </div>
               </div>
 
-              <!-- Node 2 -->
+              <!-- Node 2: Worker 1 -->
               <div id="node-card-2" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
                 <div class="flex items-center justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <span id="node-2-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                    <span class="font-bold text-sm text-white">Node 2 (Worker)</span>
+                    <span class="font-bold text-sm text-white">Worker Node 1 (W-1)</span>
+                    <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      WORKER
+                    </span>
                   </div>
                   <span id="node-2-status-pill"
                     class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -2624,24 +2631,27 @@
                   </span>
                 </div>
                 <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                  <div>QUIC: <span id="node-2-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                  <div>Seed: <span class="text-slate-400">Node 1</span></div>
-                  <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
+                  <div>QUIC (SWIM): <span id="node-2-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                  <div>Seed / CP: <span class="text-slate-400">Control Plane (CP-1)</span></div>
+                  <div>Role: <span class="text-slate-300">Workload & Shard Execution</span></div>
                 </div>
                 <div class="flex gap-2">
                   <button id="btn-node-2-action" onclick="toggleNode(2)"
                     class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                    Kill Node 2
+                    Kill Worker 1
                   </button>
                 </div>
               </div>
 
-              <!-- Node 3 -->
+              <!-- Node 3: Worker 2 -->
               <div id="node-card-3" class="p-5 rounded-xl bg-slate-950/70 border border-white/10 transition relative">
                 <div class="flex items-center justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <span id="node-3-led" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                    <span class="font-bold text-sm text-white">Node 3 (Worker)</span>
+                    <span class="font-bold text-sm text-white">Worker Node 2 (W-2)</span>
+                    <span class="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      WORKER
+                    </span>
                   </div>
                   <span id="node-3-status-pill"
                     class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -2649,14 +2659,14 @@
                   </span>
                 </div>
                 <div class="space-y-1 text-xs font-mono text-slate-400 mb-4">
-                  <div>QUIC: <span id="node-3-quic" class="text-slate-300">127.0.0.1:----</span></div>
-                  <div>Seed: <span class="text-slate-400">Node 1</span></div>
-                  <div>Role: <span class="text-slate-300">SWIM Gossip Peer</span></div>
+                  <div>QUIC (SWIM): <span id="node-3-quic" class="text-slate-300">127.0.0.1:----</span></div>
+                  <div>Seed / CP: <span class="text-slate-400">Control Plane (CP-1)</span></div>
+                  <div>Role: <span class="text-slate-300">Workload & Shard Execution</span></div>
                 </div>
                 <div class="flex gap-2">
                   <button id="btn-node-3-action" onclick="toggleNode(3)"
                     class="w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
-                    Kill Node 3
+                    Kill Worker 2
                   </button>
                 </div>
               </div>
@@ -2902,11 +2912,11 @@
           if (data.already_active) {
             addLog(`Reconnected to active cluster <span class="text-cyan-400">${data.cluster.session_id}</span> (${data.message || ''})`);
           } else {
-            addLog(`Cluster <span class="text-cyan-400">${data.cluster.session_id}</span> spawned.`);
-            addLog(`Node 1 (Seed / Admin) active on QUIC <span class="text-cyan-400">127.0.0.1:${data.cluster.nodes[0].quic_port}</span>, Admin <span class="text-cyan-400">${data.cluster.admin_port}</span>`);
-            addLog(`Node 2 (Worker) joined cluster via seed.`);
-            addLog(`Node 3 (Worker) joined cluster via seed.`);
-            addLog(`SWIM topology converged: 3 nodes active.`);
+            addLog(`Cluster <span class="text-cyan-400 font-bold">${data.cluster.session_id}</span> spawned successfully.`);
+            addLog(`Control Plane <span class="text-cyan-400 font-bold">aaron-cp-1</span> online (Raft Leader & Shard Coordinator) with Admin Console at <span class="text-cyan-400 font-mono">127.0.0.1:${data.cluster.admin_port}</span>.`);
+            addLog(`Worker Node 1 <span class="text-emerald-400">aaron-worker-1</span> joined cluster via SWIM gossip.`);
+            addLog(`Worker Node 2 <span class="text-emerald-400">aaron-worker-2</span> joined cluster via SWIM gossip.`);
+            addLog(`Topology converged: 1 Control Plane + 2 Workers active.`);
           }
 
           updateNodesUI(data.cluster.nodes);
@@ -2953,24 +2963,27 @@
         const led = document.getElementById(`node-${idx}-led`);
         const pill = document.getElementById(`node-${idx}-status-pill`);
         const quic = document.getElementById(`node-${idx}-quic`);
+        const raft = document.getElementById(`node-${idx}-raft`);
         const admin = document.getElementById(`node-${idx}-admin`);
         const btnAction = document.getElementById(`btn-node-${idx}-action`);
 
         if (quic) quic.innerText = `127.0.0.1:${n.quic_port}`;
+        if (raft && n.raft_port) raft.innerText = `127.0.0.1:${n.raft_port}`;
         if (admin && n.admin_port) admin.innerText = `127.0.0.1:${n.admin_port}`;
 
+        const nodeLabel = idx === 1 ? 'Control Plane' : `Worker ${idx - 1}`;
         if (isRunning) {
           led.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
           pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
           pill.innerText = 'RUNNING';
           btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition';
-          btnAction.innerText = `Kill Node ${idx}`;
+          btnAction.innerText = `Kill ${nodeLabel}`;
         } else {
           led.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
           pill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
           pill.innerText = 'KILLED';
           btnAction.className = 'w-full py-1.5 rounded-lg text-xs font-mono font-medium bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 transition';
-          btnAction.innerText = `Revive Node ${idx}`;
+          btnAction.innerText = `Revive ${nodeLabel}`;
         }
       });
     }
