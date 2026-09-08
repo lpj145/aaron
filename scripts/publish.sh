@@ -52,6 +52,9 @@ done
 if [ -z "${CARGO_REGISTRY_TOKEN:-}" ] && [ -n "${CRATES_IO_TOKEN:-}" ]; then
   export CARGO_REGISTRY_TOKEN="$CRATES_IO_TOKEN"
 fi
+if [ -z "${CARGO_REGISTRY_TOKEN:-}" ]; then
+  unset CARGO_REGISTRY_TOKEN
+fi
 
 # Ensure required tools are installed
 for tool in cargo jq curl; do
