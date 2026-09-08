@@ -114,9 +114,9 @@ fi
 
 echo "==> Packages requiring publication (${#PACKAGES_TO_PUBLISH[@]}): ${PACKAGES_TO_PUBLISH[*]}"
 
-if [ "$DRY_RUN" = "false" ] && [ -z "${CARGO_REGISTRY_TOKEN:-}" ]; then
-  echo "Error: Neither CARGO_REGISTRY_TOKEN nor CRATES_IO_TOKEN is set in environment." >&2
-  echo "Please set this secret in your repository settings or pass --token <token>." >&2
+if [ "$DRY_RUN" = "false" ] && [ -z "${CARGO_REGISTRY_TOKEN:-}" ] && [ ! -f "$HOME/.cargo/credentials.toml" ] && [ ! -f "$HOME/.cargo/credentials" ]; then
+  echo "Error: Neither CARGO_REGISTRY_TOKEN nor CRATES_IO_TOKEN is set, and no cargo credentials file was found." >&2
+  echo "Please set this secret in your repository settings or run 'cargo login'." >&2
   exit 1
 fi
 
