@@ -131,14 +131,14 @@ for pkg in "${PACKAGES_TO_PUBLISH[@]}"; do
   echo "==> Publishing $pkg v$version..."
 
   if [ "$DRY_RUN" = "true" ]; then
-    echo "  [DRY RUN] Would execute: cargo publish -p $pkg --no-verify"
+    echo "  [DRY RUN] Would execute: cargo publish -p $pkg --no-verify --allow-dirty"
     continue
   fi
 
   SUCCESS=false
   for attempt in $(seq 1 $MAX_ATTEMPTS); do
-    echo "  Attempt $attempt of $MAX_ATTEMPTS: cargo publish -p $pkg --no-verify"
-    if cargo publish -p "$pkg" --no-verify; then
+    echo "  Attempt $attempt of $MAX_ATTEMPTS: cargo publish -p $pkg --no-verify --allow-dirty"
+    if cargo publish -p "$pkg" --no-verify --allow-dirty; then
       echo "  Successfully published $pkg v$version"
       SUCCESS=true
       break

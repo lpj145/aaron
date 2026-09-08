@@ -39,5 +39,9 @@ export function useClusterServices(
     return list;
   });
 
-  return { detectedServices, pendingServices };
+  const workerPool = computed(() =>
+    canvasNodes.value.filter((node) => node.isWorker && (node.status === 'Alive' || node.status === 'Suspect'))
+  );
+
+  return { detectedServices, pendingServices, workerPool };
 }

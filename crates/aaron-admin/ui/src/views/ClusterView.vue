@@ -101,7 +101,7 @@ const {
   },
 });
 
-const { detectedServices, pendingServices } = useClusterServices(
+const { detectedServices, pendingServices, workerPool } = useClusterServices(
   canvasNodes,
   isControlPlaneBootstrapped,
   bootstrappedServices
@@ -299,6 +299,7 @@ onUnmounted(() => {
       :show-shards-drawer="showShardsDrawer"
       :shards-filter-service="shardsFilterService"
       :detected-services="detectedServices"
+      :worker-pool="workerPool"
       :shards-overview="shardsOverview"
       :is-node-alive="isNodeAlive"
       :get-node-label="getNodeLabel"
