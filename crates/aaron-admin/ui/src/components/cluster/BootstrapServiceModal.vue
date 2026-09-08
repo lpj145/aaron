@@ -6,6 +6,7 @@ import type { CanvasNode } from '../../types';
 const props = defineProps<{
   show: boolean;
   detectedServices: Map<string, CanvasNode[]>;
+  workerPool: CanvasNode[];
   bootstrappedServices: Set<string>;
   pendingServices: string[];
   isInitializing: boolean;
@@ -134,6 +135,30 @@ const effectiveShardCount = computed(() => {
 
       <!-- Service Groups List -->
       <div class="max-h-72 overflow-y-auto space-y-2.5 border border-slate-800/80 rounded-xl p-2.5 bg-slate-950/50">
+        <div v-if="workerPool.length >= 3" class="p-3 rounded-xl border border-cyan-700/60 bg-cyan-950/20">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-xs text-cyan-100 font-mono">DEMO WORKER POOL</span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">{{ workerPool.length }} nodes</span>
+              </div>
+              <p class="mt-1 text-[10px] text-cyan-200/70">Cross-service placement for the demo topology</p>
+            </div>
+            <button
+              @click="emit('bootstrap-service', 'demo-worker-pool', workerPool, effectiveShardCount)"
+              :disabled="isInitializing || !isControlPlaneBootstrapped"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white shadow-md disabled:opacity-50 transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <Zap class="w-3.5 h-3.5" />
+              <span>{{ isInitializing ? 'Bootstrapping...' : 'Bootstrap Pool' }}</span>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            <span v-for="n in workerPool" :key="n.id" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
+              {{ n.hostname || n.shortIndex }}
+            </span>
+          </div>
+        </div>
         <div
           v-for="[svcName, svcNodes] in Array.from(detectedServices.entries())"
           :key="svcName"
@@ -172,11 +197,11 @@ const effectiveShardCount = computed(() => {
             <button
               v-if="!bootstrappedServices.has(svcName.toUpperCase())"
               @click="emit('bootstrap-service', svcName, svcNodes, effectiveShardCount)"
-              :disabled="isInitializing || !isControlPlaneBootstrapped"
+              :disabled="isInitializing || !isControlPlaneBootstrapped || svcNodes.length < 3"
               class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white shadow-md disabled:opacity-50 transition-colors flex items-center gap-1.5"
             >
               <Zap class="w-3.5 h-3.5" />
-              <span>{{ isInitializing ? 'Bootstrapping...' : `Bootstrap ${svcName} (${effectiveShardCount.toLocaleString()} Shards)` }}</span>
+              <span>{{ svcNodes.length < 3 ? 'Needs 3 nodes' : isInitializing ? 'Bootstrapping...' : `Bootstrap ${svcName} (${effectiveShardCount.toLocaleString()} Shards)` }}</span>
             </button>
             <div v-else class="text-xs text-emerald-400 flex items-center gap-1 font-mono">
               <CheckCircle class="w-3.5 h-3.5" />

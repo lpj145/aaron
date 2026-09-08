@@ -15,6 +15,7 @@ defineProps<{
   eligibleBootstrapNodes: CanvasNode[];
   showServiceBootstrapModal: boolean;
   detectedServices: Map<string, CanvasNode[]>;
+  workerPool: CanvasNode[];
   bootstrappedServices: Set<string>;
   pendingServices: string[];
   isControlPlaneBootstrapped: boolean;
@@ -65,6 +66,7 @@ const emit = defineEmits<{
     <BootstrapServiceModal
       :show="showServiceBootstrapModal"
       :detected-services="detectedServices"
+      :worker-pool="workerPool"
       :bootstrapped-services="bootstrappedServices"
       :pending-services="pendingServices"
       :is-initializing="isInitializing"
