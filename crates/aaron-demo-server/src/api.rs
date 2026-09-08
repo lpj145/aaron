@@ -53,7 +53,7 @@ pub async fn get_demo_stats(
         active_clusters: active,
         max_clusters: max,
         available_slots: available,
-        version: "0.1.0",
+        version: "0.1.1",
     })
 }
 
