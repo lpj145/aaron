@@ -400,7 +400,9 @@ impl DemoClusterManager {
         let _ = std::fs::create_dir_all(&root_dir);
 
         let cp_tags = vec!["role:control-plane".into(), "control-plane".into()];
-        let worker_tags = vec!["role:worker".into(), "worker".into()];
+        // All demo workers belong to one shard service so the admin console can
+        // bootstrap a single three-node replica group.
+        let worker_tags = vec!["service:shard-worker".into(), "role:worker".into(), "worker".into()];
 
         let cp1 = Arc::new(DemoNode {
             id: 1,

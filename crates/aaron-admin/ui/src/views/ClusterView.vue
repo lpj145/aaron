@@ -14,6 +14,7 @@ import ClusterZoomControls from '../components/cluster/ClusterZoomControls.vue';
 import ClusterDrawers from '../components/cluster/ClusterDrawers.vue';
 import ClusterModals from '../components/cluster/ClusterModals.vue';
 import ClusterToast from '../components/cluster/ClusterToast.vue';
+import DemoRunbook from '../components/cluster/DemoRunbook.vue';
 
 const showNodeDrawer = ref(false);
 const showStateDrawer = ref(false);
@@ -220,6 +221,13 @@ onUnmounted(() => {
     </div>
 
     <!-- Cluster Actions Toolbar -->
+    <DemoRunbook
+      :nodes="canvasNodes"
+      :is-control-plane-bootstrapped="isControlPlaneBootstrapped"
+      :bootstrapped-services="bootstrappedServices"
+      :is-simulation-mode="isSimulationMode"
+    />
+
     <ClusterActionsToolbar
       :is-starting-node="isStartingNode"
       :is-control-plane-bootstrapped="isControlPlaneBootstrapped"
