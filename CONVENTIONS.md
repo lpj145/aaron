@@ -50,9 +50,11 @@ This document records the foundational architectural principles, design decision
 ---
 
 ## 4. Distributed Networking & Security (`Network` & QUIC)
-- **Web of Trust P2P TLS**:
-  - QUIC listeners present self-signed certificates with Subject Alternative Names (SAN) bound to the node's 128-bit `Uuid`.
-  - `P2pServerCertVerifier` performs cryptographic signature checks and rejects any incoming/outgoing connection if the certificate does not match the target `NodeId` UUID (mitigating rogue/impostor MITM spoofing).
+- **Cluster CA Mutual TLS**:
+  - QUIC transport certificates identify endpoints; cluster admission uses the short-lived HMAC join proof keyed by `MEMBERSHIP_CLUSTER_ID`.
+  - QUIC certificates identify node endpoints; cluster membership is authorized by the short-lived HMAC join proof keyed by `MEMBERSHIP_CLUSTER_ID`.
+  - `P2pServerCertVerifier` is a development-only verifier; unconfigured managers are restricted to loopback.
+  - See [configuration and upgrade](./docs/cluster-security.md) for provisioning and protocol compatibility.
 - **Connection Pooling**:
   - Outbound connections use atomic `get_or_insert` to eliminate race conditions under thundering herd connections, closing redundant handshakes immediately.
 

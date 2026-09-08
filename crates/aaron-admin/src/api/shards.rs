@@ -161,18 +161,29 @@ async fn bootstrap_round_robin(
     } else if let Some(membership) = &state.membership {
         let members = membership.all_members().await;
         let service_nodes = coord.filter_service_nodes(&service_name, &members);
-        if !service_nodes.is_empty() {
+        if service_nodes.len() >= 3 {
             service_nodes
         } else {
-            // Fallback para nós vivos excluindo explicitamente control-plane
-            members
-                .into_iter()
+            // Fallback para workers vivos
+            let workers: Vec<Uuid> = members
+                .iter()
                 .filter(|m| {
                     m.status == aaron_membership::MemberStatus::Alive
                         && !m.tags.iter().any(|t| t == "role:control-plane" || t.starts_with("role:control-plane"))
                 })
                 .map(|m| m.node_id.id())
-                .collect()
+                .collect();
+
+            if workers.len() >= 3 {
+                workers
+            } else {
+                // Fallback para todos os membros vivos se houver menos de 3 workers dedicados
+                members
+                    .into_iter()
+                    .filter(|m| m.status == aaron_membership::MemberStatus::Alive)
+                    .map(|m| m.node_id.id())
+                    .collect()
+            }
         }
     } else {
         vec![state.ctx.identity.id()]

@@ -34,14 +34,9 @@ struct Args {
 }
 
 static LANDING_HTML: &str = include_str!("../static/index.html");
-static CONCEPT_WEBP: &[u8] = include_bytes!("../static/cluster-concept.webp");
 
 async fn serve_landing() -> Html<&'static str> {
     Html(LANDING_HTML)
-}
-
-async fn serve_concept_image() -> impl axum::response::IntoResponse {
-    ([(axum::http::header::CONTENT_TYPE, "image/webp")], CONCEPT_WEBP)
 }
 
 #[tokio::main]
@@ -79,18 +74,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let demo_api = Router::new()
         .route("/stats", get(api::get_demo_stats))
+        .route("/current", get(api::get_current_client_session))
         .route("/start", post(api::start_demo_cluster))
         .route("/{session_id}/status", get(api::get_cluster_status))
         .route("/{session_id}/kill/{node_idx}", post(api::kill_cluster_node))
         .route("/{session_id}/revive/{node_idx}", post(api::revive_cluster_node))
         .route("/{session_id}/benchmark", post(api::run_cluster_benchmark))
+        .route("/{session_id}/init-control-plane", post(api::init_demo_control_plane))
         .route("/{session_id}/stop", post(api::stop_demo_cluster))
+        .route("/metrics-4f8a7d2b1c9e", get(api::get_internal_metrics_dashboard))
         .with_state(manager.clone());
 
     let app = Router::new()
         .route("/", get(serve_landing))
-        .route("/cluster-concept.webp", get(serve_concept_image))
-        .route("/hero-mascot.webp", get(serve_concept_image))
+        .route("/metrics-4f8a7d2b1c9e", get(api::get_internal_metrics_dashboard))
         .nest("/api/demo", demo_api)
         // All other routes (demo subroutes, static assets, internal REST APIs) handled by proxy
         .fallback(proxy::handle_proxy_admin)

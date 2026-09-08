@@ -40,8 +40,18 @@ table JoinRequest {
   sender: MemberRecord;
 }
 
+table AuthenticatedJoinRequest {
+  sender: MemberRecord;
+  timestamp_ms: uint64;
+  mac: [ubyte];
+}
+
 table JoinResponse {
   cluster_id: Aaron.Node.Uuid;
+  members: [MemberRecord];
+}
+
+table AuthenticatedJoinResponse {
   members: [MemberRecord];
 }
 
@@ -67,6 +77,8 @@ union MessagePayload {
   Ack,
   PingReq,
   JoinRequest,
+  AuthenticatedJoinRequest,
+  AuthenticatedJoinResponse,
   JoinResponse,
   ConfigUpdate,
   ConfigAck

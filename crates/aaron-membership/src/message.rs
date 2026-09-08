@@ -68,8 +68,18 @@ pub enum Message {
         gossip: Vec<Member>,
     },
     /// Cluster bootstrap join request sent to seed nodes.
-    JoinRequest { sender: Member },
-    /// Cluster bootstrap join response returned by a seed node with current members and cluster_id.
+    JoinRequest {
+        sender: Member,
+    },
+    /// Authenticated cluster bootstrap join request.
+    AuthenticatedJoinRequest {
+        sender: Member,
+        timestamp_ms: u64,
+        mac: Vec<u8>,
+    },
+    AuthenticatedJoinResponse {
+        members: Vec<Member>,
+    },
     /// Cluster bootstrap join response returned by a seed node with current members and cluster_id.
     JoinResponse {
         cluster_id: Uuid,
@@ -102,9 +112,11 @@ impl Message {
             | Self::Ack { sender, .. }
             | Self::PingReq { sender, .. }
             | Self::JoinRequest { sender }
+            | Self::AuthenticatedJoinRequest { sender, .. }
             | Self::ConfigUpdate { sender, .. }
             | Self::ConfigAck { sender, .. } => Some(sender),
             Self::JoinResponse { .. } => None,
+            Self::AuthenticatedJoinResponse { .. } => None,
         }
     }
 
@@ -160,6 +172,28 @@ impl Message {
                 proto::MessagePayload::JoinRequest(Box::new(proto::JoinRequest {
                     sender: Some(Box::new(sender_rec)),
                 }))
+            }
+            Self::AuthenticatedJoinRequest {
+                sender,
+                timestamp_ms,
+                mac,
+            } => {
+                let sender_rec = member_to_record_without_cluster(sender);
+                proto::MessagePayload::AuthenticatedJoinRequest(Box::new(
+                    proto::AuthenticatedJoinRequest {
+                        sender: Some(Box::new(sender_rec)),
+                        timestamp_ms: *timestamp_ms,
+                        mac: Some(mac.clone()),
+                    },
+                ))
+            }
+            Self::AuthenticatedJoinResponse { members } => {
+                let member_recs: Vec<_> = members.iter().map(member_to_record).collect();
+                proto::MessagePayload::AuthenticatedJoinResponse(Box::new(
+                    proto::AuthenticatedJoinResponse {
+                        members: Some(member_recs),
+                    },
+                ))
             }
             Self::JoinResponse {
                 cluster_id,
@@ -292,6 +326,30 @@ impl Message {
                 let sender = record_ref_to_member(sender_ref)?;
                 Ok(Self::JoinRequest { sender })
             }
+            proto::MessagePayloadRef::AuthenticatedJoinRequest(join_req) => {
+                let sender_ref = join_req.sender()?.ok_or(MessageError::MissingField(
+                    "AuthenticatedJoinRequest.sender",
+                ))?;
+                let sender = record_ref_to_member(sender_ref)?;
+                let mac = join_req
+                    .mac()?
+                    .ok_or(MessageError::MissingField("AuthenticatedJoinRequest.mac"))?
+                    .to_vec();
+                Ok(Self::AuthenticatedJoinRequest {
+                    sender,
+                    timestamp_ms: join_req.timestamp_ms()?,
+                    mac,
+                })
+            }
+            proto::MessagePayloadRef::AuthenticatedJoinResponse(join_resp) => {
+                let mut members = Vec::new();
+                if let Some(vec) = join_resp.members()? {
+                    for r in vec {
+                        members.push(record_ref_to_member(r?)?);
+                    }
+                }
+                Ok(Self::AuthenticatedJoinResponse { members })
+            }
             proto::MessagePayloadRef::JoinResponse(join_resp) => {
                 let cluster_ref = join_resp
                     .cluster_id()?
@@ -380,6 +438,14 @@ fn member_to_record(m: &Member) -> proto::MemberRecord {
             Some(m.tags.clone())
         },
     }
+}
+
+fn member_to_record_without_cluster(m: &Member) -> proto::MemberRecord {
+    let mut record = member_to_record(m);
+    if let Some(node_id) = record.node_id.as_mut() {
+        node_id.cluster_id = None;
+    }
+    record
 }
 
 fn record_ref_to_member(r: proto::MemberRecordRef<'_>) -> Result<Member, MessageError> {

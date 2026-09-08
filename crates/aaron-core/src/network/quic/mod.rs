@@ -13,7 +13,7 @@ pub use tls::{
 use tokio::net::ToSocketAddrs;
 use tokio::sync::OnceCell;
 
-/// Manager for QUIC transport using Quinn and Web-of-Trust P2P TLS.
+/// QUIC transport with cluster mTLS, or loopback-only development TLS.
 ///
 /// Supports high-performance multiplexed bi-directional streams and
 /// automatic outbound connection pooling.
@@ -22,7 +22,8 @@ pub struct QuicManager {
     pool: QuicPool,
     client_endpoint_v4: Arc<OnceCell<quinn::Endpoint>>,
     client_endpoint_v6: Arc<OnceCell<quinn::Endpoint>>,
-    connecting_locks: Arc<tokio::sync::Mutex<std::collections::HashMap<SocketAddr, Arc<tokio::sync::Mutex<()>>>>>,
+    connecting_locks:
+        Arc<tokio::sync::Mutex<std::collections::HashMap<SocketAddr, Arc<tokio::sync::Mutex<()>>>>>,
 }
 
 impl QuicManager {
@@ -36,16 +37,14 @@ impl QuicManager {
         }
     }
 
-    /// Binds a QUIC server endpoint to the specified address with an automatically generated
-    /// self-signed Web-of-Trust P2P TLS certificate.
+    /// Binds with the configured cluster identity, or a development certificate on loopback.
     pub async fn listen(&self, addr: impl ToSocketAddrs) -> Result<quinn::Endpoint, BoxError> {
         let (cert, key) =
             generate_self_signed_cert(vec!["localhost".to_string(), "aaron.node".to_string()])?;
         self.listen_with_cert(addr, cert, key).await
     }
 
-    /// Binds a QUIC server endpoint with an ephemeral self-signed P2P TLS certificate
-    /// bound to the specified node's unique [`Uuid`].
+    /// Binds a node listener, checking that its configured certificate matches the node UUID.
     pub async fn listen_for_node(
         &self,
         addr: impl ToSocketAddrs,
@@ -55,7 +54,8 @@ impl QuicManager {
         self.listen_with_cert(addr, cert, key).await
     }
 
-    /// Binds a QUIC server endpoint with explicit TLS certificate and private key.
+    /// Binds with a development certificate on loopback. With cluster TLS configured,
+    /// the manager's authenticated identity takes precedence over these arguments.
     pub async fn listen_with_cert(
         &self,
         addr: impl ToSocketAddrs,
@@ -89,7 +89,6 @@ impl QuicManager {
             )) as BoxError
         })?;
 
-        // 1. Fast path: check if we already have an active QUIC connection in the pool
         if let Some(existing) = self.pool.get(&socket_addr).await {
             return Ok(existing);
         }

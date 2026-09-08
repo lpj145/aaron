@@ -124,8 +124,28 @@ impl ControlPlaneHandle {
                 .ok_or_else(|| format!("Target node {target_uuid} not found in routing table or Raft membership"))?
         };
 
-        let conn = inner.quic.connect_node(&target_addr, target_uuid).await?;
-        let (mut send, mut recv) = conn.open_bi().await?;
+        let conn = match tokio::time::timeout(
+            std::time::Duration::from_millis(500),
+            inner.quic.connect_node(&target_addr, target_uuid),
+        )
+        .await
+        {
+            Ok(Ok(c)) => c,
+            Ok(Err(e)) => return Err(e),
+            Err(_) => return Err("QUIC connection timeout".into()),
+        };
+
+        let (mut send, mut recv) = match tokio::time::timeout(
+            std::time::Duration::from_millis(500),
+            conn.open_bi(),
+        )
+        .await
+        {
+            Ok(Ok(s)) => s,
+            Ok(Err(e)) => return Err(e.into()),
+            Err(_) => return Err("QUIC open stream timeout".into()),
+        };
+
         let replicas_proto = replicas.iter().map(|u| (u.high, u.low)).collect();
         let msg = RaftMessage::ShardCommand {
             shard_id,
@@ -141,7 +161,16 @@ impl ControlPlaneHandle {
         aaron_core::write_frame(&mut send, &bytes).await?;
         let _ = send.finish();
 
-        let _resp_bytes = aaron_core::read_frame(&mut recv).await?;
+        let _resp_bytes = match tokio::time::timeout(
+            std::time::Duration::from_millis(500),
+            aaron_core::read_frame(&mut recv),
+        )
+        .await
+        {
+            Ok(Ok(b)) => b,
+            Ok(Err(e)) => return Err(e.into()),
+            Err(_) => return Err("QUIC read response timeout".into()),
+        };
         Ok(())
     }
 
@@ -175,8 +204,27 @@ impl ControlPlaneHandle {
                 .ok_or_else(|| format!("Target node {target_uuid} not found in routing table or Raft membership"))?
         };
 
-        let conn = inner.quic.connect_node(&target_addr, target_uuid).await?;
-        let (mut send, mut recv) = conn.open_bi().await?;
+        let conn = match tokio::time::timeout(
+            std::time::Duration::from_millis(500),
+            inner.quic.connect_node(&target_addr, target_uuid),
+        )
+        .await
+        {
+            Ok(Ok(c)) => c,
+            Ok(Err(e)) => return Err(e),
+            Err(_) => return Err("QUIC connection timeout".into()),
+        };
+
+        let (mut send, mut recv) = match tokio::time::timeout(
+            std::time::Duration::from_millis(500),
+            conn.open_bi(),
+        )
+        .await
+        {
+            Ok(Ok(s)) => s,
+            Ok(Err(e)) => return Err(e.into()),
+            Err(_) => return Err("QUIC open stream timeout".into()),
+        };
 
         let (primary, replicas) = if members.is_empty() {
             (target_uuid, Vec::new())
@@ -199,11 +247,16 @@ impl ControlPlaneHandle {
         aaron_core::write_frame(&mut send, &bytes).await?;
         let _ = send.finish();
 
-        if let Some(resp_bytes) = aaron_core::read_frame(&mut recv).await? {
+        if let Ok(Ok(Some(resp_bytes))) = tokio::time::timeout(
+            std::time::Duration::from_millis(500),
+            aaron_core::read_frame(&mut recv),
+        )
+        .await
+        {
             let resp = RaftMessage::from_bytes(&resp_bytes)?;
             Ok(resp)
         } else {
-            Err("No response received for ShardCommand".into())
+            Err("No response or timeout received for ShardCommand".into())
         }
     }
 

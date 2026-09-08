@@ -3,6 +3,7 @@
 //! Manages cluster membership, node discovery, failure detection (Ping/Ack/PingReq),
 //! and state dissemination via epidemic gossip protocols over QUIC with P2P TLS.
 
+mod auth;
 pub mod config;
 pub mod error;
 pub mod event;

@@ -182,7 +182,7 @@ Aaron is built upon 10 core architectural principles that dictate how distribute
 5. **Linearizable Consensus (`OpenRaft` & FlatBuffers)**: Cluster metadata and state machines replicate via OpenRaft with zero-copy FlatBuffers binary persistence in the local LSM.
 6. **Deterministic WyHash Partitioning (`ShardService`)**: Uniform key distribution via 64-bit WyHash and Big-Endian partition prefixes (`[u16 BE Shard ID] + [Raw Key]`) for efficient LSM range scans.
 7. **Hardware Micro-Benchmarking & Dynamic Telemetry**: Nodes benchmark CPU, RAM, and fsync at boot to establish nominal capacity, continuously tracking live Workload Performance Scores (WPS).
-8. **Multiplexed Transport over QUIC (`Network`)**: Inter-node traffic runs over singleflight, connection-pooled QUIC streams with mutual P2P TLS authenticated against 128-bit node UUIDs.
+8. **Multiplexed Transport over QUIC (`Network`)**: Inter-node traffic uses connection-pooled QUIC, while cluster admission uses a short-lived HMAC join proof keyed by `MEMBERSHIP_CLUSTER_ID`. See [configuration and upgrade](./docs/cluster-security.md).
 9. **SWIM Cluster Membership & Failure Detection**: Decentralized peer discovery, direct Ping and indirect PingReq probes, and monotonic incarnation conflict resolution with automatic self-refutation.
 10. **Erlang/OTP-Style Supervision Tree (`ServiceOpts`)**: Granular per-service lifecycle supervision with dedicated cancellation tokens, restart policies (`Never`, `Always`, `OnFailure`, `MaxRetries`), and backoff strategies.
 
@@ -197,7 +197,7 @@ Aaron provides the distributed infrastructure runtime. The boundary between the 
 | Architectural Concern | Handled by Aaron (Framework Runtime) | Handled by User-Space (Application Domain) |
 | :--- | :--- | :--- |
 | **Node Lifecycle & Supervision** | Task supervision trees, backoff retry policies, and fail-fast environment validation. | Registering domain services and executing application business loops. |
-| **P2P Transport & Mesh Security** | Multiplexed QUIC streams, connection pooling, and mutual P2P TLS certificate pinning. | Application-level protocols, user authentication (JWT/OAuth), and business endpoints. |
+| **P2P Transport & Mesh Security** | Multiplexed QUIC streams, connection pooling, node endpoint identity, and HMAC-based cluster admission. | Application-level protocols, user authentication (JWT/OAuth), and business endpoints. |
 | **Cluster Discovery & Health** | SWIM gossip protocol, Ping/PingReq failure detection, and self-refutation. | Reacting to cluster membership events to trigger business workflows. |
 | **Metadata Consensus** | Linearizable OpenRaft consensus for cluster state and FlatBuffers LSM storage. | Designing application metadata schemas stored within the consensus log. |
 | **Partition Routing & Topology** | WyHash key-to-shard mapping, partition allocation, and Big-Endian LSM prefixing. | **Data Replication**: Streaming partition data (via WAL, Raft, or CRDTs) across replicas. |

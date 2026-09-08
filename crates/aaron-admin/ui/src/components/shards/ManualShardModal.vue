@@ -27,11 +27,17 @@ watch(
       if (props.initialPlacement) {
         shardId.value = props.initialPlacement.shard_id;
         primary.value = props.initialPlacement.primary;
-        replicas.value = [...props.initialPlacement.replicas];
+        let reps = [...props.initialPlacement.replicas].filter((r) => r !== props.initialPlacement.primary);
+        if (reps.length < 2 && props.eligibleMembers.length >= 3) {
+          const others = props.eligibleMembers.filter((m) => m.id !== primary.value).map((m) => m.id);
+          reps = others.slice(0, 2);
+        }
+        replicas.value = reps;
       } else {
         shardId.value = 0;
         primary.value = props.eligibleMembers[0]?.id || '';
-        replicas.value = props.eligibleMembers.slice(1, 3).map((m) => m.id);
+        const others = props.eligibleMembers.filter((m) => m.id !== primary.value).map((m) => m.id);
+        replicas.value = others.slice(0, 2);
       }
     }
   },
@@ -160,6 +166,10 @@ function handleSave() {
             </div>
           </div>
         </div>
+      <!-- Quorum validation info -->
+      <div class="text-[11px] font-mono p-2.5 rounded-xl border" :class="isModalValid ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-amber-950/20 border-amber-800/40 text-amber-300'">
+        Total Distinct Nodes: <strong>{{ distinctModalCount }}</strong> (1 Primary + {{ replicas.filter(r => r !== primary).length }} Replicas).
+        <span v-if="!isModalValid" class="block text-amber-400 mt-0.5">Manual shard assignment requires at least 3 distinct nodes (1 Primary + >= 2 Replicas).</span>
       </div>
 
       <!-- Actions -->

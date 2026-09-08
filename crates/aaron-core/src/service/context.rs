@@ -60,7 +60,16 @@ impl Context {
         env: Arc<Env>,
         token: CancellationToken,
     ) -> Self {
-        Self::with_tags("node", event_hub, network, store, identity, env, token, Vec::new())
+        Self::with_tags(
+            "node",
+            event_hub,
+            network,
+            store,
+            identity,
+            env,
+            token,
+            Vec::new(),
+        )
     }
 
     /// Creates a new `Context` instance with a specific primary service name.
@@ -73,7 +82,16 @@ impl Context {
         env: Arc<Env>,
         token: CancellationToken,
     ) -> Self {
-        Self::with_tags(service_name, event_hub, network, store, identity, env, token, Vec::new())
+        Self::with_tags(
+            service_name,
+            event_hub,
+            network,
+            store,
+            identity,
+            env,
+            token,
+            Vec::new(),
+        )
     }
 
     /// Creates a new `Context` with pre-populated tags.
@@ -129,7 +147,12 @@ impl Context {
 
     /// Returns a list of currently registered / supervised service names running on this node.
     pub async fn running_services(&self) -> Vec<String> {
-        self.services.read().await.iter().map(|s| s.name.clone()).collect()
+        self.services
+            .read()
+            .await
+            .iter()
+            .map(|s| s.name.clone())
+            .collect()
     }
 
     /// Updates the registered supervised services and their schemas on this node.

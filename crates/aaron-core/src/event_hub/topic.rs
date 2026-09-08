@@ -55,7 +55,8 @@ impl<E: Send + Sync + Unpin + 'static> Topic<E> {
             if tx.is_disconnected() {
                 has_dead = true;
             } else {
-                match tokio::time::timeout(Duration::from_millis(15), tx.send(event.clone())).await {
+                match tokio::time::timeout(Duration::from_millis(15), tx.send(event.clone())).await
+                {
                     Ok(Ok(())) => delivered += 1,
                     Ok(Err(_)) => has_dead = true,
                     Err(_timeout) => {}

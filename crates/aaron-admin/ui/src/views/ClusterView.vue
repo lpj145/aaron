@@ -116,7 +116,7 @@ const {
   simulateErrorBurst,
   simulateAutoHeal,
   simulateAutoScenario,
-  clearSimulationTimers,
+  cleanupSimulation: clearSimulationTimers,
 } = useClusterSimulation(
   computed(() => canvasNodes.value),
   shardsOverview,

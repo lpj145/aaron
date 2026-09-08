@@ -98,17 +98,46 @@ impl EgressTransport {
         local_member: Member,
         timeout: Duration,
     ) -> Result<(aaron_core::Uuid, Vec<Member>), BoxError> {
-        trace!(target: "membership::egress", seed = %seed_addr, "Sending JoinRequest to seed node over QUIC");
-        let req = Message::JoinRequest {
+        let cluster_id = local_member.node_id.cluster_id.ok_or_else(|| {
+            std::io::Error::other("cluster_id is required for authenticated join")
+        })?;
+        let members =
+            Self::join_authenticated(quic, seed_addr, local_member, cluster_id, timeout).await?;
+        Ok((cluster_id, members))
+    }
+
+    /// Sends an HMAC-authenticated join request. The cluster UUID is never sent in
+    /// the request or response; it is used only as the shared HMAC key.
+    pub async fn join_authenticated(
+        quic: &QuicManager,
+        seed_addr: SocketAddr,
+        local_member: Member,
+        cluster_id: aaron_core::Uuid,
+        timeout: Duration,
+    ) -> Result<Vec<Member>, BoxError> {
+        let timestamp_ms = crate::auth::now_ms();
+        let mac = crate::auth::sign(
+            cluster_id,
+            local_member.node_id.id(),
+            local_member.node_id.incarnation,
+            timestamp_ms,
+        );
+        let req = Message::AuthenticatedJoinRequest {
             sender: local_member,
+            timestamp_ms,
+            mac: mac.to_vec(),
         };
-        let response = Self::request_response(quic, seed_addr, req, timeout, "join").await?;
+        let response =
+            Self::request_response(quic, seed_addr, req, timeout, "authenticated_join").await?;
         match response {
-            Message::JoinResponse {
-                cluster_id,
-                members,
-            } => Ok((cluster_id, members)),
-            other => Err(format!("expected JoinResponse, got {other:?}").into()),
+            Message::AuthenticatedJoinResponse { members } => Ok(members
+                .into_iter()
+                .map(|mut member| {
+                    member.node_id.cluster_id = Some(cluster_id);
+                    member
+                })
+                .collect()),
+            other => Err(format!("expected AuthenticatedJoinResponse, got {other:?}").into()),
         }
     }
 
@@ -120,7 +149,8 @@ impl EgressTransport {
         timeout: Duration,
     ) -> Result<(), BoxError> {
         trace!(target: "membership::egress", peer = %peer_addr, "Sending ConfigUpdate over QUIC");
-        let response = Self::request_response(quic, peer_addr, update, timeout, "config_update").await?;
+        let response =
+            Self::request_response(quic, peer_addr, update, timeout, "config_update").await?;
         match response {
             Message::ConfigAck { success, .. } if success => Ok(()),
             other => Err(format!("unexpected response to config_update: {other:?}").into()),

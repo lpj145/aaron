@@ -4,13 +4,9 @@ use crate::Uuid;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NodeEvent {
     /// Request to supervise and start an instance of a registered service.
-    StartService {
-        name: String,
-    },
+    StartService { name: String },
     /// Command to associate or update this node's cluster identity.
-    BindClusterId {
-        cluster_id: Uuid,
-    },
+    BindClusterId { cluster_id: Uuid },
     /// Event indicating that a cluster node should be started/orchestrated.
     StartNode {
         service_name: String,
@@ -18,14 +14,9 @@ pub enum NodeEvent {
         addr: Option<String>,
     },
     /// Event indicating that a cluster node should be removed/stopped.
-    RemoveNode {
-        node_id: Uuid,
-    },
+    RemoveNode { node_id: Uuid },
     /// Dynamic runtime update of an environment variable.
-    SetEnvVar {
-        key: String,
-        value: String,
-    },
+    SetEnvVar { key: String, value: String },
 }
 
 /// Backwards compatibility alias for `NodeEvent`.
@@ -86,9 +77,7 @@ pub struct ShardGroup {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ShardEvent {
     /// Inicialização atômica do Worker com todas as suas partições de uma só vez.
-    Bootstrap {
-        shards: Vec<ShardGroup>,
-    },
+    Bootstrap { shards: Vec<ShardGroup> },
     /// Adição dinâmica de uma partição em tempo de execução (rebalanceamento / escala).
     Join {
         shard_id: u32,
@@ -96,12 +85,7 @@ pub enum ShardEvent {
         role: MemberRole,
     },
     /// Mudança de papel no quórum (Learner, Voter ou Leader).
-    RoleChanged {
-        shard_id: u32,
-        role: MemberRole,
-    },
+    RoleChanged { shard_id: u32, role: MemberRole },
     /// Remoção / desligamento da réplica do shard (saída do quórum).
-    Leave {
-        shard_id: u32,
-    },
+    Leave { shard_id: u32 },
 }
