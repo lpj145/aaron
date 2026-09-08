@@ -8,8 +8,8 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
-aaron-core = { version = "0.1.0", path = "../aaron-core" }
-aaron-membership = { version = "0.1.0", path = "../aaron-membership" }
+aaron-core = { version = "0.1.1", path = "../aaron-core" }
+aaron-membership = { version = "0.1.1", path = "../aaron-membership" }
 openraft = { version = "0.9", features = ["single-term-leader", "tracing-log"] }
 tokio.workspace = true
 tracing.workspace = true
@@ -23,7 +23,7 @@ futures-util = "0.3"
 bytes = "1.10"
 
 [build-dependencies]
-aaron-build = { version = "0.1.0", path = "../aaron-build" }
+aaron-build = { version = "0.1.1", path = "../aaron-build" }
 
 [dev-dependencies]
 tempfile = "3"

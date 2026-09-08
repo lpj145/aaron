@@ -207,6 +207,14 @@ impl Store {
         self.read_state().db.batch()
     }
 
+    /// Commits a batch and synchronizes its journal before reporting success.
+    pub fn commit_durable(&self, batch: WriteBatch) -> Result<(), BoxError> {
+        let _state = self.read_state();
+        self.check_writable()?;
+        batch.durability(Some(PersistMode::SyncAll)).commit()?;
+        Ok(())
+    }
+
     /// Executes a paginated scan over the default keyspace with the given [`ScanOptions`].
     pub fn scan(&self, options: ScanOptions<'_>) -> Result<Page, BoxError> {
         let guard = self.read_state();

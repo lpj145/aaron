@@ -8,12 +8,12 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
-aaron-core = { version = "0.1.0", path = "../aaron-core" }
-aaron-tracing = { version = "0.1.0", path = "../aaron-tracing", optional = true }
-aaron-membership = { version = "0.1.0", path = "../aaron-membership", optional = true }
-aaron-control-plane = { version = "0.1.0", path = "../aaron-control-plane", optional = true }
-aaron-shard = { version = "0.1.0", path = "../aaron-shard", optional = true }
-aaron-admin = { version = "0.1.0", path = "../aaron-admin", optional = true }
+aaron-core = { version = "0.1.1", path = "../aaron-core" }
+aaron-tracing = { version = "0.1.1", path = "../aaron-tracing", optional = true }
+aaron-membership = { version = "0.1.1", path = "../aaron-membership", optional = true }
+aaron-control-plane = { version = "0.1.1", path = "../aaron-control-plane", optional = true }
+aaron-shard = { version = "0.1.1", path = "../aaron-shard", optional = true }
+aaron-admin = { version = "0.1.1", path = "../aaron-admin", optional = true }
 
 [features]
 default = ["full"]

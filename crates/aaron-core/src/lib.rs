@@ -8,7 +8,9 @@ use tokio::task::JoinSet;
 pub use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
-pub use crate::events::{MemberRole, NodeEvent, NodeEvents, SetEnvVar, ShardEvent, ShardGroup, ShardRole};
+pub use crate::events::{
+    MemberRole, NodeEvent, NodeEvents, SetEnvVar, ShardEvent, ShardGroup, ShardRole,
+};
 // `supervise`/`SupervisedService`/`TaskResult` are internal plumbing, not part
 // of the normal public API — but exposed under `test-util` so integration
 // tests in `tests/` can exercise them directly instead of only through `Node`.
@@ -25,9 +27,9 @@ pub use env::{Env, TrackedVar};
 pub use event_hub::{EventHub, EventHubError, Subscriber};
 pub use identity::{NodeId, NodeIdBuilder, NodeIdRef, Uuid, UuidRef};
 pub use network::{
-    DEFAULT_MAX_FRAME_SIZE, DEFAULT_MAX_RAFT_FRAME_SIZE, FrameError, Network, NetworkError, P2pServerCertVerifier, QuicManager,
-    QuicPool, TcpConnection, TcpManager, TcpPool, TcpReader, TcpWriter, UdpManager,
-    build_p2p_client_config, build_p2p_server_config, generate_node_cert,
+    DEFAULT_MAX_FRAME_SIZE, DEFAULT_MAX_RAFT_FRAME_SIZE, FrameError, Network, NetworkError,
+    P2pServerCertVerifier, QuicManager, QuicPool, TcpConnection, TcpManager, TcpPool, TcpReader,
+    TcpWriter, UdpManager, build_p2p_client_config, build_p2p_server_config, generate_node_cert,
     generate_self_signed_cert, read_frame, read_frame_with_limit, write_frame,
     write_frame_with_limit,
 };

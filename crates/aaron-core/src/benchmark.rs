@@ -45,7 +45,8 @@ impl HardwareBenchmark {
         // 3. Storage IOPS: 4KB sync write + fsync latency
         let disk_start = Instant::now();
         let disk_sync_latency_us = {
-            let tmp_path = std::env::temp_dir().join(format!("aaron_bm_{}.tmp", std::process::id()));
+            let tmp_path =
+                std::env::temp_dir().join(format!("aaron_bm_{}.tmp", std::process::id()));
             let sample_block = [0xAAu8; 4096];
             let latency = match std::fs::OpenOptions::new()
                 .create(true)
@@ -123,7 +124,8 @@ impl NodeTelemetry {
 
     /// Sets the current Workload Performance Score (clamped to nominal capacity ceiling).
     pub fn set_wps(&self, wps: u32) {
-        self.current_wps.store(wps.min(self.benchmark.nominal_wps * 2), Ordering::Relaxed);
+        self.current_wps
+            .store(wps.min(self.benchmark.nominal_wps * 2), Ordering::Relaxed);
     }
 
     /// Returns the nominal baseline capacity score.

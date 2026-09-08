@@ -26,7 +26,7 @@ crossfire = "3"
 futures-util = "0.3"
 
 [build-dependencies]
-aaron-build = { version = "0.1.0", path = "../aaron-build" }
+aaron-build = { version = "0.1.1", path = "../aaron-build" }
 
 [dev-dependencies]
 tempfile = "3"

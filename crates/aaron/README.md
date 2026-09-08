@@ -15,13 +15,13 @@ By default, `aaron` enables the `full` feature suite. You can disable default fe
 ```toml
 [dependencies]
 # Full framework (all services enabled)
-aaron = "0.1.0"
+aaron = "0.1.1"
 
 # Minimal: core runtime only (Node, Context, Supervision, Network, Store, EventHub)
-aaron = { version = "0.1.0", default-features = false }
+aaron = { version = "0.1.1", default-features = false }
 
 # Core + Membership & Tracing only
-aaron = { version = "0.1.0", default-features = false, features = ["membership", "tracing"] }
+aaron = { version = "0.1.1", default-features = false, features = ["membership", "tracing"] }
 ```
 
 ### Feature Matrix

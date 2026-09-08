@@ -83,7 +83,7 @@ impl Service for MembershipService {
                 }
                 // Bootstrap node: generate initial cluster authority
                 let new_cid = aaron_core::Uuid::random();
-                info!(target: "membership", cluster_id = %new_cid, "Initialized new cluster authority as bootstrap node");
+                info!(target: "membership", "Initialized new cluster authority as bootstrap node");
                 new_cid
             }
         };
@@ -110,7 +110,6 @@ impl Service for MembershipService {
             bind_addr = %config.bind_addr,
             local_addr = %local_addr,
             node_id = %ctx.identity.id(),
-            cluster_id = %cluster_id,
             "MembershipService listening over QUIC"
         );
 
@@ -176,6 +175,10 @@ impl Service for MembershipService {
             ctx.network.quic.clone(),
             config.gossip_fanout,
             config.probe_timeout,
+            ctx.env
+                .get::<u64>("MEMBERSHIP_JOIN_AUTH_WINDOW_MS")
+                .unwrap_or(2_000)
+                .max(1),
         );
         let probe = ProbeLoop::new(
             table.clone(),
@@ -225,14 +228,15 @@ impl Service for MembershipService {
                     attempt += 1;
                     for seed_str in &seeds {
                         let seed_trim = seed_str.trim();
-                        let seed_addrs: Vec<SocketAddr> = if let Ok(addr) = seed_trim.parse::<SocketAddr>() {
-                            vec![addr]
-                        } else {
-                            match tokio::net::lookup_host(seed_trim).await {
-                                Ok(addrs) => addrs.collect(),
-                                Err(_) => vec![],
-                            }
-                        };
+                        let seed_addrs: Vec<SocketAddr> =
+                            if let Ok(addr) = seed_trim.parse::<SocketAddr>() {
+                                vec![addr]
+                            } else {
+                                match tokio::net::lookup_host(seed_trim).await {
+                                    Ok(addrs) => addrs.collect(),
+                                    Err(_) => vec![],
+                                }
+                            };
 
                         for seed_addr in seed_addrs {
                             if seed_addr == local_addr {
@@ -249,31 +253,20 @@ impl Service for MembershipService {
                                 continue;
                             }
 
-                            info!(target: "membership", seed = %seed_addr, cluster_id = %cluster_id, attempt = attempt, "Attempting to join/merge cluster via seed node");
-                            match EgressTransport::join(
+                            info!(target: "membership", seed = %seed_addr, attempt = attempt, "Attempting to join/merge cluster via seed node");
+                            match EgressTransport::join_authenticated(
                                 &quic,
                                 seed_addr,
                                 local_member.clone(),
+                                cluster_id,
                                 Duration::from_millis(1500),
                             )
                             .await
                             {
-                                Ok((seed_cluster_id, members)) => {
-                                    if seed_cluster_id != cluster_id {
-                                        warn!(
-                                            target: "membership",
-                                            seed = %seed_addr,
-                                            expected_cluster = %cluster_id,
-                                            seed_cluster = %seed_cluster_id,
-                                            "Seed node returned mismatched cluster_id, rejecting join"
-                                        );
-                                        continue;
-                                    }
-
+                                Ok(members) => {
                                     info!(
                                         target: "membership",
                                         seed = %seed_addr,
-                                        cluster_id = %cluster_id,
                                         discovered = members.len(),
                                         "Successfully joined/merged cluster via seed"
                                     );

@@ -92,126 +92,119 @@ pub(crate) fn encode_payload(payload: &EntryPayload<TypeConfig>) -> Vec<u8> {
             b
         }
         EntryPayload::Membership(mem) => {
-            let mut b = vec![2];
-            let voter_ids: Vec<u64> = mem.voter_ids().collect();
-            b.extend_from_slice(&(voter_ids.len() as u32).to_le_bytes());
-            for id in voter_ids {
-                b.extend_from_slice(&id.to_le_bytes());
-            }
-
-            let nodes: Vec<(&u64, &ControlPlaneNode)> = mem.nodes().collect();
-            b.extend_from_slice(&(nodes.len() as u32).to_le_bytes());
-            for (id, node) in nodes {
-                b.extend_from_slice(&id.to_le_bytes());
-                b.extend_from_slice(&node.node_uuid_high.to_le_bytes());
-                b.extend_from_slice(&node.node_uuid_low.to_le_bytes());
-                let addr_bytes = node.addr.as_bytes();
-                b.extend_from_slice(&(addr_bytes.len() as u32).to_le_bytes());
-                b.extend_from_slice(addr_bytes);
-            }
-            b
+            let mut bytes = vec![3];
+            bytes.extend(crate::storage::serialize_stored_membership(
+                &openraft::StoredMembership::new(None, mem.clone()),
+            ));
+            bytes
         }
     }
 }
 
-pub(crate) fn decode_payload(bytes: &[u8]) -> EntryPayload<TypeConfig> {
-    if bytes.is_empty() || bytes[0] == 0 {
-        return EntryPayload::Blank;
+pub(crate) fn decode_payload(bytes: &[u8]) -> Result<EntryPayload<TypeConfig>, MessageError> {
+    use std::io::{Cursor, Read};
+    fn take(cursor: &mut Cursor<&[u8]>, len: usize) -> Result<Vec<u8>, MessageError> {
+        let remaining = cursor
+            .get_ref()
+            .len()
+            .saturating_sub(cursor.position() as usize);
+        if len > remaining {
+            return Err(MessageError::UnknownPayload);
+        }
+        let mut bytes = vec![0; len];
+        cursor
+            .read_exact(&mut bytes)
+            .map_err(|_| MessageError::UnknownPayload)?;
+        Ok(bytes)
     }
-
-    if bytes[0] == 1 {
-        let sub = &bytes[1..];
-        if sub.is_empty() {
-            return EntryPayload::Blank;
-        }
-        if sub[0] == 0 {
-            // Set
-            if sub.len() >= 5 {
-                let mut len_bytes = [0u8; 4];
-                len_bytes.copy_from_slice(&sub[1..5]);
-                let k_len = u32::from_le_bytes(len_bytes) as usize;
-                if sub.len() >= 5 + k_len {
-                    let key = String::from_utf8_lossy(&sub[5..5 + k_len]).to_string();
-                    let value = sub[5 + k_len..].to_vec();
-                    return EntryPayload::Normal(crate::types::ClientRequest::Set { key, value });
-                }
-            }
-        } else if sub[0] == 1 {
-            // Delete
-            let key = String::from_utf8_lossy(&sub[1..]).to_string();
-            return EntryPayload::Normal(crate::types::ClientRequest::Delete { key });
-        } else if sub[0] == 2 {
-            // SetBatch
-            if sub.len() >= 5 {
-                let mut cursor = 1;
-                let count = u32::from_le_bytes(sub[cursor..cursor + 4].try_into().unwrap()) as usize;
-                cursor += 4;
-                let mut entries = Vec::with_capacity(count);
-                for _ in 0..count {
-                    if cursor + 4 > sub.len() { break; }
-                    let k_len = u32::from_le_bytes(sub[cursor..cursor + 4].try_into().unwrap()) as usize;
-                    cursor += 4;
-                    if cursor + k_len > sub.len() { break; }
-                    let key = String::from_utf8_lossy(&sub[cursor..cursor + k_len]).to_string();
-                    cursor += k_len;
-
-                    if cursor + 4 > sub.len() { break; }
-                    let v_len = u32::from_le_bytes(sub[cursor..cursor + 4].try_into().unwrap()) as usize;
-                    cursor += 4;
-                    if cursor + v_len > sub.len() { break; }
-                    let value = sub[cursor..cursor + v_len].to_vec();
-                    cursor += v_len;
-
-                    entries.push((key, value));
-                }
-                return EntryPayload::Normal(crate::types::ClientRequest::SetBatch { entries });
-            }
-        }
-    } else if bytes[0] == 2 {
-        let mut cursor = 1;
-        if bytes.len() >= cursor + 4 {
-            let voter_count = u32::from_le_bytes(bytes[cursor..cursor + 4].try_into().unwrap()) as usize;
-            cursor += 4;
-            let mut voter_set = BTreeSet::new();
-            for _ in 0..voter_count {
-                if bytes.len() >= cursor + 8 {
-                    let vid = u64::from_le_bytes(bytes[cursor..cursor + 8].try_into().unwrap());
-                    voter_set.insert(vid);
-                    cursor += 8;
-                }
-            }
-
-            if bytes.len() >= cursor + 4 {
-                let node_count = u32::from_le_bytes(bytes[cursor..cursor + 4].try_into().unwrap()) as usize;
-                cursor += 4;
-                let mut node_map = BTreeMap::new();
-                for _ in 0..node_count {
-                    if bytes.len() >= cursor + 28 {
-                        let nid = u64::from_le_bytes(bytes[cursor..cursor + 8].try_into().unwrap());
-                        let high = u64::from_le_bytes(bytes[cursor + 8..cursor + 16].try_into().unwrap());
-                        let low = u64::from_le_bytes(bytes[cursor + 16..cursor + 24].try_into().unwrap());
-                        let addr_len = u32::from_le_bytes(bytes[cursor + 24..cursor + 28].try_into().unwrap()) as usize;
-                        cursor += 28;
-                        if bytes.len() >= cursor + addr_len {
-                            let addr = String::from_utf8_lossy(&bytes[cursor..cursor + addr_len]).to_string();
-                            cursor += addr_len;
-                            let node = ControlPlaneNode {
-                                addr,
-                                node_uuid_high: high,
-                                node_uuid_low: low,
-                            };
-                            node_map.insert(nid, node);
-                        }
+    fn u32_value(cursor: &mut Cursor<&[u8]>) -> Result<u32, MessageError> {
+        Ok(u32::from_le_bytes(take(cursor, 4)?.try_into().unwrap()))
+    }
+    fn u64_value(cursor: &mut Cursor<&[u8]>) -> Result<u64, MessageError> {
+        Ok(u64::from_le_bytes(take(cursor, 8)?.try_into().unwrap()))
+    }
+    fn string(bytes: Vec<u8>) -> Result<String, MessageError> {
+        String::from_utf8(bytes).map_err(|_| MessageError::UnknownPayload)
+    }
+    let (&kind, rest) = bytes.split_first().ok_or(MessageError::UnknownPayload)?;
+    let mut cursor = Cursor::new(rest);
+    let payload = match kind {
+        0 if rest.is_empty() => EntryPayload::Blank,
+        1 => {
+            let op = take(&mut cursor, 1)?[0];
+            let req = match op {
+                0 => {
+                    let len = u32_value(&mut cursor)? as usize;
+                    let key = string(take(&mut cursor, len)?)?;
+                    let remaining = rest.len() - cursor.position() as usize;
+                    crate::types::ClientRequest::Set {
+                        key,
+                        value: take(&mut cursor, remaining)?,
                     }
                 }
-
-                let membership = openraft::Membership::new(vec![voter_set], node_map);
-                return EntryPayload::Membership(membership);
-            }
+                1 => {
+                    let remaining = rest.len() - cursor.position() as usize;
+                    crate::types::ClientRequest::Delete {
+                        key: string(take(&mut cursor, remaining)?)?,
+                    }
+                }
+                2 => {
+                    let count = u32_value(&mut cursor)? as usize;
+                    if count > rest.len() / 8 {
+                        return Err(MessageError::UnknownPayload);
+                    }
+                    let mut entries = Vec::new();
+                    for _ in 0..count {
+                        let len = u32_value(&mut cursor)? as usize;
+                        let key = string(take(&mut cursor, len)?)?;
+                        let len = u32_value(&mut cursor)? as usize;
+                        entries.push((key, take(&mut cursor, len)?));
+                    }
+                    crate::types::ClientRequest::SetBatch { entries }
+                }
+                _ => return Err(MessageError::UnknownPayload),
+            };
+            EntryPayload::Normal(req)
         }
+        // Read legacy persisted payloads; network peers must use protocol version 1.
+        2 => {
+            let count = u32_value(&mut cursor)? as usize;
+            if count > rest.len() / 8 {
+                return Err(MessageError::UnknownPayload);
+            }
+            let mut voters = BTreeSet::new();
+            for _ in 0..count {
+                voters.insert(u64_value(&mut cursor)?);
+            }
+            let count = u32_value(&mut cursor)? as usize;
+            if count > rest.len() / 28 {
+                return Err(MessageError::UnknownPayload);
+            }
+            let mut nodes = BTreeMap::new();
+            for _ in 0..count {
+                let id = u64_value(&mut cursor)?;
+                let high = u64_value(&mut cursor)?;
+                let low = u64_value(&mut cursor)?;
+                let len = u32_value(&mut cursor)? as usize;
+                let addr = string(take(&mut cursor, len)?)?;
+                nodes.insert(
+                    id,
+                    ControlPlaneNode::new(addr, aaron_core::Uuid::new(high, low)),
+                );
+            }
+            EntryPayload::Membership(openraft::Membership::new(vec![voters], nodes))
+        }
+        3 => {
+            let membership = crate::storage::deserialize_stored_membership(rest)
+                .ok_or(MessageError::UnknownPayload)?;
+            return Ok(EntryPayload::Membership(membership.membership().clone()));
+        }
+        _ => return Err(MessageError::UnknownPayload),
+    };
+    if cursor.position() as usize != rest.len() {
+        return Err(MessageError::UnknownPayload);
     }
-
-    EntryPayload::Blank
+    Ok(payload)
 }
 
 impl RaftMessage {
@@ -234,7 +227,10 @@ impl RaftMessage {
             }
             Self::VoteResp(resp) => {
                 let voted_for_high = resp.vote.leader_id().voted_for().unwrap_or(0);
-                let voted_for_proto = proto_node::Uuid { high: voted_for_high, low: 0 };
+                let voted_for_proto = proto_node::Uuid {
+                    high: voted_for_high,
+                    low: 0,
+                };
 
                 proto::ControlPlanePayload::VoteResponse(Box::new(proto::VoteResponse {
                     term: resp.vote.leader_id().term,
@@ -252,13 +248,11 @@ impl RaftMessage {
                 let entries: Vec<_> = req
                     .entries
                     .iter()
-                    .map(|e| {
-                        proto::LogEntry {
-                            term: e.log_id.leader_id.term,
-                            index: e.log_id.index,
-                            entry_type: 0,
-                            payload: Some(encode_payload(&e.payload)),
-                        }
+                    .map(|e| proto::LogEntry {
+                        term: e.log_id.leader_id.term,
+                        index: e.log_id.index,
+                        entry_type: 0,
+                        payload: Some(encode_payload(&e.payload)),
                     })
                     .collect();
 
@@ -280,11 +274,16 @@ impl RaftMessage {
                 };
 
                 let (term, voted_for_high) = match resp {
-                    AppendEntriesResponse::HigherVote(v) => (v.leader_id().term, v.leader_id().voted_for().unwrap_or(0)),
+                    AppendEntriesResponse::HigherVote(v) => {
+                        (v.leader_id().term, v.leader_id().voted_for().unwrap_or(0))
+                    }
                     _ => (0, 0),
                 };
 
-                let voted_for_proto = proto_node::Uuid { high: voted_for_high, low: 0 };
+                let voted_for_proto = proto_node::Uuid {
+                    high: voted_for_high,
+                    low: 0,
+                };
 
                 proto::ControlPlanePayload::AppendEntriesResponse(Box::new(
                     proto::AppendEntriesResponse {
@@ -307,17 +306,25 @@ impl RaftMessage {
                     proto::InstallSnapshotRequest {
                         term: req.vote.leader_id().term,
                         leader_id: Some(leader_proto),
-                        last_included_term: req.meta.last_log_id.map(|l| l.leader_id.term).unwrap_or(0),
+                        last_included_term: req
+                            .meta
+                            .last_log_id
+                            .map(|l| l.leader_id.term)
+                            .unwrap_or(0),
                         last_included_index: req.meta.last_log_id.map(|l| l.index).unwrap_or(0),
                         offset: req.offset,
                         data: Some(req.data.clone()),
                         done: req.done,
+                        meta: Some(Box::new(crate::storage::snapshot_meta_to_proto(&req.meta))),
                     },
                 ))
             }
             Self::SnapshotResp(resp) => {
                 let voted_for_high = resp.vote.leader_id().voted_for().unwrap_or(0);
-                let voted_for_proto = proto_node::Uuid { high: voted_for_high, low: 0 };
+                let voted_for_proto = proto_node::Uuid {
+                    high: voted_for_high,
+                    low: 0,
+                };
 
                 proto::ControlPlanePayload::InstallSnapshotResponse(Box::new(
                     proto::InstallSnapshotResponse {
@@ -365,17 +372,15 @@ impl RaftMessage {
                 current_role,
                 term,
                 reject_reason,
-            } => {
-                proto::ControlPlanePayload::ShardCommandResponse(Box::new(
-                    proto::ShardCommandResponse {
-                        success: *success,
-                        shard_id: *shard_id,
-                        current_role: *current_role,
-                        term: *term,
-                        reject_reason: *reject_reason,
-                    },
-                ))
-            }
+            } => proto::ControlPlanePayload::ShardCommandResponse(Box::new(
+                proto::ShardCommandResponse {
+                    success: *success,
+                    shard_id: *shard_id,
+                    current_role: *current_role,
+                    term: *term,
+                    reject_reason: *reject_reason,
+                },
+            )),
             Self::TelemetryHeartbeat {
                 node_id_high,
                 node_id_low,
@@ -406,6 +411,7 @@ impl RaftMessage {
         };
 
         let msg = proto::ControlPlaneMessage {
+            protocol_version: 1,
             payload: Some(payload),
         };
         let offset = msg.prepare(&mut builder);
@@ -415,35 +421,34 @@ impl RaftMessage {
     /// Deserializes a FlatBuffers binary buffer into a strongly-typed `RaftMessage`.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, MessageError> {
         let msg_ref = proto::ControlPlaneMessageRef::read_as_root(bytes)?;
+        if msg_ref.protocol_version()? != 1 {
+            return Err(MessageError::UnknownPayload);
+        }
 
-        let payload_ref = msg_ref
-            .payload()?
-            .ok_or(MessageError::UnknownPayload)?;
+        let payload_ref = msg_ref.payload()?.ok_or(MessageError::UnknownPayload)?;
 
         match payload_ref {
             proto::ControlPlanePayloadRef::VoteRequest(req) => {
                 let term = req.term()?;
-                let cand_ref = req
-                    .candidate_id()?
-                    .ok_or(MessageError::MissingField {
-                        field: "candidate_id",
-                    })?;
+                let cand_ref = req.candidate_id()?.ok_or(MessageError::MissingField {
+                    field: "candidate_id",
+                })?;
                 let cand_id = cand_ref.high();
 
                 let last_log_term = req.last_log_term()?;
                 let last_log_index = req.last_log_index()?;
 
                 let last_log_id = if last_log_index > 0 {
-                    Some(LogId::new(CommittedLeaderId::new(last_log_term, cand_id), last_log_index))
+                    Some(LogId::new(
+                        CommittedLeaderId::new(last_log_term, cand_id),
+                        last_log_index,
+                    ))
                 } else {
                     None
                 };
 
                 let vote = Vote::new(term, cand_id);
-                Ok(Self::Vote(VoteRequest {
-                    vote,
-                    last_log_id,
-                }))
+                Ok(Self::Vote(VoteRequest { vote, last_log_id }))
             }
             proto::ControlPlanePayloadRef::VoteResponse(resp) => {
                 let term = resp.term()?;
@@ -453,7 +458,10 @@ impl RaftMessage {
                 let voted_for = resp.voted_for()?.map(|v| v.high()).unwrap_or(0);
 
                 let last_log_id = if last_log_index > 0 {
-                    Some(LogId::new(CommittedLeaderId::new(last_log_term, voted_for), last_log_index))
+                    Some(LogId::new(
+                        CommittedLeaderId::new(last_log_term, voted_for),
+                        last_log_index,
+                    ))
                 } else {
                     None
                 };
@@ -476,13 +484,19 @@ impl RaftMessage {
                 let leader_commit_idx = req.leader_commit()?;
 
                 let prev_log_id = if prev_log_index > 0 {
-                    Some(LogId::new(CommittedLeaderId::new(prev_log_term, leader_id), prev_log_index))
+                    Some(LogId::new(
+                        CommittedLeaderId::new(prev_log_term, leader_id),
+                        prev_log_index,
+                    ))
                 } else {
                     None
                 };
 
                 let leader_commit = if leader_commit_idx > 0 {
-                    Some(LogId::new(CommittedLeaderId::new(term, leader_id), leader_commit_idx))
+                    Some(LogId::new(
+                        CommittedLeaderId::new(term, leader_id),
+                        leader_commit_idx,
+                    ))
                 } else {
                     None
                 };
@@ -495,10 +509,13 @@ impl RaftMessage {
                         let entry_idx = entry_ref.index()?;
                         let payload_bytes = entry_ref.payload()?.unwrap_or_default();
 
-                        let payload = decode_payload(payload_bytes);
+                        let payload = decode_payload(payload_bytes)?;
 
                         entries.push(Entry {
-                            log_id: LogId::new(CommittedLeaderId::new(entry_term, leader_id), entry_idx),
+                            log_id: LogId::new(
+                                CommittedLeaderId::new(entry_term, leader_id),
+                                entry_idx,
+                            ),
                             payload,
                         });
                     }
@@ -534,21 +551,17 @@ impl RaftMessage {
                     .ok_or(MessageError::MissingField { field: "leader_id" })?;
                 let leader_id = leader_ref.high();
 
-                let last_log_term = req.last_included_term()?;
-                let last_log_index = req.last_included_index()?;
                 let offset = req.offset()?;
                 let data = req.data()?.unwrap_or_default().to_vec();
                 let done = req.done()?;
 
-                let meta = openraft::SnapshotMeta {
-                    last_log_id: if last_log_index > 0 {
-                        Some(LogId::new(CommittedLeaderId::new(last_log_term, leader_id), last_log_index))
-                    } else {
-                        None
-                    },
-                    last_membership: openraft::StoredMembership::default(),
-                    snapshot_id: format!("{last_log_term}-{last_log_index}"),
-                };
+                let meta = req
+                    .meta()?
+                    .ok_or(MessageError::MissingField { field: "meta" })?;
+                let meta = crate::storage::snapshot_meta_from_proto(
+                    proto::StoredSnapshotMeta::try_from(meta)?,
+                )
+                .ok_or(MessageError::UnknownPayload)?;
 
                 Ok(Self::Snapshot(InstallSnapshotRequest {
                     vote: Vote::new_committed(term, leader_id),
@@ -568,7 +581,9 @@ impl RaftMessage {
             proto::ControlPlanePayloadRef::ShardCommand(cmd) => {
                 let shard_id = cmd.shard_id()?;
                 let role = cmd.role()?;
-                let p = cmd.primary()?.ok_or(MessageError::MissingField { field: "primary" })?;
+                let p = cmd
+                    .primary()?
+                    .ok_or(MessageError::MissingField { field: "primary" })?;
                 let primary_high = p.high();
                 let primary_low = p.low();
                 let mut replicas = Vec::new();
@@ -606,7 +621,9 @@ impl RaftMessage {
                 })
             }
             proto::ControlPlanePayloadRef::TelemetryHeartbeat(t) => {
-                let node_ref = t.node_id()?.ok_or(MessageError::MissingField { field: "node_id" })?;
+                let node_ref = t
+                    .node_id()?
+                    .ok_or(MessageError::MissingField { field: "node_id" })?;
                 Ok(Self::TelemetryHeartbeat {
                     node_id_high: node_ref.high(),
                     node_id_low: node_ref.low(),

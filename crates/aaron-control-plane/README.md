@@ -10,7 +10,7 @@ The **Control Plane Service** provides strongly consistent coordination, cluster
 
 - **OpenRaft 0.9 Consensus Core**: Full implementation of the Raft distributed consensus protocol, supporting joint consensus dynamic membership transitions, leader election, and non-voting learners.
 - **Embedded LSM-Tree Storage Engine with FlatBuffers**: Persistent log entries, cluster votes, membership, and replicated state machine data backed by an isolated `"control-plane"` keyspace in Fjall. On-disk storage structures are serialized into binary FlatBuffers schemas (`schemas/control_plane.fbs`), eliminating JSON overhead.
-- **Multiplexed QUIC Transport**: Low-latency inter-node communication with peer-to-peer Web-of-Trust TLS authentication, stream-level framing, and singleflight connection pooling.
+- **Multiplexed QUIC Transport**: Stream-level framing and singleflight connection pooling. Cluster membership admission uses a short-lived HMAC proof; see [configuration and upgrade](../../docs/cluster-security.md).
 - **Dynamic Topology Routing**: Integrates with SWIM membership to resolve live peer IP addresses dynamically, surviving Kubernetes pod restarts and network migrations.
 - **Shard Command Dispatch**: Dispatches structured partition assignments and role migrations (`dispatch_shard_command`, `send_raft_shard_command`) over QUIC bi-streams to Data Plane workers.
 - **Clean Node Expulsion**: Removes nodes completely from Raft consensus (`remove_node_from_raft`) by revoking voting rights before clearing learner membership, preventing quorum stalls.
@@ -61,15 +61,17 @@ Data is persisted in the `"control-plane"` keyspace using lexicographically orde
 ```
 meta/vote              -> StoredVote { term, node_id, is_committed }
 meta/last_purged       -> StoredLogId { term, index }
-meta/membership        -> StoredMembership { log_id, voter_ids, nodes: [NodeEndpoint] }
+meta/last_applied      -> StoredLogId { term, index }
+meta/last_membership   -> StoredMembership { log_id, voter_ids, nodes, node_ids, configs }
 meta/snapshot          -> StoredSnapshotMeta { last_log_id, last_membership, snapshot_id }
+snapshot/data          -> Encoded snapshot key-value data
 log/{:020index}        -> StoredEntry { log_id, payload_type, payload }
 data/{key}             -> [raw_value_bytes]
 data/shards/{service}/{:05shard_id} -> StoredShardPlacement (FlatBuffers)
 ```
 
 - **`meta/vote`**: Tracks the current term and voted-for candidate to prevent split-brain elections across node restarts.
-- **`meta/membership`**: Stores cluster voter IDs and node endpoint configurations with zero-copy decoding.
+- **`meta/last_membership`**: Preserves joint voting configurations and explicit Raft node IDs independently of node UUIDs.
 - **`log/{:020index}`**: Fixed-width 20-digit zero-padded log keys ensure fast range scans and ordered iteration during replay.
 - **`data/{key}`**: The replicated state machine key-value store, committed only upon quorum agreement.
 - **`data/shards/{service}/{:05shard_id}`**: Replicated multi-service shard placements; fixed-width 5-digit zero-padding ensures numeric partition ordering during prefix range scans.
@@ -77,6 +79,10 @@ data/shards/{service}/{:05shard_id} -> StoredShardPlacement (FlatBuffers)
 ---
 
 ## 5. Rust Usage Example
+
+Writes use Raft quorum agreement. The handle's `get`, `get_string`, `prefix_data`
+and `all_data` methods are local reads and may be stale on followers or during
+partitions; they do not perform a linearizable read barrier.
 
 ```rust
 use aaron::{Context, ControlPlaneService, Node};

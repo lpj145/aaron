@@ -17,6 +17,7 @@ pub struct IngressHandler {
     quic: QuicManager,
     gossip_fanout: usize,
     probe_timeout: Duration,
+    join_auth_window_ms: u64,
 }
 
 impl IngressHandler {
@@ -27,6 +28,7 @@ impl IngressHandler {
         quic: QuicManager,
         gossip_fanout: usize,
         probe_timeout: Duration,
+        join_auth_window_ms: u64,
     ) -> Self {
         Self {
             table,
@@ -34,6 +36,7 @@ impl IngressHandler {
             quic,
             gossip_fanout,
             probe_timeout,
+            join_auth_window_ms,
         }
     }
 
@@ -89,9 +92,12 @@ impl IngressHandler {
         let msg = Message::from_bytes(&frame_bytes)?;
         let local_cluster = self.table.cluster_id().await;
 
-        // Gatekeeper: Reject any non-JoinRequest message from an unauthorized/mismatched cluster
+        // Gatekeeper: authenticated join is validated below before cluster association.
         if let Some(expected_cid) = local_cluster
-            && !matches!(msg, Message::JoinRequest { .. })
+            && !matches!(
+                msg,
+                Message::JoinRequest { .. } | Message::AuthenticatedJoinRequest { .. }
+            )
             && let Some(sender) = msg.sender()
             && sender.node_id.cluster_id != Some(expected_cid)
         {
@@ -203,47 +209,46 @@ impl IngressHandler {
                     let _ = send.finish();
                 }
             }
-            Message::JoinRequest { sender } => {
-                let local_cluster = self.table.cluster_id().await;
-                let cluster_id = match local_cluster {
-                    Some(cid) => {
-                        if sender.node_id.cluster_id != Some(cid) {
-                            warn!(
-                                target: "membership::ingress",
-                                expected_cluster = %cid,
-                                sender_cluster = ?sender.node_id.cluster_id,
-                                from = %sender.addr,
-                                "Rejected unauthorized JoinRequest: cluster_id mismatch"
-                            );
-                            return Ok(());
-                        }
-                        cid
-                    }
-                    None => {
-                        let new_cid = sender.node_id.cluster_id.unwrap_or_else(aaron_core::Uuid::random);
-                        self.table.set_cluster_id(new_cid).await;
-                        new_cid
-                    }
+            Message::AuthenticatedJoinRequest {
+                sender,
+                timestamp_ms,
+                mac,
+            } => {
+                let Some(cluster_id) = self.table.cluster_id().await else {
+                    return Ok(());
                 };
-
-                info!(
-                    target: "membership::ingress",
-                    from = %sender.addr,
-                    id = %sender.node_id.id(),
-                    cluster_id = %cluster_id,
-                    "Admitting authorized node to cluster"
-                );
-
-                self.process_member_update(sender).await;
-
-                let all_members = self.table.all_active_members().await;
-                let join_resp = Message::JoinResponse {
+                if !crate::auth::verify(
                     cluster_id,
-                    members: all_members,
+                    sender.node_id.id(),
+                    sender.node_id.incarnation,
+                    timestamp_ms,
+                    &mac,
+                    self.join_auth_window_ms,
+                ) {
+                    warn!(target: "membership::ingress", from = %sender.addr, "Rejected JoinRequest: invalid or expired HMAC");
+                    return Ok(());
+                }
+                let mut sender = sender;
+                sender.node_id.cluster_id = Some(cluster_id);
+                info!(target: "membership::ingress", from = %sender.addr, id = %sender.node_id.id(), "Admitting HMAC-authenticated node to cluster");
+                self.process_member_update(sender).await;
+                let join_resp = Message::AuthenticatedJoinResponse {
+                    members: self
+                        .table
+                        .all_active_members()
+                        .await
+                        .into_iter()
+                        .map(|mut member| {
+                            member.node_id.cluster_id = None;
+                            member
+                        })
+                        .collect(),
                 };
-
                 write_frame(&mut send, &join_resp.to_bytes()).await?;
                 let _ = send.finish();
+            }
+            Message::JoinRequest { sender } => {
+                warn!(target: "membership::ingress", from = %sender.addr, "Rejected unauthenticated JoinRequest");
             }
             Message::Ack {
                 seq,
@@ -306,10 +311,14 @@ impl IngressHandler {
                     || gossip_fanout > 0
                 {
                     let update = crate::event::UpdateSwimConfig {
-                        probe_interval: (probe_interval_ms > 0).then(|| Duration::from_millis(probe_interval_ms)),
-                        probe_timeout: (probe_timeout_ms > 0).then(|| Duration::from_millis(probe_timeout_ms)),
-                        suspect_timeout: (suspect_timeout_ms > 0).then(|| Duration::from_millis(suspect_timeout_ms)),
-                        indirect_ping_targets: (indirect_ping_targets > 0).then_some(indirect_ping_targets as usize),
+                        probe_interval: (probe_interval_ms > 0)
+                            .then(|| Duration::from_millis(probe_interval_ms)),
+                        probe_timeout: (probe_timeout_ms > 0)
+                            .then(|| Duration::from_millis(probe_timeout_ms)),
+                        suspect_timeout: (suspect_timeout_ms > 0)
+                            .then(|| Duration::from_millis(suspect_timeout_ms)),
+                        indirect_ping_targets: (indirect_ping_targets > 0)
+                            .then_some(indirect_ping_targets as usize),
                         gossip_fanout: (gossip_fanout > 0).then_some(gossip_fanout as usize),
                     };
                     self.event_hub.publish(update).await;
@@ -336,6 +345,9 @@ impl IngressHandler {
             }
             Message::ConfigAck { .. } => {
                 // Acknowledged
+            }
+            Message::AuthenticatedJoinResponse { .. } => {
+                warn!(target: "membership::ingress", "Rejected unexpected JoinResponse on ingress");
             }
         }
 

@@ -1,13 +1,13 @@
-use aaron_core::{BoxError, EventHub, QuicManager, Uuid};
-use std::net::SocketAddr;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::sync::{RwLock, watch};
 use crate::config::MembershipConfig;
 use crate::event::{MembershipEvent, UpdateSwimConfig};
 use crate::member::Member;
 use crate::stage::egress::EgressTransport;
 use crate::table::{MembershipChange, MembershipTable};
+use aaron_core::{BoxError, EventHub, QuicManager, Uuid};
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::{RwLock, watch};
 
 #[derive(Clone)]
 pub(crate) struct MembershipHandleInner {
@@ -179,24 +179,18 @@ impl MembershipHandle {
 
         let local_member = inner.table.local_member().await;
         let start_time = std::time::Instant::now();
-        let (seed_cluster_id, members) = EgressTransport::join(
+        let cluster_id = inner.table.cluster_id().await.ok_or_else(|| {
+            Box::new(std::io::Error::other("cluster ID is not initialized")) as BoxError
+        })?;
+        let members = EgressTransport::join_authenticated(
             &inner.quic,
             seed_addr,
             local_member,
+            cluster_id,
             Duration::from_millis(2000),
         )
         .await?;
         let join_rtt = start_time.elapsed();
-
-        if let Some(expected_cid) = inner.table.cluster_id().await {
-            if seed_cluster_id != expected_cid {
-                return Err(Box::new(std::io::Error::other(format!(
-                    "Cluster ID mismatch: expected {expected_cid}, seed returned {seed_cluster_id}"
-                ))) as BoxError);
-            }
-        } else {
-            inner.table.set_cluster_id(seed_cluster_id).await;
-        }
 
         for m in &members {
             if m.addr == seed_addr {
@@ -241,9 +235,13 @@ impl MembershipHandle {
         let tracing_str = tracing_filter.unwrap_or_default();
         let (pi_ms, pt_ms, st_ms, k, fanout) = match swim_config {
             Some(cfg) => (
-                cfg.probe_interval.map(|d| d.as_millis() as u64).unwrap_or(0),
+                cfg.probe_interval
+                    .map(|d| d.as_millis() as u64)
+                    .unwrap_or(0),
                 cfg.probe_timeout.map(|d| d.as_millis() as u64).unwrap_or(0),
-                cfg.suspect_timeout.map(|d| d.as_millis() as u64).unwrap_or(0),
+                cfg.suspect_timeout
+                    .map(|d| d.as_millis() as u64)
+                    .unwrap_or(0),
                 cfg.indirect_ping_targets.unwrap_or(0) as u32,
                 cfg.gossip_fanout.unwrap_or(0) as u32,
             ),

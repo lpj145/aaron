@@ -63,6 +63,7 @@ table InstallSnapshotRequest {
   offset: uint64;
   data: [ubyte];
   done: bool;
+  meta: StoredSnapshotMeta;
 }
 
 table InstallSnapshotResponse {
@@ -128,6 +129,7 @@ union ControlPlanePayload {
 
 table ControlPlaneMessage {
   payload: ControlPlanePayload;
+  protocol_version: uint16;
 }
 
 root_type ControlPlaneMessage;
@@ -151,6 +153,18 @@ table StoredMembership {
   log_id: StoredLogId;
   voter_ids: [uint64];
   nodes: [NodeEndpoint];
+  node_ids: [uint64];
+  configs: [VoterConfig];
+}
+
+table VoterConfig {
+  voter_ids: [uint64];
+}
+
+table StoredSnapshotMeta {
+  last_log_id: StoredLogId;
+  last_membership: StoredMembership;
+  snapshot_id: string;
 }
 
 table StoredLogEntry {

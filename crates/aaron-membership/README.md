@@ -1,6 +1,6 @@
 # membership-service
 
-SWIM-based cluster membership, failure detection, and gossip dissemination service for the Aaron Node framework, operating over QUIC with P2P Web-of-Trust TLS and FlatBuffers binary protocol.
+SWIM-based cluster membership, failure detection, and gossip dissemination service for the Aaron Node framework, operating over QUIC with a FlatBuffers binary protocol and HMAC-authenticated cluster joins.
 
 ## Architecture
 
@@ -13,6 +13,7 @@ crates/aaron-membership/src/
 ├── handle.rs          # Thread-safe in-process query handle (MembershipHandle)
 ├── member.rs          # Member domain model and MemberStatus enum
 ├── message.rs         # Strongly-typed FlatBuffers message conversions
+├── auth.rs            # HMAC-SHA256 join proofs and timestamp validation
 ├── proto.rs           # Planus-generated FlatBuffers declarations
 ├── service.rs         # Supervised Service lifecycle implementation
 ├── table.rs           # Thread-safe MembershipTable with SWIM conflict resolution
@@ -24,11 +25,11 @@ crates/aaron-membership/src/
 
 ## Features
 
-- **Transport over QUIC**: Multiplexed bi-directional streams over QUIC with zero head-of-line blocking and TLS authenticated against node UUIDs.
+- **Transport over QUIC**: Multiplexed bi-directional streams over QUIC with zero head-of-line blocking and node endpoint identity through the P2P certificate.
 - **FlatBuffers Serialization**: Zero-copy binary schemas compiled with `planus` (`schemas/membership.fbs`).
 - **SWIM Failure Detection**: Direct `Ping` probes backed by indirect `PingReq` across $k$ random intermediaries on probe timeout.
 - **Incarnation Conflict Resolution**: Strictly enforces incarnation ordering, status precedence (`Alive` < `Suspect` < `Dead`/`Left`), and automatic refutation of false suspicions against the local node.
-- **Cluster Authorization & Security Token**: Enforces strict `cluster_id` validation at the gatekeeper (`JoinRequest`) to reject rogue/foreign nodes.
+- **Cluster Authorization**: Authenticated join requests use HMAC-SHA256 keyed by the 128-bit `cluster_id`, binding node UUID, incarnation and timestamp. The `cluster_id` is not included in the authenticated join request or response.
 - **Capability Tags & Hostname Propagation**: Automatically propagates `service:<name>`, `host:<hostname>`, functional roles (`control-plane`, `shard-worker`), and custom tags via gossip without polluting the mesh with internal engine plumbing.
 - **Direct Query Handle (`MembershipHandle`)**: Provides sub-microsecond in-memory topology lookups for other services (Admin, RPC, HTTP).
 - **Dynamic Join Commands**: Dispatches and handles dynamic cluster join commands (`JoinClusterCommand`) via `EventHub` at runtime.
@@ -40,13 +41,15 @@ crates/aaron-membership/src/
 | `MEMBERSHIP_BIND_ADDR` | `String` | `"0.0.0.0:7946"` | QUIC listen socket address |
 | `MEMBERSHIP_SEEDS` | `String` | `""` | Comma-separated list of seed node socket addresses |
 | `MEMBERSHIP_CLUSTER_ID` | `String` | `""` | 128-bit Cluster ID UUID token (required for joiner nodes) |
+| `MEMBERSHIP_JOIN_AUTH_WINDOW_MS` | `u64` | `2000` | Validity window for HMAC-authenticated join requests |
 | `AARON_TAGS` | `String` | `""` | Optional comma-separated custom tags (e.g. `zone:us-east-1,tier:worker`) |
 
 ### Cluster Authorization Policy
 
 - **Bootstrap Node (`MEMBERSHIP_SEEDS=""`)**: Initializes the cluster. If `MEMBERSHIP_CLUSTER_ID` is not specified, generates a cryptographically random UUID and acts as the cluster authority.
 - **Joining Nodes (`MEMBERSHIP_SEEDS="ip:port,..."`)**: **Must** be provisioned with `MEMBERSHIP_CLUSTER_ID`. Aborts startup immediately (Fail-Fast) if omitted.
-- **Join Handshake**: Incoming `JoinRequest` is validated against the local cluster authority. Mismatched cluster tokens are rejected at the gate.
+- **Join Handshake**: Incoming authenticated join requests are accepted only when the HMAC is valid and the timestamp is within the configured window. Legacy unauthenticated `JoinRequest` messages are rejected.
+- **Replay behavior**: There is no replay cache by design. A captured join proof is usable only until its timestamp window expires.
 
 ### Protocol Timings (LAN Profile)
 

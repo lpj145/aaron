@@ -12,7 +12,7 @@ A unified, multi-transport network manager for distributed node communication wi
 - [Feature Guide](#feature-guide)
   - [1. TCP Inbound & Outbound with Connection Pooling](#1-tcp-inbound--outbound-with-connection-pooling)
   - [2. UDP Socket Binding & Datagrams](#2-udp-socket-binding--datagrams)
-  - [3. QUIC with Web-of-Trust P2P TLS](#3-quic-with-web-of-trust-p2p-tls)
+  - [3. QUIC Transport and Membership Authorization](#3-quic-transport-and-membership-authorization)
 - [Thread Safety & Concurrency](#thread-safety--concurrency)
 
 ---
@@ -22,7 +22,7 @@ A unified, multi-transport network manager for distributed node communication wi
 The `Network` module provides a central facade (`network.tcp`, `network.udp`, `network.quic`) managing:
 - **Inbound Listeners**: Listening on TCP ports, binding UDP sockets, or hosting QUIC endpoints.
 - **Outbound Connection Pooling**: Transparently reusing active TCP/QUIC connections to the same target peer without duplicate handshakes.
-- **Web-of-Trust P2P TLS**: Self-signed certificate generation and custom TLS 1.3 verification for decentralized peer authentication without Web PKI CAs.
+- **P2P QUIC Transport**: Multiplexed streams with node endpoint identity; cluster membership is authorized separately by the membership HMAC join protocol.
 - **Thread-Safe Handles**: Safe asynchronous read/write and multiplexed bi-directional stream operations across concurrent Tokio tasks.
 
 ---
@@ -40,7 +40,7 @@ crates/aaron-core/src/network/
 │   └── mod.rs         # UdpManager (bind, get_or_bind, unbind)
 ├── quic/
 │   ├── mod.rs         # QuicManager (listen, connect, pool)
-│   ├── tls.rs         # Web-of-Trust P2P TLS (self-signed cert generation & P2pServerCertVerifier)
+│   ├── tls.rs         # P2P TLS (self-signed cert generation & P2pServerCertVerifier)
 │   └── pool.rs        # QuicPool (multiplexed QUIC connection pool)
 └── README.md          # Module documentation
 ```
@@ -115,9 +115,10 @@ let (len, sender) = udp_socket.recv_from(&mut buf).await?;
 
 ---
 
-### 3. QUIC with Web-of-Trust P2P TLS
+### 3. QUIC Transport and Membership Authorization
 
-Quinn-powered QUIC transport with automatic self-signed TLS certificate generation and custom peer certificate verification.
+Cluster membership is authorized by the short-lived HMAC join proof keyed by `MEMBERSHIP_CLUSTER_ID`. See the [configuration and upgrade guide](../../../../docs/cluster-security.md).
+The examples below use the local development transport. Cluster admission is handled by the membership HMAC protocol.
 
 #### Server Endpoint (Inbound)
 ```rust

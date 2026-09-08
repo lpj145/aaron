@@ -12,11 +12,11 @@ tokio.workspace = true
 tokio-util.workspace = true
 tracing.workspace = true
 snafu.workspace = true
-aaron-core = { version = "0.1.0", path = "../aaron-core" }
-aaron-membership = { version = "0.1.0", path = "../aaron-membership" }
-aaron-tracing = { version = "0.1.0", path = "../aaron-tracing" }
-aaron-control-plane = { version = "0.1.0", path = "../aaron-control-plane" }
-aaron-shard = { version = "0.1.0", path = "../aaron-shard" }
+aaron-core = { version = "0.1.1", path = "../aaron-core" }
+aaron-membership = { version = "0.1.1", path = "../aaron-membership" }
+aaron-tracing = { version = "0.1.1", path = "../aaron-tracing" }
+aaron-control-plane = { version = "0.1.1", path = "../aaron-control-plane" }
+aaron-shard = { version = "0.1.1", path = "../aaron-shard" }
 openraft = { version = "0.9", features = ["single-term-leader", "tracing-log"] }
 
 axum = { version = "0.8", default-features = false, features = ["tokio", "http1", "http2", "json", "matched-path", "query"] }
